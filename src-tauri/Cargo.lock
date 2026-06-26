@@ -3469,7 +3469,7 @@ dependencies = [
 
 [[package]]
 name = "soloncode-desktop-community"
-version = "0.12.2"
+version = "0.12.3"
 dependencies = [
  "dirs",
  "libc",
