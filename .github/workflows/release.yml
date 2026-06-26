@@ -59,7 +59,7 @@ jobs:
                   tauriScript: cargo tauri
                   tagName: v__VERSION__
                   releaseName: SolonCode Desktop Community v__VERSION__
-                  releaseBody: See the assets to download this version and install.
+                  releaseBody: update v__VERSION__
                   releaseDraft: true
                   prerelease: false
                   args: ${{ matrix.args }}
