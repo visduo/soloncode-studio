@@ -222,7 +222,7 @@ button {
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: minmax(340px, 34%) 1fr;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     gap: 14px;
     min-height: 0;
     padding: 14px 18px 18px;
@@ -282,46 +282,20 @@ body.project-mode .project-view {
 }
 
 .sidebar {
+    grid-column: 1;
+    grid-row: 1;
     display: flex;
     flex-direction: column;
     padding: 14px;
 }
 
 .main-panel {
+    grid-column: 2;
+    grid-row: 1;
     display: grid;
     grid-template-rows: auto 1fr;
     gap: 12px;
     padding: 14px;
-}
-
-.github-link {
-    grid-column: 2;
-    justify-self: end;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    min-height: 32px;
-    padding: 6px 11px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.82);
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 0.76rem;
-    font-weight: 750;
-    box-shadow: 0 8px 20px rgba(31, 50, 79, 0.08);
-}
-
-.github-link:hover {
-    border-color: var(--border-strong);
-    background: #ffffff;
-    color: var(--accent-strong);
-}
-
-.github-link-icon {
-    width: 16px;
-    height: 16px;
-    fill: currentColor;
 }
 
 .version-footer {
@@ -433,6 +407,17 @@ h1 {
 .tool-uninstall:not(:disabled) .tool-icon {
     background: #fee2e2;
     color: var(--red);
+}
+
+.tool-github .tool-icon {
+    background: #eef2f7;
+    color: var(--text-primary);
+}
+
+.tool-github-icon {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
 }
 
 .status-dot {
@@ -929,12 +914,19 @@ h1 {
     }
 
     .sidebar {
+        grid-column: 1;
+        grid-row: auto;
         min-height: 360px;
     }
 
     .home-view {
         grid-template-columns: 1fr;
         padding: 14px;
+    }
+
+    .main-panel {
+        grid-column: 1;
+        grid-row: auto;
     }
 
     .project-view {
