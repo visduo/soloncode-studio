@@ -3,6 +3,8 @@ use std::collections::{HashMap, HashSet};
 use std::io::{BufRead, BufReader};
 use std::net::{TcpListener, TcpStream};
 #[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
+#[cfg(unix)]
 use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
@@ -208,6 +210,8 @@ fn signal_process_group(process_group_id: u32, signal: &str) {
 
 fn kill_child_tree(mut child: Child, process_group_id: u32) {
     let pid = child.id();
+    #[cfg(not(unix))]
+    let _ = process_group_id;
     #[cfg(unix)]
     signal_process_group(process_group_id, "TERM");
     signal_pid_tree(pid, "TERM");
@@ -225,6 +229,13 @@ fn kill_child_tree(mut child: Child, process_group_id: u32) {
     signal_pid_tree(pid, "KILL");
     let _ = child.kill();
     let _ = child.wait();
+}
+
+fn make_executable(path: &PathBuf) {
+    #[cfg(unix)]
+    {
+        let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755));
+    }
 }
 
 fn emit_workspace_log(
@@ -725,10 +736,7 @@ fn start_soloncode(
     for name in ["open", "xdg-open", "sensible-browser", "browser"] {
         let shadow_bin = shadow_dir.join(name);
         let _ = std::fs::write(&shadow_bin, "#!/bin/sh\nexit 0\n");
-        let _ = std::fs::set_permissions(
-            &shadow_bin,
-            std::os::unix::fs::PermissionsExt::from_mode(0o755),
-        );
+        make_executable(&shadow_bin);
     }
     let shadow_browser = shadow_dir.join("browser");
 
