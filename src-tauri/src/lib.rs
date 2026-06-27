@@ -80,21 +80,58 @@ impl Drop for SolonState {
 fn find_soloncode_path() -> Option<String> {
     // 方法1：检查 ~/.soloncode/bin/soloncode
     if let Some(home) = dirs::home_dir() {
+        #[cfg(target_os = "windows")]
+        let local_path = home.join(".soloncode/bin/soloncode.ps1");
+        #[cfg(not(target_os = "windows"))]
         let local_path = home.join(".soloncode/bin/soloncode");
         if local_path.exists() {
             return Some(local_path.to_string_lossy().to_string());
         }
     }
     // 方法2：检查 PATH 中的 soloncode
-    if let Ok(output) = Command::new("which").arg("soloncode").output() {
+    #[cfg(target_os = "windows")]
+    let mut path_command = Command::new("where");
+    #[cfg(not(target_os = "windows"))]
+    let mut path_command = Command::new("which");
+
+    if let Ok(output) = path_command.arg("soloncode").output() {
         if output.status.success() {
             let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
             if !path.is_empty() {
-                return Some(path);
+                return path.lines().next().map(|line| line.trim().to_string());
             }
         }
     }
     None
+}
+
+fn soloncode_command(soloncode_path: &str) -> Command {
+    #[cfg(target_os = "windows")]
+    {
+        let mut command = Command::new("powershell");
+        command.args([
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            soloncode_path,
+        ]);
+        command
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Command::new(soloncode_path)
+    }
+}
+
+fn is_java_available() -> bool {
+    Command::new("java")
+        .arg("-version")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|status| status.success())
 }
 
 fn cleanup_soloncode_process(state: &SolonState) {
@@ -267,7 +304,7 @@ fn is_version_different(current: &str, latest: &str) -> bool {
 }
 
 fn current_cli_version(soloncode_path: &str) -> Result<String, String> {
-    let mut command = Command::new(soloncode_path);
+    let mut command = soloncode_command(soloncode_path);
     command
         .arg("version")
         .stdout(Stdio::piped())
@@ -333,6 +370,14 @@ fn latest_versions() -> Result<RemoteVersionInfo, String> {
 #[tauri::command]
 async fn check_soloncode() -> bool {
     tauri::async_runtime::spawn_blocking(|| find_soloncode_path().is_some())
+        .await
+        .unwrap_or(false)
+}
+
+/// 检测 Java 运行环境是否可用
+#[tauri::command]
+async fn check_java() -> bool {
+    tauri::async_runtime::spawn_blocking(is_java_available)
         .await
         .unwrap_or(false)
 }
@@ -491,8 +536,20 @@ fn run_shell_with_live_output(
 ) -> Result<String, String> {
     let _ = app.emit("soloncode-output", start_message);
 
-    let mut child = Command::new("bash")
-        .args(["-c", script])
+    #[cfg(target_os = "windows")]
+    let mut command = {
+        let mut command = Command::new("powershell");
+        command.args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script]);
+        command
+    };
+    #[cfg(not(target_os = "windows"))]
+    let mut command = {
+        let mut command = Command::new("bash");
+        command.args(["-c", script]);
+        command
+    };
+
+    let mut child = command
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -546,13 +603,23 @@ async fn install_soloncode(app: tauri::AppHandle) -> Result<String, String> {
         run_shell_with_live_output(
             app,
             "📦 开始安装 SolonCode CLI...",
-            "curl -fsSL https://solon.noear.org/soloncode/setup.sh | bash",
+            install_soloncode_script(),
             "✅ SolonCode 安装成功!",
             "❌ 安装失败",
         )
     })
     .await
     .map_err(|e| format!("安装任务执行失败: {}", e))?
+}
+
+#[cfg(target_os = "windows")]
+fn install_soloncode_script() -> &'static str {
+    "irm https://solon.noear.org/soloncode/setup.ps1 | iex"
+}
+
+#[cfg(not(target_os = "windows"))]
+fn install_soloncode_script() -> &'static str {
+    "curl -fsSL https://solon.noear.org/soloncode/setup.sh | bash"
 }
 
 /// 卸载 soloncode
@@ -569,13 +636,23 @@ async fn uninstall_soloncode(
         run_shell_with_live_output(
             app,
             "🗑️ 正在卸载 SolonCode CLI...",
-            "printf 'y\ny\n' | sh ~/.soloncode/bin/uninstall.sh",
+            uninstall_soloncode_script(),
             "✅ SolonCode 已卸载",
             "❌ 卸载失败",
         )
     })
     .await
     .map_err(|e| format!("卸载任务执行失败: {}", e))?
+}
+
+#[cfg(target_os = "windows")]
+fn uninstall_soloncode_script() -> &'static str {
+    "$script = Join-Path $HOME '.soloncode/bin/uninstall.ps1'; if (Test-Path $script) { & $script } else { throw \"卸载脚本不存在: $script\" }"
+}
+
+#[cfg(not(target_os = "windows"))]
+fn uninstall_soloncode_script() -> &'static str {
+    "printf 'y\ny\n' | sh ~/.soloncode/bin/uninstall.sh"
 }
 
 /// 启动 soloncode web 服务
@@ -615,6 +692,9 @@ fn start_soloncode(
     // 检查是否已安装，获取完整路径
     let soloncode_path =
         find_soloncode_path().ok_or("SolonCode CLI 未安装，请先点击「安装 CLI」")?;
+    if !is_java_available() {
+        return Err("未检测到 Java 运行环境，请先安装 Java 后再启动 SolonCode Web".to_string());
+    }
 
     let used_ports: HashSet<u16> = state
         .processes
@@ -646,26 +726,55 @@ fn start_soloncode(
     if let Some(home) = dirs::home_dir() {
         let bin_dir = home.join(".soloncode/bin").to_string_lossy().to_string();
         if !path_env.contains(&bin_dir) {
-            path_env = format!("{}:{}", bin_dir, path_env);
+            #[cfg(target_os = "windows")]
+            {
+                path_env = format!("{};{}", bin_dir, path_env);
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                path_env = format!("{}:{}", bin_dir, path_env);
+            }
         }
     }
 
+    #[cfg(not(target_os = "windows"))]
     // 创建浏览器打开命令的阴影脚本，放在临时目录并注入 PATH 最前面
     // soloncode web 内部调用 open / xdg-open / browser 时，会命中这些空脚本
     let shadow_dir = std::env::temp_dir().join("soloncode-shadow");
+    #[cfg(not(target_os = "windows"))]
     let _ = std::fs::create_dir_all(&shadow_dir);
+    #[cfg(not(target_os = "windows"))]
     for name in ["open", "xdg-open", "sensible-browser", "browser"] {
         let shadow_bin = shadow_dir.join(name);
         let _ = std::fs::write(&shadow_bin, "#!/bin/sh\nexit 0\n");
         make_executable(&shadow_bin);
     }
+    #[cfg(not(target_os = "windows"))]
     let shadow_browser = shadow_dir.join("browser");
 
+    #[cfg(not(target_os = "windows"))]
     let shadow_path = format!("{}:{}", shadow_dir.to_string_lossy(), path_env);
 
+    #[cfg(not(target_os = "windows"))]
     let start_script = "cd \"$SOLONCODE_WORKSPACE\" && echo \"Shell working directory: $(pwd)\" && echo \"open command: $(command -v open || true)\" && exec \"$SOLONCODE_BIN\" web \"$SOLONCODE_PORT\"";
 
+    #[cfg(target_os = "windows")]
+    let mut command = {
+        let mut command = soloncode_command(&soloncode_path);
+        command
+            .args(["web", &port.to_string()])
+            .current_dir(&workspace_path)
+            .env("NO_BROWSER", "1")
+            .env("OPEN_BROWSER", "false")
+            .env("PATH", &path_env)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        command
+    };
+
+    #[cfg(not(target_os = "windows"))]
     let mut command = Command::new("bash");
+    #[cfg(not(target_os = "windows"))]
     command
         .args(["-c", start_script])
         .current_dir(&workspace_path)
@@ -891,6 +1000,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             check_soloncode,
+            check_java,
             check_versions,
             pick_workspace,
             home_workspace_path,

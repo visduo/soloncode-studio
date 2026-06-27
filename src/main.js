@@ -8,6 +8,7 @@ let selectedWorkspace = null;
 let homeWorkspacePath = "";
 let activeTabKey = "home";
 let cliUpdateAvailable = false;
+let isJavaAvailable = false;
 let cliUpdatePromptShown = false;
 let installCliPromptShown = false;
 const pendingUpdatePrompts = [];
@@ -120,6 +121,11 @@ function isWorkspaceStarting(path) {
     return startingWorkspaceKeys.has(getWorkspaceKey(path));
 }
 
+function formatError(message) {
+    const text = String(message || "未知错误");
+    return text.startsWith("❌") ? text : "❌ " + text;
+}
+
 function setBusy(busy) {
     isBusy = busy;
     renderWorkspaces();
@@ -138,7 +144,7 @@ function refreshButtons() {
 
     btnInstall.disabled = isBusy || isInstalled;
     btnUpdate.disabled = isBusy || !isInstalled || !cliUpdateAvailable || hasRunningProjects;
-    btnRun.disabled = isBusy || !isInstalled || Boolean(activeProject) || activeStarting;
+    btnRun.disabled = isBusy || !isInstalled || !isJavaAvailable || Boolean(activeProject) || activeStarting;
     btnStop.disabled = isBusy || (!activeProject && !activeStarting);
     btnUninstall.disabled = isBusy || !isInstalled || hasRunningProjects;
 
@@ -150,6 +156,10 @@ function refreshButtons() {
         btnRun.querySelector(".btn-text").textContent = "启动中...";
         btnRun.querySelector(".btn-icon").textContent = "…";
         btnRun.querySelector(".btn-desc").textContent = "等待 Web 服务就绪";
+    } else if (!isJavaAvailable) {
+        btnRun.querySelector(".btn-text").textContent = "缺少 Java";
+        btnRun.querySelector(".btn-icon").textContent = "!";
+        btnRun.querySelector(".btn-desc").textContent = "请先安装 Java 运行环境";
     } else {
         btnRun.querySelector(".btn-text").textContent = "运行 SolonCode";
         btnRun.querySelector(".btn-icon").textContent = "▶";
@@ -302,6 +312,19 @@ async function refreshHomeWorkspacePath() {
     updateActiveWorkspace();
 }
 
+async function refreshJavaStatus() {
+    try {
+        isJavaAvailable = Boolean(await invoke("check_java"));
+        if (!isJavaAvailable) {
+            setStatus("缺少 Java 运行环境", "not-installed");
+        }
+    } catch (e) {
+        isJavaAvailable = false;
+        setStatus("Java 检测失败: " + e, "not-installed");
+    }
+    refreshButtons();
+}
+
 async function refreshVersionStatus() {
     try {
         const info = await invoke("check_versions");
@@ -312,10 +335,14 @@ async function refreshVersionStatus() {
         showUpdatePrompts(info);
         if (changed) renderWorkspaces();
         if (isInstalled) {
-            setStatus(
-                info.cli_update_available ? "CLI 可更新" : "已安装",
-                info.cli_update_available ? "update-available" : "installed"
-            );
+            if (!isJavaAvailable) {
+                setStatus("缺少 Java 运行环境", "not-installed");
+            } else {
+                setStatus(
+                    info.cli_update_available ? "CLI 可更新" : "已安装",
+                    info.cli_update_available ? "update-available" : "installed"
+                );
+            }
         } else {
             setStatus("CLI 未安装，请先安装", "not-installed");
         }
@@ -414,7 +441,7 @@ async function closeProjectTab(key) {
             runningProjects.size > 0 ? "running" : "installed"
         );
     } catch (e) {
-        appendLog("❌ " + e, key, project.name, project.port);
+        appendLog(formatError(e), key, project.name, project.port);
     } finally {
         setBusy(false);
     }
@@ -472,7 +499,7 @@ async function openWorkspaceInExplorer(path) {
     try {
         await invoke("reveal_workspace", { workspace: path || null });
     } catch (e) {
-        appendLog("❌ " + e, getWorkspaceKey(path), getWorkspaceName(path));
+        appendLog(formatError(e), getWorkspaceKey(path), getWorkspaceName(path));
     }
 }
 
@@ -480,7 +507,7 @@ async function openGitHubPage() {
     try {
         await invoke("open_desktop_download_page");
     } catch (e) {
-        appendLog("❌ 打开 GitHub 失败: " + e);
+        appendLog(formatError("打开 GitHub 失败: " + e));
     }
 }
 
@@ -610,10 +637,11 @@ async function handleInstall() {
     try {
         await invoke("install_soloncode");
         isInstalled = true;
+        await refreshJavaStatus();
         await refreshVersionStatus();
         setStatus("CLI 安装完成", "installed");
     } catch (e) {
-        appendLog("❌ " + e);
+        appendLog(formatError(e));
         setStatus("CLI 安装失败", "not-installed");
     } finally {
         setBusy(false);
@@ -629,6 +657,7 @@ async function handleUpdate() {
     try {
         await invoke("install_soloncode");
         isInstalled = true;
+        await refreshJavaStatus();
         await refreshVersionStatus();
         setStatus("CLI 更新完成", "installed");
     } catch (e) {
@@ -644,6 +673,16 @@ async function handleRun() {
     if (isBusy || getActiveProject() || startingWorkspaceKeys.has(workspaceKey)) return;
     if (!isInstalled) {
         showInstallCliPrompt();
+        return;
+    }
+    if (!isJavaAvailable) {
+        appendLog(
+            formatError("未检测到 Java 运行环境，请先安装 Java 后再启动 SolonCode Web"),
+            workspaceKey,
+            getWorkspaceName(selectedWorkspace)
+        );
+        setStatus("缺少 Java 运行环境", "not-installed");
+        refreshButtons();
         return;
     }
     setBusy(true);
@@ -671,7 +710,7 @@ async function handleRun() {
         setStatus("Web 服务启动中...", "running");
     } catch (e) {
         startingWorkspaceKeys.delete(workspaceKey);
-        appendLog("❌ " + e, workspaceKey, workspaceName);
+        appendLog(formatError(e), workspaceKey, workspaceName);
         setStatus("启动失败", "installed");
     } finally {
         setBusy(false);
@@ -686,7 +725,7 @@ async function handleOpenWorkspace() {
             rememberWorkspace(path);
         }
     } catch (e) {
-        appendLog("❌ " + e);
+        appendLog(formatError(e));
     }
 }
 
@@ -711,7 +750,12 @@ async function handleStop() {
             runningProjects.size > 0 ? "running" : "installed"
         );
     } catch (e) {
-        appendLog("❌ " + e, workspaceKey, project?.name || getWorkspaceName(selectedWorkspace), project?.port || null);
+        appendLog(
+            formatError(e),
+            workspaceKey,
+            project?.name || getWorkspaceName(selectedWorkspace),
+            project?.port || null
+        );
     } finally {
         setBusy(false);
     }
@@ -732,7 +776,7 @@ async function handleUninstall() {
         await refreshVersionStatus();
         setStatus("CLI 已卸载", "not-installed");
     } catch (e) {
-        appendLog("❌ " + e);
+        appendLog(formatError(e));
     } finally {
         setBusy(false);
     }
@@ -779,7 +823,7 @@ listen("soloncode-failed", (e) => {
     const workspaceKey = String(e.payload || HOME_WORKSPACE_KEY);
     startingWorkspaceKeys.delete(workspaceKey);
     runningProjects.delete(workspaceKey);
-    appendLog("❌ 启动失败: " + e.payload, workspaceKey, getWorkspaceName(null));
+    appendLog(formatError("启动失败: " + e.payload), workspaceKey, getWorkspaceName(null));
     setStatus("启动失败", "installed");
     setBusy(false);
 });
@@ -796,6 +840,7 @@ async function init() {
     document.getElementById("button-group").style.display = "grid";
     refreshButtons();
     refreshHomeWorkspacePath();
+    refreshJavaStatus();
     refreshInstallStatus();
     refreshVersionStatus();
 }
