@@ -3,8 +3,6 @@ use std::collections::{HashMap, HashSet};
 use std::io::{BufRead, BufReader};
 use std::net::{TcpListener, TcpStream};
 #[cfg(unix)]
-use std::os::unix::fs::PermissionsExt;
-#[cfg(unix)]
 use std::os::unix::process::CommandExt;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -354,13 +352,6 @@ fn kill_child_tree(mut child: Child, process_group_id: u32, port: Option<u16>) {
     }
     let _ = child.kill();
     let _ = child.wait();
-}
-
-fn make_executable(path: &PathBuf) {
-    #[cfg(unix)]
-    {
-        let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755));
-    }
 }
 
 fn emit_workspace_log(
@@ -839,63 +830,15 @@ fn start_soloncode(
     }
 
     #[cfg(not(target_os = "windows"))]
-    // 创建浏览器打开命令的阴影脚本，放在临时目录并注入 PATH 最前面
-    // soloncode 内部调用 open / xdg-open / browser 时，会命中这些空脚本
-    let shadow_dir = std::env::temp_dir().join("soloncode-shadow");
-    #[cfg(not(target_os = "windows"))]
-    let _ = std::fs::create_dir_all(&shadow_dir);
-    #[cfg(not(target_os = "windows"))]
-    for name in ["open", "xdg-open", "sensible-browser", "browser"] {
-        let shadow_bin = shadow_dir.join(name);
-        let _ = std::fs::write(&shadow_bin, "#!/bin/sh\nexit 0\n");
-        make_executable(&shadow_bin);
-    }
-    #[cfg(not(target_os = "windows"))]
-    let shadow_browser = shadow_dir.join("browser");
-
-    #[cfg(not(target_os = "windows"))]
-    let shadow_path = format!("{}:{}", shadow_dir.to_string_lossy(), path_env);
-
-    #[cfg(target_os = "windows")]
-    let shadow_dir = std::env::temp_dir().join("soloncode-shadow");
-    #[cfg(target_os = "windows")]
-    let _ = std::fs::create_dir_all(&shadow_dir);
-    #[cfg(target_os = "windows")]
-    for name in ["browser.cmd", "open.cmd", "start.cmd"] {
-        let shadow_bin = shadow_dir.join(name);
-        let _ = std::fs::write(&shadow_bin, "@echo off\r\nexit /b 0\r\n");
-    }
-    #[cfg(target_os = "windows")]
-    {
-        let cmd_shadow = shadow_dir.join("cmd.cmd");
-        let _ = std::fs::write(
-            &cmd_shadow,
-            "@echo off\r\nif /i \"%~1\"==\"/c\" if /i \"%~2\"==\"start\" exit /b 0\r\n\"%SystemRoot%\\System32\\cmd.exe\" %*\r\nexit /b %ERRORLEVEL%\r\n",
-        );
-    }
-    #[cfg(target_os = "windows")]
-    let shadow_browser = shadow_dir.join("browser.cmd");
-
-    #[cfg(target_os = "windows")]
-    let shadow_path = format!("{};{}", shadow_dir.to_string_lossy(), path_env);
-
-    #[cfg(not(target_os = "windows"))]
-    let start_script = "cd \"$SOLONCODE_WORKSPACE\" && echo \"Shell working directory: $(pwd)\" && echo \"open command: $(command -v open || true)\" && exec \"$SOLONCODE_BIN\" web \"$SOLONCODE_PORT\"";
+    let start_script = "cd \"$SOLONCODE_WORKSPACE\" && exec \"$SOLONCODE_BIN\" serve \"$SOLONCODE_PORT\"";
 
     #[cfg(target_os = "windows")]
     let mut command = {
         let mut command = soloncode_command(&soloncode_path);
         command
-            .args(["web", &port.to_string()])
+            .args(["serve", &port.to_string()])
             .current_dir(&workspace_path)
-            .env("BROWSER", &shadow_browser)
-            .env("browser", &shadow_browser)
-            .env("JAVA_TOOL_OPTIONS", "-Djava.awt.headless=true")
-            .env("SOLONCODE_NO_BROWSER", "1")
-            .env("SOLONCODE_OPEN_BROWSER", "false")
-            .env("NO_BROWSER", "1")
-            .env("OPEN_BROWSER", "false")
-            .env("PATH", &shadow_path)
+            .env("PATH", &path_env)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         command
@@ -911,10 +854,7 @@ fn start_soloncode(
         .env("SOLONCODE_WORKSPACE", &workspace_path)
         .env("SOLONCODE_BIN", &soloncode_path)
         .env("SOLONCODE_PORT", port.to_string())
-        .env("BROWSER", &shadow_browser)
-        .env("NO_BROWSER", "1")
-        .env("OPEN_BROWSER", "false")
-        .env("PATH", &shadow_path)
+        .env("PATH", &path_env)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     #[cfg(unix)]

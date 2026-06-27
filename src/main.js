@@ -26,6 +26,38 @@ const MAX_LOG_LINES = 500;
 
 // ─── 工具函数 ────────────────────────────────────────────
 
+const ICON_PATHS = {
+    download: '<path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" />',
+    refresh:
+        '<path d="M21 12a9 9 0 0 1-15.4 6.4L3 16" /><path d="M3 21v-5h5" /><path d="M3 12A9 9 0 0 1 18.4 5.6L21 8" /><path d="M21 3v5h-5" />',
+    x: '<path d="M18 6 6 18" /><path d="m6 6 12 12" />',
+    github: '<path d="M12 2C6.48 2 2 6.58 2 12.23c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.32 9.32 0 0 1 12 6.94c.85 0 1.71.12 2.51.34 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.59.69.49A10.09 10.09 0 0 0 22 12.23C22 6.58 17.52 2 12 2z" />',
+    "folder-plus":
+        '<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z" /><path d="M12 11v5" /><path d="M9.5 13.5h5" />',
+    play: '<path d="M8 5v14l11-7z" />',
+    square: '<rect x="7" y="7" width="10" height="10" rx="1" />',
+    loader: '<path d="M12 2v4" /><path d="m16.2 7.8 2.9-2.9" /><path d="M18 12h4" /><path d="m16.2 16.2 2.9 2.9" /><path d="M12 18v4" /><path d="m4.9 19.1 2.9-2.9" /><path d="M2 12h4" /><path d="m4.9 4.9 2.9 2.9" />',
+    "external-link": '<path d="M7 17 17 7" /><path d="M9 7h8v8" />',
+    minus: '<path d="M6 12h12" />',
+    folder: '<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z" />'
+};
+
+function iconSvg(name) {
+    const paths = ICON_PATHS[name] || ICON_PATHS.play;
+    const fillClass = ["github", "play", "folder"].includes(name) ? " icon-fill" : "";
+    return `<svg class="app-icon app-icon-${name}${fillClass}" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+}
+
+function setIcon(element, name) {
+    if (element) element.innerHTML = iconSvg(name);
+}
+
+function hydrateStaticIcons() {
+    document.querySelectorAll("[data-icon]").forEach((element) => {
+        setIcon(element, element.dataset.icon);
+    });
+}
+
 function appendLog(text, workspaceKey = HOME_WORKSPACE_KEY, name = "用户目录", port = null) {
     appendWorkspaceLog({ workspace_key: workspaceKey, name, port, message: text });
 }
@@ -156,15 +188,15 @@ function refreshButtons() {
 
     if (activeProject) {
         btnRun.querySelector(".btn-text").textContent = "运行中...";
-        btnRun.querySelector(".btn-icon").textContent = "…";
+        setIcon(btnRun.querySelector(".btn-icon"), "loader");
         btnRun.querySelector(".btn-desc").textContent = `端口 ${activeProject.port}`;
     } else if (activeStarting) {
         btnRun.querySelector(".btn-text").textContent = "启动中...";
-        btnRun.querySelector(".btn-icon").textContent = "…";
+        setIcon(btnRun.querySelector(".btn-icon"), "loader");
         btnRun.querySelector(".btn-desc").textContent = "等待 Web 服务就绪";
     } else {
         btnRun.querySelector(".btn-text").textContent = "运行 SolonCode";
-        btnRun.querySelector(".btn-icon").textContent = "▶";
+        setIcon(btnRun.querySelector(".btn-icon"), "play");
         btnRun.querySelector(".btn-desc").textContent = "在当前工作区启动 Web 界面";
     }
 }
@@ -514,7 +546,7 @@ function renderTabs() {
         const tab = document.createElement("button");
         tab.className = "tab-item" + (activeTabKey === project.workspace_key ? " active" : "");
         tab.type = "button";
-        tab.innerHTML = `<span class="tab-dot running"></span><span class="tab-label"></span><span class="tab-port"></span><span class="tab-close" title="关闭当前工作区">×</span>`;
+        tab.innerHTML = `<span class="tab-dot running"></span><span class="tab-label"></span><span class="tab-port"></span><span class="tab-close" title="关闭当前工作区">${iconSvg("x")}</span>`;
         tab.querySelector(".tab-label").textContent = project.name;
         tab.querySelector(".tab-port").textContent = String(project.port);
         tab.addEventListener("click", () => activateProjectTab(project.workspace_key));
@@ -558,13 +590,13 @@ async function openGitHubPage() {
 }
 
 function getWorkspaceIcon(name) {
-    const icons = {
-        play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>',
-        open: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7" /><path d="M9 7h8v8" /></svg>',
-        remove: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" /></svg>',
-        folder: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z" /></svg>'
+    const iconNames = {
+        play: "play",
+        open: "external-link",
+        remove: "minus",
+        folder: "folder"
     };
-    return icons[name] || icons.play;
+    return iconSvg(iconNames[name] || "play");
 }
 
 function createWorkspaceButton(icon, title, className, onClick, options = {}) {
@@ -890,6 +922,7 @@ listen("soloncode-failed", (e) => {
 // ─── 初始化 ────────────────────────────────────────────────
 
 async function init() {
+    hydrateStaticIcons();
     selectedWorkspace = null;
     localStorage.setItem("soloncode.selectedWorkspace", "");
     renderTabs();

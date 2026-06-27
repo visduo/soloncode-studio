@@ -93,6 +93,22 @@ button {
     font: inherit;
 }
 
+.app-icon {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.15;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.app-icon.icon-fill {
+    fill: currentColor;
+    stroke: none;
+}
+
 .launcher-container {
     width: 100vw;
     height: 100vh;
@@ -198,6 +214,11 @@ button {
     font-size: 0.9rem;
     line-height: 1;
     text-align: center;
+}
+
+.tab-close .app-icon {
+    width: 14px;
+    height: 14px;
 }
 
 .tab-close:hover {
@@ -394,9 +415,11 @@ h1 {
     border-radius: 7px;
     background: #eef2f7;
     color: inherit;
-    font-weight: 900;
-    line-height: 1;
-    text-align: center;
+}
+
+.tool-icon .app-icon {
+    width: 13px;
+    height: 13px;
 }
 
 .tool-install:not(:disabled) .tool-icon {
@@ -419,11 +442,9 @@ h1 {
     color: var(--text-primary);
 }
 
-.tool-github-icon {
-    display: block;
+.tool-github .app-icon {
     width: 15px;
     height: 15px;
-    fill: currentColor;
 }
 
 .status-dot {
@@ -518,15 +539,9 @@ h1 {
     line-height: 1;
 }
 
-.workspace-add-icon svg {
-    display: block;
+.workspace-add-icon .app-icon {
     width: 17px;
     height: 17px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
 }
 
 .workspace-list {
@@ -620,21 +635,9 @@ h1 {
         color 0.15s ease;
 }
 
-.workspace-icon-btn svg {
-    display: block;
+.workspace-icon-btn .app-icon {
     width: 17px;
     height: 17px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.15;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.workspace-icon-btn.icon-play svg path,
-.workspace-icon-btn.icon-folder svg path {
-    fill: currentColor;
-    stroke: none;
 }
 
 .workspace-icon-btn:hover {
@@ -754,10 +757,11 @@ h1 {
     border-radius: 8px;
     background: #eef2f7;
     color: var(--text-secondary);
-    font-size: 0.86rem;
-    font-weight: 800;
-    line-height: 1;
-    text-align: center;
+}
+
+.btn-icon .app-icon {
+    width: 16px;
+    height: 16px;
 }
 
 .btn-text {
