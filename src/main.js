@@ -326,6 +326,7 @@ async function refreshHomeWorkspacePath() {
 }
 
 async function refreshJavaStatus() {
+    const previousJavaStatus = isJavaAvailable;
     try {
         isJavaAvailable = Boolean(await invoke("check_java"));
         if (!isJavaAvailable && !javaPromptShown) {
@@ -342,6 +343,9 @@ async function refreshJavaStatus() {
                 actions: [{ label: "知道了", primary: true, handler: closeUpdateDialog }]
             });
         }
+    }
+    if (previousJavaStatus !== isJavaAvailable) {
+        renderWorkspaces();
     }
     refreshButtons();
 }
