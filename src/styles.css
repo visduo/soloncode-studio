@@ -384,14 +384,17 @@ h1 {
 }
 
 .tool-icon {
-    display: grid;
+    display: inline-grid;
     place-items: center;
+    flex: 0 0 20px;
     width: 20px;
     height: 20px;
     border-radius: 7px;
     background: #eef2f7;
     color: inherit;
     font-weight: 900;
+    line-height: 1;
+    text-align: center;
 }
 
 .tool-install:not(:disabled) .tool-icon {
@@ -415,6 +418,7 @@ h1 {
 }
 
 .tool-github-icon {
+    display: block;
     width: 15px;
     height: 15px;
     fill: currentColor;
@@ -504,13 +508,16 @@ h1 {
 }
 
 .workspace-add-icon {
-    display: grid;
+    display: inline-grid;
     place-items: center;
+    flex: 0 0 18px;
     width: 18px;
     height: 18px;
+    line-height: 1;
 }
 
 .workspace-add-icon svg {
+    display: block;
     width: 17px;
     height: 17px;
     fill: none;
@@ -612,6 +619,7 @@ h1 {
 }
 
 .workspace-icon-btn svg {
+    display: block;
     width: 17px;
     height: 17px;
     fill: none;
@@ -736,8 +744,9 @@ h1 {
 }
 
 .btn-icon {
-    display: grid;
+    display: inline-grid;
     place-items: center;
+    flex: 0 0 28px;
     width: 28px;
     height: 28px;
     border-radius: 8px;
@@ -745,6 +754,8 @@ h1 {
     color: var(--text-secondary);
     font-size: 0.86rem;
     font-weight: 800;
+    line-height: 1;
+    text-align: center;
 }
 
 .btn-text {

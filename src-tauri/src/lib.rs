@@ -154,7 +154,7 @@ fn is_java_available() -> bool {
 fn cleanup_soloncode_process(state: &SolonState) {
     if let Ok(mut guard) = state.processes.lock() {
         for (_, process) in guard.drain() {
-            kill_child_tree(process.child, process.process_group_id);
+            kill_child_tree(process.child, process.process_group_id, Some(process.port));
         }
     }
 }
@@ -278,17 +278,65 @@ fn signal_process_group(process_group_id: u32, signal: &str) {
         .output();
 }
 
-fn kill_child_tree(mut child: Child, process_group_id: u32) {
+#[cfg(windows)]
+fn kill_windows_pid_tree(pid: u32) {
+    let mut command = Command::new("taskkill");
+    command.args(["/PID", &pid.to_string(), "/T", "/F"]);
+    command.creation_flags(CREATE_NO_WINDOW);
+    let _ = command.output();
+}
+
+#[cfg(windows)]
+fn process_ids_by_port(port: u16) -> Vec<u32> {
+    let mut command = Command::new("netstat");
+    command.args(["-ano", "-p", "tcp"]);
+    command.creation_flags(CREATE_NO_WINDOW);
+
+    command
+        .output()
+        .ok()
+        .filter(|output| output.status.success())
+        .map(|output| {
+            String::from_utf8_lossy(&output.stdout)
+                .lines()
+                .filter_map(|line| {
+                    let columns = line.split_whitespace().collect::<Vec<_>>();
+                    let local_address = columns.get(1)?;
+                    let pid = columns.last()?.parse::<u32>().ok()?;
+                    let local_port = local_address.rsplit(':').next()?.parse::<u16>().ok()?;
+                    (local_port == port).then_some(pid)
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+#[cfg(windows)]
+fn kill_windows_processes_by_port(port: u16) {
+    for pid in process_ids_by_port(port) {
+        kill_windows_pid_tree(pid);
+    }
+}
+
+fn kill_child_tree(mut child: Child, process_group_id: u32, port: Option<u16>) {
     let pid = child.id();
     #[cfg(not(unix))]
     let _ = process_group_id;
+    #[cfg(not(windows))]
+    let _ = port;
     #[cfg(unix)]
     signal_process_group(process_group_id, "TERM");
     signal_pid_tree(pid, "TERM");
 
     for _ in 0..20 {
         match child.try_wait() {
-            Ok(Some(_)) => return,
+            Ok(Some(_)) => {
+                #[cfg(windows)]
+                if let Some(port) = port {
+                    kill_windows_processes_by_port(port);
+                }
+                return;
+            }
             Ok(None) => std::thread::sleep(Duration::from_millis(50)),
             Err(_) => return,
         }
@@ -299,10 +347,10 @@ fn kill_child_tree(mut child: Child, process_group_id: u32) {
     signal_pid_tree(pid, "KILL");
     #[cfg(windows)]
     {
-        let mut command = Command::new("taskkill");
-        command.args(["/PID", &pid.to_string(), "/T", "/F"]);
-        command.creation_flags(CREATE_NO_WINDOW);
-        let _ = command.output();
+        kill_windows_pid_tree(pid);
+        if let Some(port) = port {
+            kill_windows_processes_by_port(port);
+        }
     }
     let _ = child.kill();
     let _ = child.wait();
@@ -387,11 +435,11 @@ fn current_cli_version(soloncode_path: &str) -> Result<String, String> {
 
     match receiver.recv_timeout(Duration::from_secs(12)) {
         Ok(line) => {
-            kill_child_tree(child, process_group_id);
+            kill_child_tree(child, process_group_id, None);
             parse_soloncode_version(&line).ok_or_else(|| "无法解析 SolonCode CLI 版本".to_string())
         }
         Err(_) => {
-            kill_child_tree(child, process_group_id);
+            kill_child_tree(child, process_group_id, None);
             Err("获取 SolonCode CLI 版本超时".to_string())
         }
     }
@@ -773,13 +821,6 @@ fn start_soloncode(
         Some(port),
         format!("🚀 启动 SolonCode (端口: {})", port),
     );
-    emit_workspace_log(
-        &app,
-        &workspace_key,
-        &name,
-        Some(port),
-        format!("📁 实际启动目录: {}", workspace_path.display()),
-    );
 
     // 构建 shell 环境 PATH
     let mut path_env = std::env::var("PATH").unwrap_or_default();
@@ -815,6 +856,21 @@ fn start_soloncode(
     #[cfg(not(target_os = "windows"))]
     let shadow_path = format!("{}:{}", shadow_dir.to_string_lossy(), path_env);
 
+    #[cfg(target_os = "windows")]
+    let shadow_dir = std::env::temp_dir().join("soloncode-shadow");
+    #[cfg(target_os = "windows")]
+    let _ = std::fs::create_dir_all(&shadow_dir);
+    #[cfg(target_os = "windows")]
+    for name in ["browser.cmd", "open.cmd", "start.cmd"] {
+        let shadow_bin = shadow_dir.join(name);
+        let _ = std::fs::write(&shadow_bin, "@echo off\r\nexit /b 0\r\n");
+    }
+    #[cfg(target_os = "windows")]
+    let shadow_browser = shadow_dir.join("browser.cmd");
+
+    #[cfg(target_os = "windows")]
+    let shadow_path = format!("{};{}", shadow_dir.to_string_lossy(), path_env);
+
     #[cfg(not(target_os = "windows"))]
     let start_script = "cd \"$SOLONCODE_WORKSPACE\" && echo \"Shell working directory: $(pwd)\" && echo \"open command: $(command -v open || true)\" && exec \"$SOLONCODE_BIN\" web \"$SOLONCODE_PORT\"";
 
@@ -824,13 +880,14 @@ fn start_soloncode(
         command
             .args(["web", &port.to_string()])
             .current_dir(&workspace_path)
-            .env("BROWSER", "cmd /C exit 0")
-            .env("browser", "cmd /C exit 0")
+            .env("BROWSER", &shadow_browser)
+            .env("browser", &shadow_browser)
+            .env("JAVA_TOOL_OPTIONS", "-Djava.awt.headless=true")
             .env("SOLONCODE_NO_BROWSER", "1")
             .env("SOLONCODE_OPEN_BROWSER", "false")
             .env("NO_BROWSER", "1")
             .env("OPEN_BROWSER", "false")
-            .env("PATH", &path_env)
+            .env("PATH", &shadow_path)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         command
@@ -1010,7 +1067,7 @@ fn start_soloncode(
             let state = app_nav.state::<SolonState>();
             if let Ok(mut guard) = state.processes.lock() {
                 if let Some(process) = guard.remove(&failed_workspace_key) {
-                    kill_child_tree(process.child, process.process_group_id);
+                    kill_child_tree(process.child, process.process_group_id, Some(process.port));
                 }
             }
             let _ = app_nav.emit(
@@ -1048,7 +1105,7 @@ fn stop_soloncode(
         .lock()
         .map_err(|_| "进程状态不可用，请重启 Desktop 后重试".to_string())?;
     if let Some(process) = guard.remove(&workspace_key) {
-        kill_child_tree(process.child, process.process_group_id);
+        kill_child_tree(process.child, process.process_group_id, Some(process.port));
         let message = "🛑 停止 SolonCode".to_string();
         emit_workspace_log(
             &app,
