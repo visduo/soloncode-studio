@@ -866,7 +866,7 @@ listen("soloncode-ready", (e) => {
     const project = e.payload;
     startingWorkspaceKeys.delete(project.workspace_key);
     upsertProject(project);
-    appendLog(`✅ 服务就绪: ${project.url}`, project.workspace_key, project.name, project.port);
+    appendLog(`✅ 服务就绪: ${project.name} -> ${project.url}`, project.workspace_key, project.name, project.port);
     setStatus("Web 界面就绪", "running");
     setBusy(false);
     activateProjectTab(project.workspace_key);
