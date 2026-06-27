@@ -866,6 +866,14 @@ fn start_soloncode(
         let _ = std::fs::write(&shadow_bin, "@echo off\r\nexit /b 0\r\n");
     }
     #[cfg(target_os = "windows")]
+    {
+        let cmd_shadow = shadow_dir.join("cmd.cmd");
+        let _ = std::fs::write(
+            &cmd_shadow,
+            "@echo off\r\nif /i \"%~1\"==\"/c\" if /i \"%~2\"==\"start\" exit /b 0\r\n\"%SystemRoot%\\System32\\cmd.exe\" %*\r\nexit /b %ERRORLEVEL%\r\n",
+        );
+    }
+    #[cfg(target_os = "windows")]
     let shadow_browser = shadow_dir.join("browser.cmd");
 
     #[cfg(target_os = "windows")]
