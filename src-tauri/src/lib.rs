@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -647,6 +647,7 @@ fn run_shell_with_live_output(
     app: tauri::AppHandle,
     start_message: &'static str,
     script: &'static str,
+    stdin_input: Option<&'static str>,
     success_message: &'static str,
     failure_label: &'static str,
 ) -> Result<String, String> {
@@ -672,11 +673,23 @@ fn run_shell_with_live_output(
         command
     };
 
+    if stdin_input.is_some() {
+        command.stdin(Stdio::piped());
+    }
+
     let mut child = command
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("执行命令失败: {}", e))?;
+
+    if let Some(input) = stdin_input {
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin
+                .write_all(input.as_bytes())
+                .map_err(|e| format!("写入命令确认失败: {}", e))?;
+        }
+    }
 
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
@@ -727,6 +740,7 @@ async fn install_soloncode(app: tauri::AppHandle) -> Result<String, String> {
             app,
             "📦 开始安装 SolonCode CLI...",
             install_soloncode_script(),
+            None,
             "✅ SolonCode 安装成功!",
             "❌ 安装失败",
         )
@@ -760,6 +774,7 @@ async fn uninstall_soloncode(
             app,
             "🗑️ 正在卸载 SolonCode CLI...",
             uninstall_soloncode_script(),
+            uninstall_soloncode_confirmation(),
             "✅ SolonCode 已卸载",
             "❌ 卸载失败",
         )
@@ -773,9 +788,19 @@ fn uninstall_soloncode_script() -> &'static str {
     "$script = Join-Path $HOME '.soloncode/bin/uninstall.ps1'; if (Test-Path $script) { & $script } else { throw \"卸载脚本不存在: $script\" }"
 }
 
+#[cfg(target_os = "windows")]
+fn uninstall_soloncode_confirmation() -> Option<&'static str> {
+    Some("Y\n")
+}
+
 #[cfg(not(target_os = "windows"))]
 fn uninstall_soloncode_script() -> &'static str {
-    "printf 'y\ny\n' | sh ~/.soloncode/bin/uninstall.sh"
+    "sh ~/.soloncode/bin/uninstall.sh"
+}
+
+#[cfg(not(target_os = "windows"))]
+fn uninstall_soloncode_confirmation() -> Option<&'static str> {
+    Some("Y\nY\n")
 }
 
 /// 启动 soloncode 服务
