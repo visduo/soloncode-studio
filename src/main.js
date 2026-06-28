@@ -193,15 +193,15 @@ function refreshButtons() {
     btnUninstall.disabled = isBusy || !isInstalled || !isJavaAvailable || hasRunningProjects;
 
     if (activeProject) {
-        btnRun.querySelector(".btn-text").textContent = "运行中";
+        btnRun.querySelector(".btn-text").textContent = "正在运行";
         setIcon(btnRun.querySelector(".btn-icon"), "loader");
-        btnRun.querySelector(".btn-desc").textContent = "已运行";
+        btnRun.querySelector(".btn-desc").textContent = "正在运行";
     } else if (activeStarting) {
-        btnRun.querySelector(".btn-text").textContent = "启动中...";
+        btnRun.querySelector(".btn-text").textContent = "正在启动";
         setIcon(btnRun.querySelector(".btn-icon"), "loader");
         btnRun.querySelector(".btn-desc").textContent = "等待 Web 服务就绪";
     } else {
-        btnRun.querySelector(".btn-text").textContent = "运行";
+        btnRun.querySelector(".btn-text").textContent = "启动服务";
         setIcon(btnRun.querySelector(".btn-icon"), "play");
         btnRun.querySelector(".btn-desc").textContent = "在当前工作区启动 Web 界面";
     }
