@@ -712,10 +712,19 @@ fn open_external_url(url: String) -> Result<(), String> {
 fn open_soloncode_system_terminal(workspace: Option<String>) -> Result<(), String> {
     let (_, _, workspace_path, _) = normalize_workspace(workspace)?;
     let soloncode_path = find_soloncode_path().ok_or("SolonCode CLI 未安装，请先点击「安装 CLI」")?;
+
+    #[cfg(not(target_os = "windows"))]
     let script = format!(
         "cd {} && {} cli",
         shell_quote(&workspace_path.to_string_lossy()),
         shell_quote(&soloncode_path)
+    );
+
+    #[cfg(target_os = "windows")]
+    let script = format!(
+        "pushd {} && {} cli",
+        cmd_quote(&workspace_path.to_string_lossy()),
+        cmd_quote(&soloncode_path)
     );
 
     #[cfg(target_os = "macos")]
@@ -765,6 +774,11 @@ fn open_soloncode_system_terminal(workspace: Option<String>) -> Result<(), Strin
 
 fn shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\\''"))
+}
+
+#[cfg(target_os = "windows")]
+fn cmd_quote(value: &str) -> String {
+    format!("\"{}\"", value.replace('"', "\"\""))
 }
 
 fn open_url(url: &str) -> Result<(), String> {
