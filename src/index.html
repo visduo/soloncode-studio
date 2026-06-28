@@ -13,8 +13,10 @@
             <main class="app-shell">
                 <nav class="tab-bar" id="tab-bar">
                     <button class="tab-item active" type="button" data-tab-key="home" onclick="activateHomeTab()">
-                        <span class="tab-dot home"></span>
-                        <span>首页</span>
+                        <span class="tab-main">
+                            <span class="tab-dot home"></span>
+                            <span class="tab-label">首页</span>
+                        </span>
                     </button>
                 </nav>
 
@@ -24,36 +26,45 @@
                     </div>
 
                     <div class="app-actions" id="app-actions" style="display: none">
-                        <div class="status-badge" id="status-badge">
-                            <span class="status-dot" id="status-dot"></span>
-                            <span id="status-label">检测中</span>
+                        <div class="action-group status-group">
+                            <div class="status-badge" id="status-badge" title="运行状态">
+                                <span class="status-dot" id="status-dot"></span>
+                                <span id="status-label">检测中</span>
+                            </div>
                         </div>
-                        <button class="tool-btn tool-install" id="btn-install" onclick="handleCliPrimaryAction()">
-                            <span class="tool-icon" data-icon="download" aria-hidden="true"></span>
-                            <span>安装 CLI</span>
-                        </button>
-                        <button class="tool-btn tool-uninstall" id="btn-uninstall" onclick="handleUninstall()" disabled>
-                            <span class="tool-icon" data-icon="x" aria-hidden="true"></span>
-                            <span>卸载 CLI</span>
-                        </button>
-                        <button
-                            class="tool-btn tool-github"
-                            type="button"
-                            onclick="openGitHubPage()"
-                            aria-label="打开 GitHub"
-                        >
-                            <span class="tool-icon" data-icon="github" aria-hidden="true"></span>
-                            <span>GitHub</span>
-                        </button>
-                        <button
-                            class="tool-btn tool-gitee"
-                            type="button"
-                            onclick="openGiteePage()"
-                            aria-label="打开 Gitee"
-                        >
-                            <span class="tool-icon" data-icon="gitee" aria-hidden="true"></span>
-                            <span>Gitee</span>
-                        </button>
+                        <div class="action-group cli-group">
+                            <button
+                                class="tool-btn tool-install"
+                                id="btn-install"
+                                onclick="handleCliPrimaryAction()"
+                                title="安装或更新 SolonCode CLI"
+                            >
+                                <span class="tool-icon" data-icon="download" aria-hidden="true"></span>
+                                <span>安装 CLI</span>
+                            </button>
+                            <button
+                                class="tool-btn tool-uninstall"
+                                id="btn-uninstall"
+                                onclick="handleUninstall()"
+                                title="卸载本机 SolonCode CLI"
+                                disabled
+                            >
+                                <span class="tool-icon" data-icon="x" aria-hidden="true"></span>
+                                <span>卸载 CLI</span>
+                            </button>
+                        </div>
+                        <div class="action-group repo-group">
+                            <button
+                                class="tool-btn tool-github"
+                                type="button"
+                                onclick="openGitHubPage()"
+                                aria-label="打开 GitHub"
+                                title="打开 GitHub 仓库"
+                            >
+                                <span class="tool-icon" data-icon="github" aria-hidden="true"></span>
+                                <span>GitHub</span>
+                            </button>
+                        </div>
                     </div>
                 </header>
 
@@ -88,7 +99,28 @@
                         <div class="log-area" id="log-area">
                             <div class="log-header">
                                 <span>运行日志</span>
-                                <button class="log-clear" onclick="clearLog()">清除</button>
+                                <div class="log-toolbar" aria-label="日志工具栏">
+                                    <input
+                                        class="log-search"
+                                        id="log-search"
+                                        type="search"
+                                        placeholder="搜索日志"
+                                        autocomplete="off"
+                                        aria-label="搜索日志"
+                                    />
+                                    <select class="log-filter" id="log-filter" aria-label="日志类型筛选">
+                                        <option value="all">全部</option>
+                                        <option value="success">成功</option>
+                                        <option value="info">关键信息</option>
+                                        <option value="wait">等待</option>
+                                        <option value="error">错误</option>
+                                    </select>
+                                    <label class="log-autoscroll">
+                                        <input id="log-autoscroll" type="checkbox" checked />
+                                        <span>自动滚动</span>
+                                    </label>
+                                    <button class="log-clear" type="button" onclick="clearLog()">清除</button>
+                                </div>
                             </div>
                             <div class="log-content" id="log-content">
                                 <div class="log-empty">当前工作区还没有运行日志。</div>

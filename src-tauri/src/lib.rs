@@ -619,18 +619,6 @@ fn open_studio_github_release_page() -> Result<(), String> {
     open_url("https://github.com/visduo/soloncode-studio/releases")
 }
 
-/// 打开 Studio Gitee 首页
-#[tauri::command]
-fn open_studio_gitee_home_page() -> Result<(), String> {
-    open_url("https://gitee.com/visduo/soloncode-studio")
-}
-
-/// 打开 Studio Gitee 下载页面
-#[tauri::command]
-fn open_studio_gitee_release_page() -> Result<(), String> {
-    open_url("https://gitee.com/visduo/soloncode-studio/releases")
-}
-
 fn open_url(url: &str) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     let mut command = {
@@ -1230,8 +1218,6 @@ pub fn run() {
             reveal_workspace,
             open_studio_github_home_page,
             open_studio_github_release_page,
-            open_studio_gitee_home_page,
-            open_studio_gitee_release_page,
             install_soloncode,
             uninstall_soloncode,
             start_soloncode,

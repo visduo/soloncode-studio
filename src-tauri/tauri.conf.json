@@ -11,6 +11,7 @@
         "windows": [
             {
                 "title": "SolonCode Studio",
+                "theme": "Light",
                 "width": 1280,
                 "height": 860,
                 "minWidth": 1000,
