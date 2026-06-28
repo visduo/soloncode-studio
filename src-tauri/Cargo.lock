@@ -3410,7 +3410,7 @@ dependencies = [
 
 [[package]]
 name = "soloncode-studio"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "dirs",
  "libc",
