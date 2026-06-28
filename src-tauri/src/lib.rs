@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
-#[cfg(unix)]
+#[cfg(target_os = "macos")]
 use std::os::unix::fs::PermissionsExt;
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -778,10 +778,13 @@ fn open_soloncode_system_terminal(workspace: Option<String>) -> Result<(), Strin
         ));
     }
 
-    command
-        .spawn()
-        .map_err(|e| format!("打开系统终端失败: {}", e))?;
-    Ok(())
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    {
+        command
+            .spawn()
+            .map_err(|e| format!("打开系统终端失败: {}", e))?;
+        Ok(())
+    }
 }
 
 fn shell_quote(value: &str) -> String {
