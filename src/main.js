@@ -199,6 +199,7 @@ function refreshButtons() {
     const activeProject = getActiveProject();
     const activeStarting = isWorkspaceStarting(selectedWorkspace);
     const hasRunningProjects = runningProjects.size > 0;
+    const hasStartingProjects = startingWorkspaceKeys.size > 0;
 
     const canInstallCli = !isInstalled && isJavaAvailable;
     const canUpdateCli = isInstalled && isJavaAvailable && cliUpdateAvailable && !hasRunningProjects;
@@ -210,7 +211,7 @@ function refreshButtons() {
     setIcon(btnInstall.querySelector(".tool-icon"), installIcon);
     btnRun.disabled = isBusy || !isInstalled || !isJavaAvailable || activeStarting;
     btnStop.disabled = isBusy || (!activeProject && !activeStarting);
-    btnUninstall.disabled = isBusy || !isInstalled || !isJavaAvailable || hasRunningProjects;
+    btnUninstall.disabled = isBusy || !isInstalled || !isJavaAvailable || hasRunningProjects || hasStartingProjects;
 
     if (activeProject) {
         btnRun.querySelector(".btn-text").textContent = "打开服务";
