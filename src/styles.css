@@ -773,44 +773,57 @@ h1 {
 .workspace-status-bar {
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 12px;
+    gap: 14px;
     align-items: center;
-    min-height: 56px;
-    padding: 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: #f6f8fb;
+    min-height: 50px;
+    padding: 8px 12px 8px 14px;
+    border: 1px solid rgba(219, 228, 239, 0.92);
+    border-radius: 10px;
+    background: linear-gradient(180deg, #fbfcfe, #f3f6fa);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 .workspace-status-bar h2 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.92rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
     font-weight: 750;
 }
 
 .workspace-status-bar p {
-    margin-top: 4px;
+    margin-top: 3px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--text-secondary);
-    font-size: 0.74rem;
+    color: var(--text-muted);
+    font-size: 0.72rem;
 }
 
 .workspace-status-label {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     min-width: 56px;
-    padding: 4px 8px;
+    min-height: 24px;
+    padding: 3px 9px;
     border: 1px solid var(--border);
     border-radius: 999px;
     background: #ffffff;
     color: var(--text-muted);
     font-size: 0.72rem;
     font-weight: 750;
+}
+
+.workspace-status-label::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.78;
 }
 
 .workspace-status-label.running {
