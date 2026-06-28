@@ -97,6 +97,7 @@ body {
 
 .update-dialog-actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 10px;
 }
@@ -108,6 +109,8 @@ body {
     border-radius: 8px;
     background: #ffffff;
     color: var(--text-primary);
+    font-size: 0.84rem;
+    font-weight: 700;
     cursor: pointer;
 }
 

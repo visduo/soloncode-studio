@@ -36,7 +36,8 @@ const ICON_PATHS = {
     refresh:
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw-icon lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>',
     x: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
-    github: '<path d="M12 2C6.48 2 2 6.58 2 12.23c0 4.52 2.87 8.35 6.84 9.71.5.09.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.32 9.32 0 0 1 12 6.94c.85 0 1.71.12 2.51.34 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.59.69.49A10.09 10.09 0 0 0 22 12.23C22 6.58 17.52 2 12 2z" />',
+    github: '<svg fill="currentColor" fill-rule="evenodd" height="1em" style="flex:none;line-height:1" viewBox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><title>Github</title><path d="M12 0c6.63 0 12 5.276 12 11.79-.001 5.067-3.29 9.567-8.175 11.187-.6.118-.825-.25-.825-.56 0-.398.015-1.665.015-3.242 0-1.105-.375-1.813-.81-2.181 2.67-.295 5.475-1.297 5.475-5.822 0-1.297-.465-2.344-1.23-3.169.12-.295.54-1.503-.12-3.125 0 0-1.005-.324-3.3 1.209a11.32 11.32 0 00-3-.398c-1.02 0-2.04.133-3 .398-2.295-1.518-3.3-1.209-3.3-1.209-.66 1.622-.24 2.83-.12 3.125-.765.825-1.23 1.887-1.23 3.169 0 4.51 2.79 5.527 5.46 5.822-.345.294-.66.81-.765 1.577-.69.31-2.415.81-3.495-.973-.225-.354-.9-1.223-1.845-1.209-1.005.015-.405.56.015.781.51.28 1.095 1.327 1.23 1.666.24.663 1.02 1.93 4.035 1.385 0 .988.015 1.916.015 2.196 0 .31-.225.664-.825.56C3.303 21.374-.003 16.867 0 11.791 0 5.276 5.37 0 12 0z"></path></svg>',
+    gitee: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none"><path fill="#C71D23" d="M512 1024C229.222 1024 0 794.778 0 512S229.222 0 512 0s512 229.222 512 512-229.222 512-512 512zm259.149-568.883h-290.74a25.293 25.293 0 0 0-25.292 25.293l-.026 63.206c0 13.952 11.315 25.293 25.267 25.293h177.024c13.978 0 25.293 11.315 25.293 25.267v12.646a75.853 75.853 0 0 1-75.853 75.853h-240.23a25.293 25.293 0 0 1-25.267-25.293V417.203a75.853 75.853 0 0 1 75.827-75.853h353.946a25.293 25.293 0 0 0 25.267-25.292l.077-63.207a25.293 25.293 0 0 0-25.268-25.293H417.152a189.62 189.62 0 0 0-189.62 189.645V771.15c0 13.977 11.316 25.293 25.294 25.293h372.94a170.65 170.65 0 0 0 170.65-170.65V480.384a25.293 25.293 0 0 0-25.293-25.267z"/></svg>',
     "folder-plus":
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-plus-icon lucide-folder-plus"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
     play: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play-icon lucide-play"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>',
@@ -53,8 +54,12 @@ const ICON_PATHS = {
 
 function iconSvg(name) {
     const paths = ICON_PATHS[name] || ICON_PATHS.play;
-    const fillClass = ["github", "play", "folder"].includes(name) ? " icon-fill" : "";
-    return `<svg class="app-icon app-icon-${name}${fillClass}" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+    if (typeof paths === "string" && paths.trimStart().startsWith("<svg")) {
+        return paths
+            .replace(/\sclass="[^"]*"/g, "")
+            .replace(/<svg\b([^>]*)>/, `<svg$1 class="app-icon app-icon-${name}" aria-hidden="true">`);
+    }
+    return `<svg class="app-icon app-icon-${name}" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
 }
 
 function setIcon(element, name) {
@@ -339,9 +344,10 @@ function showUpdatePrompts(info) {
         queueUpdatePrompt({
             key: `studio-update-${studioLatest}`,
             title: "Studio 可更新",
-            message: `SolonCode Studio ${studioLatest} 已发布，请从 GitHub 下载最新安装包。`,
+            message: `SolonCode Studio ${studioLatest} 已发布，请从 GitHub 或 Gitee 下载最新安装包。`,
             actions: [
                 { label: "稍后", primary: false, handler: closeUpdateDialog },
+                /**
                 {
                     label: "不再提醒",
                     primary: false,
@@ -350,12 +356,21 @@ function showUpdatePrompts(info) {
                         closeUpdateDialog();
                     }
                 },
+                **/
                 {
-                    label: "下载最新版",
+                    label: "访问 GitHub",
                     primary: true,
                     handler: () => {
                         closeUpdateDialog();
-                        openGitHubPage();
+                        openGitHubReleasePage();
+                    }
+                },
+                {
+                    label: "访问 Gitee",
+                    primary: true,
+                    handler: () => {
+                        closeUpdateDialog();
+                        openGiteeReleasePage();
                     }
                 }
             ]
@@ -695,9 +710,33 @@ async function openWorkspaceInExplorer(path) {
 
 async function openGitHubPage() {
     try {
-        await invoke("open_studio_download_page");
+        await invoke("open_studio_github_home_page");
     } catch (e) {
         appendLog(formatError("打开 GitHub 失败: " + e));
+    }
+}
+
+async function openGiteePage() {
+    try {
+        await invoke("open_studio_gitee_home_page");
+    } catch (e) {
+        appendLog(formatError("打开 Gitee 失败: " + e));
+    }
+}
+
+async function openGitHubReleasePage() {
+    try {
+        await invoke("open_studio_github_release_page");
+    } catch (e) {
+        appendLog(formatError("打开 GitHub 更新页失败: " + e));
+    }
+}
+
+async function openGiteeReleasePage() {
+    try {
+        await invoke("open_studio_gitee_release_page");
+    } catch (e) {
+        appendLog(formatError("打开 Gitee 更新页失败: " + e));
     }
 }
 
@@ -1072,6 +1111,7 @@ window.handleStop = handleStop;
 window.handleUninstall = handleUninstall;
 window.handleOpenWorkspace = handleOpenWorkspace;
 window.openGitHubPage = openGitHubPage;
+window.openGiteePage = openGiteePage;
 window.clearLog = clearLog;
 window.activateHomeTab = activateHomeTab;
 window.closeCurrentWorkspace = closeCurrentWorkspace;

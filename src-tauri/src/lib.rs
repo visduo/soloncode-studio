@@ -14,7 +14,7 @@ use tauri::{Emitter, Manager, RunEvent};
 
 const PORT_START: u16 = 49152;
 const PORT_END: u16 = 60999;
-const VERSION_URL: &str = "https://static-lab.6os.net/soloncode/version.php";
+const VERSION_URL: &str = "https://static-lab.6os.net/soloncode-studio/version.php";
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -607,10 +607,28 @@ fn reveal_workspace(workspace: Option<String>) -> Result<(), String> {
     Ok(())
 }
 
-/// 打开 Studio 下载页面
+/// 打开 Studio GitHub 首页
 #[tauri::command]
-fn open_studio_download_page() -> Result<(), String> {
+fn open_studio_github_home_page() -> Result<(), String> {
+    open_url("https://github.com/visduo/soloncode-studio")
+}
+
+/// 打开 Studio GitHub 下载页面
+#[tauri::command]
+fn open_studio_github_release_page() -> Result<(), String> {
     open_url("https://github.com/visduo/soloncode-studio/releases")
+}
+
+/// 打开 Studio Gitee 首页
+#[tauri::command]
+fn open_studio_gitee_home_page() -> Result<(), String> {
+    open_url("https://gitee.com/visduo/soloncode-studio")
+}
+
+/// 打开 Studio Gitee 下载页面
+#[tauri::command]
+fn open_studio_gitee_release_page() -> Result<(), String> {
+    open_url("https://gitee.com/visduo/soloncode-studio/releases")
 }
 
 fn open_url(url: &str) -> Result<(), String> {
@@ -1210,7 +1228,10 @@ pub fn run() {
             pick_workspace,
             home_workspace_path,
             reveal_workspace,
-            open_studio_download_page,
+            open_studio_github_home_page,
+            open_studio_github_release_page,
+            open_studio_gitee_home_page,
+            open_studio_gitee_release_page,
             install_soloncode,
             uninstall_soloncode,
             start_soloncode,
