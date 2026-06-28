@@ -39,7 +39,7 @@ const RUN_TARGETS = {
     cliSystem: "cli-system"
 };
 const RUN_TARGET_OPTIONS = [
-    { key: RUN_TARGETS.webInternal, mode: LAUNCH_MODES.web, label: "运行 Web（内置浏览器）", external: false },
+    { key: RUN_TARGETS.webInternal, mode: LAUNCH_MODES.web, label: "运行 Web（内置窗口）", external: false },
     { key: RUN_TARGETS.webSystem, mode: LAUNCH_MODES.web, label: "运行 Web（系统浏览器）", external: true },
     { key: RUN_TARGETS.cliInternal, mode: LAUNCH_MODES.cli, label: "运行 CLI（内置终端）", external: false },
     { key: RUN_TARGETS.cliSystem, mode: LAUNCH_MODES.cli, label: "运行 CLI（系统终端）", external: true }
@@ -808,7 +808,9 @@ function updateProjectView(element, project) {
         return;
     }
     element.title = project.name;
-    element.src = project.url;
+    if (element.getAttribute("src") !== project.url) {
+        element.src = project.url;
+    }
 }
 
 function scrollTerminalToBottom(surface) {
