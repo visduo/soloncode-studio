@@ -878,10 +878,6 @@ h1 {
     font-weight: 730;
 }
 
-.workspace-item.active .workspace-name {
-    font-weight: 800;
-}
-
 .workspace-path {
     display: block;
     margin-top: 3px;
