@@ -1233,7 +1233,11 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
         appendLog(`📁 本次启动工作区: ${targetWorkspace || "用户目录"}`, workspaceKey, workspaceDisplayName);
         if (target === RUN_TARGETS.cliSystem) {
             await invoke("open_soloncode_system_terminal", { workspace: targetWorkspace });
-            appendLog(`已打开系统终端: ${workspaceDisplayName}`, workspaceKey, workspaceDisplayName);
+            appendLog(
+                `✅ 就绪: 已打开系统终端，请关注系统终端状态: ${workspaceDisplayName}`,
+                workspaceKey,
+                workspaceDisplayName
+            );
             setStatus(
                 runningProjects.size > 0 ? "部分工作区运行中" : "未启动",
                 runningProjects.size > 0 ? "running" : "installed"
@@ -1243,6 +1247,7 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
         }
 
         pendingRunTargets.set(projectKey, target);
+        appendLog(`启动中: ${workspaceDisplayName}`, workspaceKey, workspaceDisplayName);
         const project = await invoke("start_soloncode", { workspace: targetWorkspace, mode: option.mode });
         project.launch_target = target;
         project.external = option.external;
@@ -1254,7 +1259,6 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
             startingWorkspaceKeys.add(project.workspace_key);
             renderWorkspaces();
         }
-        appendLog(`启动中: ${workspaceDisplayName}`, project.workspace_key, workspaceDisplayName);
         setStatus(
             target === RUN_TARGETS.cliInternal
                 ? `${getModeLabel(option.mode)} 运行中`

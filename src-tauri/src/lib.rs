@@ -429,25 +429,6 @@ fn emit_workspace_log(
     );
 }
 
-fn emit_buffered_workspace_logs(
-    app: &tauri::AppHandle,
-    workspace_key: &str,
-    name: &str,
-    port: Option<u16>,
-    line_buffer: &mut String,
-    prefix: Option<&str>,
-) {
-    while let Some(index) = line_buffer.find('\n') {
-        let line = line_buffer[..index].trim_end_matches('\r');
-        let message = match prefix {
-            Some(prefix) => format!("{}{}", prefix, line),
-            None => line.to_string(),
-        };
-        emit_workspace_log(app, workspace_key, name, port, message);
-        line_buffer.drain(..=index);
-    }
-}
-
 fn decode_utf8_chunk(pending: &mut Vec<u8>, bytes: &[u8]) -> String {
     pending.extend_from_slice(bytes);
     match std::str::from_utf8(pending) {
@@ -1138,7 +1119,7 @@ fn start_soloncode(
         if mode == LaunchMode::Web {
             "✅ 进程已启动，等待服务就绪..."
         } else {
-            "✅ 进程已启动，等待终端就绪..."
+            "✅ CLI 运行中"
         },
     );
 
@@ -1158,7 +1139,6 @@ fn start_soloncode(
             let mut reader = BufReader::new(stdout);
             let mut buffer = [0_u8; 4096];
             let mut pending_utf8 = Vec::new();
-            let mut line_buffer = String::new();
 
             loop {
                 match reader.read(&mut buffer) {
@@ -1166,11 +1146,6 @@ fn start_soloncode(
                         let chunk = String::from_utf8_lossy(&pending_utf8).into_owned();
                         if !chunk.is_empty() {
                             append_cli_output(&app_out, &stdout_outputs, &stdout_workspace_key, &chunk);
-                            line_buffer.push_str(&chunk);
-                        }
-                        if !line_buffer.is_empty() {
-                            let remaining = line_buffer.trim_end_matches('\r').to_string();
-                            emit_workspace_log(&app_out, &stdout_workspace_key, &stdout_name, None, remaining);
                         }
                         break;
                     }
@@ -1183,15 +1158,6 @@ fn start_soloncode(
                             let _ = server_port_sender.send(server_port);
                         }
                         append_cli_output(&app_out, &stdout_outputs, &stdout_workspace_key, &chunk);
-                        line_buffer.push_str(&chunk);
-                        emit_buffered_workspace_logs(
-                            &app_out,
-                            &stdout_workspace_key,
-                            &stdout_name,
-                            None,
-                            &mut line_buffer,
-                            None,
-                        );
                     }
                     Err(_) => break,
                 }
@@ -1226,7 +1192,6 @@ fn start_soloncode(
             let mut reader = BufReader::new(stderr);
             let mut buffer = [0_u8; 4096];
             let mut pending_utf8 = Vec::new();
-            let mut line_buffer = String::new();
 
             loop {
                 match reader.read(&mut buffer) {
@@ -1234,17 +1199,6 @@ fn start_soloncode(
                         let chunk = String::from_utf8_lossy(&pending_utf8).into_owned();
                         if !chunk.is_empty() {
                             append_cli_output(&app_err, &stderr_outputs, &stderr_workspace_key, &chunk);
-                            line_buffer.push_str(&chunk);
-                        }
-                        if !line_buffer.is_empty() {
-                            let remaining = line_buffer.trim_end_matches('\r').to_string();
-                            emit_workspace_log(
-                                &app_err,
-                                &stderr_workspace_key,
-                                &stderr_name,
-                                None,
-                                format!("[stderr] {}", remaining),
-                            );
                         }
                         break;
                     }
@@ -1257,15 +1211,6 @@ fn start_soloncode(
                             let _ = stderr_port_sender.send(server_port);
                         }
                         append_cli_output(&app_err, &stderr_outputs, &stderr_workspace_key, &chunk);
-                        line_buffer.push_str(&chunk);
-                        emit_buffered_workspace_logs(
-                            &app_err,
-                            &stderr_workspace_key,
-                            &stderr_name,
-                            None,
-                            &mut line_buffer,
-                            Some("[stderr] "),
-                        );
                     }
                     Err(_) => break,
                 }
