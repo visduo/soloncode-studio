@@ -74,6 +74,16 @@
                                 <span class="tool-icon" data-icon="github" aria-hidden="true"></span>
                                 <span>GitHub</span>
                             </button>
+                            <button
+                                class="tool-btn tool-webpage"
+                                type="button"
+                                onclick="openWebPage()"
+                                aria-label="打开网页"
+                                title="输入 URL 并在内置 tab 中打开"
+                            >
+                                <span class="tool-icon" data-icon="website" aria-hidden="true"></span>
+                                <span>打开网页</span>
+                            </button>
                         </div>
                     </div>
                 </header>
@@ -180,6 +190,29 @@
                     <div class="dialog-actions">
                         <button class="dialog-btn" type="button" id="workspace-alias-cancel">取消</button>
                         <button class="dialog-btn primary" type="button" id="workspace-alias-confirm">保存</button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="dialog-backdrop" id="web-page-url-dialog" hidden>
+                <section class="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="web-page-url-title">
+                    <div>
+                        <h2 id="web-page-url-title">打开网页</h2>
+                        <p id="web-page-url-message">请输入要打开的 URL，确认后会在内置 tab 中以 iframe 方式显示。</p>
+                    </div>
+                    <div class="workspace-alias-form">
+                        <input
+                            class="workspace-alias-input"
+                            id="web-page-url-input"
+                            type="url"
+                            placeholder="例如：https://example.com"
+                            autocomplete="off"
+                            spellcheck="false"
+                        />
+                    </div>
+                    <div class="dialog-actions">
+                        <button class="dialog-btn" type="button" id="web-page-url-cancel">取消</button>
+                        <button class="dialog-btn primary" type="button" id="web-page-url-confirm">打开</button>
                     </div>
                 </section>
             </div>
