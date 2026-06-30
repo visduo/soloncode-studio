@@ -59,6 +59,7 @@ const logViewState = {
 // ─── 工具函数 ────────────────────────────────────────────
 
 const ICON_PATHS = {
+    pin: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>',
     install:
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download-icon lucide-download"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>',
     update: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw-icon lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>',
@@ -758,7 +759,19 @@ function saveWorkspaceAlias() {
 function loadWorkspaces() {
     try {
         const raw = localStorage.getItem(WORKSPACES_KEY);
-        return raw ? JSON.parse(raw).filter(Boolean) : [];
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+            .map((item) => {
+                if (typeof item === "string") {
+                    return { path: item, pinned: false };
+                }
+                if (item && typeof item === "object" && item.path) {
+                    return { path: item.path, pinned: Boolean(item.pinned) };
+                }
+                return null;
+            })
+            .filter(Boolean);
     } catch (_) {
         return [];
     }
@@ -766,6 +779,20 @@ function loadWorkspaces() {
 
 function saveWorkspaces(workspaces) {
     localStorage.setItem(WORKSPACES_KEY, JSON.stringify(workspaces));
+}
+
+function getWorkspaceEntry(path) {
+    return loadWorkspaces().find((item) => item.path === path) || null;
+}
+
+function setWorkspacePinned(path, pinned) {
+    if (!path) return;
+    const workspaces = loadWorkspaces();
+    const index = workspaces.findIndex((item) => item.path === path);
+    if (index === -1) return;
+    workspaces[index] = { ...workspaces[index], pinned };
+    saveWorkspaces(workspaces);
+    renderWorkspaces();
 }
 
 function setSelectedWorkspace(path) {
@@ -1078,6 +1105,7 @@ function getWorkspaceIcon(name) {
         edit: "edit",
         open: "openExternal",
         more: "more",
+        pin: "pin",
         remove: "remove",
         folder: "openFolder"
     };
@@ -1099,6 +1127,8 @@ function createWorkspaceMenuItem(icon, label, onClick) {
 
 function createWorkspaceMenu(path, removable) {
     const workspaceKey = getWorkspaceKey(path);
+    const workspaceEntry = getWorkspaceEntry(path);
+    const pinned = Boolean(workspaceEntry?.pinned);
     const menuWrap = document.createElement("div");
     menuWrap.className = "workspace-menu-wrap";
 
@@ -1109,6 +1139,11 @@ function createWorkspaceMenu(path, removable) {
     if (openWorkspaceMenuKey === workspaceKey) {
         const menu = document.createElement("div");
         menu.className = "workspace-menu";
+        if (path) {
+            menu.appendChild(
+                createWorkspaceMenuItem("pin", pinned ? "取消置顶" : "置顶", () => setWorkspacePinned(path, !pinned))
+            );
+        }
         if (removable) {
             menu.appendChild(createWorkspaceMenuItem("edit", "重命名", () => renameWorkspace(path)));
             menu.appendChild(createWorkspaceMenuItem("remove", "移除工作区", () => removeWorkspace(path)));
@@ -1230,7 +1265,12 @@ function renderWorkspaces() {
     const current = document.getElementById("workspace-current");
     if (!list) return;
 
-    const workspaces = loadWorkspaces();
+    const workspaces = loadWorkspaces()
+        .slice()
+        .sort((left, right) => {
+            if (left.pinned === right.pinned) return 0;
+            return left.pinned ? -1 : 1;
+        });
     if (current) current.textContent = selectedWorkspace || homeWorkspacePath || "用户目录";
     list.innerHTML = "";
     updateActiveWorkspace();
@@ -1248,13 +1288,13 @@ function renderWorkspaces() {
     );
 
     for (const workspace of workspaces) {
-        const project = getProjectsByWorkspace(workspace).length > 0;
+        const project = getProjectsByWorkspace(workspace.path).length > 0;
         list.appendChild(
             createWorkspaceItem({
-                path: workspace,
-                name: getWorkspaceDisplayName(workspace),
-                detail: workspace,
-                active: workspace === selectedWorkspace,
+                path: workspace.path,
+                name: getWorkspaceDisplayName(workspace.path),
+                detail: workspace.path,
+                active: workspace.path === selectedWorkspace,
                 running: Boolean(project),
                 removable: true
             })
