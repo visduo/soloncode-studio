@@ -937,8 +937,9 @@ function updateProjectView(element, project) {
         return;
     }
     element.title = project.name;
-    if (element.getAttribute("src") !== project.url) {
-        element.src = project.url;
+    const nextSrc = withStudioParam(project.url);
+    if (element.getAttribute("src") !== nextSrc) {
+        element.src = nextSrc;
     }
 }
 
@@ -1411,7 +1412,7 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
 
 async function openRunningProject(project) {
     if (project.launch_target === RUN_TARGETS.webSystem) {
-        if (project.url) await invoke("open_external_url", { url: project.url });
+        if (project.url) await invoke("open_external_url", { url: withStudioParam(project.url) });
         return;
     }
     if (project.launch_target === RUN_TARGETS.cliSystem || project.external) return;
