@@ -11,15 +11,7 @@ let cliUpdateAvailable = false;
 let isJavaAvailable = false;
 let cliUpdatePromptShown = false;
 let installCliPromptShown = false;
-let javaPromptShown = false;
-let jdkInstallDialogShown = false;
-let jdkInstallInProgress = false;
-let jdkInstallState = {
-    stage: "idle",
-    message: "",
-    progress: 0
-};
-let jdkRestartPromptLocked = false;
+let installJavaPromptShown = false;
 const pendingPrompts = [];
 const runningProjects = new Map();
 const projectFrames = new Map();
@@ -557,69 +549,13 @@ function showInstallCliPrompt() {
     });
 }
 
-function showJavaPrompt() {
-    renderJdkInstallDialog();
-}
-
-function renderJdkInstallDialog() {
-    const dialog = document.getElementById("jdk-install-dialog");
-    const title = document.getElementById("jdk-install-title");
-    const message = document.getElementById("jdk-install-message");
-    const progressBar = document.getElementById("jdk-install-progress-bar");
-    const progressText = document.getElementById("jdk-install-progress-text");
-    const status = document.getElementById("jdk-install-status");
-    const installButton = document.getElementById("jdk-install-confirm");
-    if (!dialog || !title || !message || !progressBar || !progressText || !status || !installButton) return;
-
-    title.textContent = "缺少 Java 环境";
-    message.textContent =
-        "未检测到 Java 运行环境，也可以直接下载安装 macOS JDK。系统没有 JDK 时，如果用户目录下已经存在 jdk-26.jdk/Contents/Home/bin/java，也会被识别为可用。";
-    const progress = Math.max(0, Math.min(1, jdkInstallState.progress || 0));
-    progressBar.style.width = `${Math.round(progress * 100)}%`;
-    progressText.textContent = jdkInstallInProgress ? `${Math.round(progress * 100)}%` : "0%";
-    if (jdkRestartPromptLocked || jdkInstallState.stage === "done") {
-        status.textContent = "JDK 安装完成，请重启 SolonCode Studio";
-        installButton.textContent = "关闭";
-        installButton.disabled = false;
-    } else {
-        status.textContent = jdkInstallInProgress ? jdkInstallState.message || "正在准备安装..." : "准备下载 JDK";
-        installButton.textContent = "一键下载 JDK";
-        installButton.disabled = jdkInstallInProgress;
-    }
-    dialog.hidden = false;
-    jdkInstallDialogShown = true;
-}
-
-function closeJdkInstallDialog() {
-    const dialog = document.getElementById("jdk-install-dialog");
-    if (dialog) dialog.hidden = true;
-    jdkInstallDialogShown = false;
-}
-
-async function installJdk() {
-    if (jdkInstallInProgress) return;
-    if (jdkRestartPromptLocked || jdkInstallState.stage === "done") {
-        closeJdkInstallDialog();
-        return;
-    }
-    jdkRestartPromptLocked = false;
-    jdkInstallInProgress = true;
-    jdkInstallState = { stage: "prepare", message: "正在启动 JDK 下载...", progress: 0.05 };
-    renderJdkInstallDialog();
-    try {
-        await invoke("install_jdk");
-        jdkRestartPromptLocked = true;
-        jdkInstallState = { stage: "done", message: "JDK 安装完成，请重启 SolonCode Studio", progress: 1 };
-        renderJdkInstallDialog();
-        isJavaAvailable = true;
-        refreshButtons();
-    } catch (error) {
-        jdkRestartPromptLocked = false;
-        jdkInstallState = { stage: "error", message: `JDK 安装失败: ${error}`, progress: 0 };
-        renderJdkInstallDialog();
-    } finally {
-        jdkInstallInProgress = false;
-    }
+function showInstallJavaPrompt() {
+    queuePrompt({
+        key: "install-java",
+        title: "缺少 Java 环境",
+        message: "未检测到 Java 运行环境，请先安装 Java 后再安装或启动 SolonCode。",
+        actions: [{ label: "知道了", primary: true, handler: closePromptDialog }]
+    });
 }
 
 function showUpdatePrompts(info) {
@@ -694,34 +630,14 @@ async function refreshHomeWorkspacePath() {
 }
 
 async function refreshJavaStatus() {
-    const previousJavaStatus = isJavaAvailable;
     try {
         isJavaAvailable = Boolean(await invoke("check_java"));
-        if (!isJavaAvailable && !javaPromptShown) {
-            javaPromptShown = true;
-            showJavaPrompt();
-        }
-        if (!isJavaAvailable) {
-            renderJdkInstallDialog();
-        }
     } catch (e) {
         isJavaAvailable = false;
-        if (!javaPromptShown) {
-            javaPromptShown = true;
-            queuePrompt({
-                key: "java-check-failed",
-                title: "Java 检测失败",
-                message: "Java 运行环境检测失败: " + e,
-                actions: [{ label: "知道了", primary: true, handler: closePromptDialog }]
-            });
-        }
-        renderJdkInstallDialog();
     }
-    if (jdkRestartPromptLocked) {
-        renderJdkInstallDialog();
-    }
-    if (previousJavaStatus !== isJavaAvailable) {
-        renderWorkspaces();
+    if (!isJavaAvailable && !installJavaPromptShown) {
+        installJavaPromptShown = true;
+        showInstallJavaPrompt();
     }
     refreshButtons();
 }
@@ -1461,16 +1377,6 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
         showInstallCliPrompt();
         return;
     }
-    if (!isJavaAvailable) {
-        showJavaPrompt();
-        appendLog(
-            formatError("未检测到 Java 运行环境，请先安装 Java 后再启动 SolonCode"),
-            workspaceKey,
-            getWorkspaceName(targetWorkspace)
-        );
-        refreshButtons();
-        return;
-    }
     setBusy(true);
     setStatus("正在启动...", "detecting");
     const workspaceName = getWorkspaceName(targetWorkspace);
@@ -1700,28 +1606,6 @@ listen("soloncode-failed", (e) => {
     setBusy(false);
 });
 
-listen("soloncode-jdk-progress", (e) => {
-    const payload = typeof e.payload === "object" && e.payload ? e.payload : {};
-    jdkInstallState = {
-        stage: String(payload.stage || "progress"),
-        message: String(payload.message || "正在安装 JDK..."),
-        progress: typeof payload.progress === "number" ? payload.progress : jdkInstallState.progress || 0
-    };
-    if (jdkInstallState.stage === "done") {
-        jdkRestartPromptLocked = true;
-        jdkInstallInProgress = false;
-        renderJdkInstallDialog();
-        return;
-    }
-    if (jdkRestartPromptLocked) {
-        jdkInstallInProgress = false;
-        renderJdkInstallDialog();
-        return;
-    }
-    jdkInstallInProgress = true;
-    renderJdkInstallDialog();
-});
-
 // ─── 初始化 ────────────────────────────────────────────────
 
 async function init() {
@@ -1764,8 +1648,6 @@ async function init() {
             closeWorkspaceAliasDialog();
         }
     });
-    document.getElementById("jdk-install-cancel")?.addEventListener("click", closeJdkInstallDialog);
-    document.getElementById("jdk-install-confirm")?.addEventListener("click", installJdk);
     document.addEventListener("click", (event) => {
         if (!event.target.closest(".workspace-menu-wrap")) {
             closeRunMenu();
