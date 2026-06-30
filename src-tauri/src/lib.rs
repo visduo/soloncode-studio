@@ -15,6 +15,9 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{Emitter, Manager, RunEvent};
 
+#[cfg(target_os = "macos")]
+const MACOS_JDK_URL: &str = "https://d10.injdk.cn/openjdk/openjdk/26/openjdk-26_macos-x64_bin.tar.gz";
+
 const PORT_START: u16 = 49152;
 const PORT_END: u16 = 60999;
 const VERSION_URL: &str = "https://soloncode.studio/version.php";
@@ -196,14 +199,177 @@ fn soloncode_command(soloncode_path: &str) -> Command {
 }
 
 fn is_java_available() -> bool {
-    let mut command = Command::new("java");
-    command
-        .arg("-version")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
+    if let Some(path) = system_java_path() {
+        let mut command = Command::new(path);
+        command.arg("-version").stdout(Stdio::null()).stderr(Stdio::null());
+        #[cfg(windows)]
+        command.creation_flags(CREATE_NO_WINDOW);
+        return command.status().is_ok_and(|status| status.success());
+    }
+
+    if let Some(java_path) = local_java_path() {
+        if java_path.exists() {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn local_java_path() -> Option<PathBuf> {
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(home) = dirs::home_dir() {
+            let bundled = home.join("jdk-26.jdk/Contents/Home/bin/java");
+            if bundled.exists() {
+                return Some(bundled);
+            }
+        }
+    }
+
+    None
+}
+
+fn system_java_path() -> Option<PathBuf> {
+    if matches!(
+        std::env::var("SOLONCODE_FORCE_NO_JAVA").as_deref(),
+        Ok("1" | "true" | "yes")
+    ) {
+        return None;
+    }
+
+    let mut command = if cfg!(target_os = "windows") {
+        Command::new("where")
+    } else {
+        Command::new("which")
+    };
     #[cfg(windows)]
     command.creation_flags(CREATE_NO_WINDOW);
-    command.status().is_ok_and(|status| status.success())
+    if let Ok(output) = command.arg(if cfg!(target_os = "windows") { "java.exe" } else { "java" }).output() {
+        if output.status.success() {
+            if let Some(line) = String::from_utf8_lossy(&output.stdout).lines().next() {
+                let path = line.trim();
+                if !path.is_empty() {
+                    return Some(PathBuf::from(path));
+                }
+            }
+        }
+    }
+
+    None
+}
+
+fn java_path_string() -> Option<String> {
+    local_java_path().map(|path| path.to_string_lossy().to_string())
+}
+
+#[derive(Serialize, Clone)]
+struct JdkInstallProgress {
+    stage: String,
+    message: String,
+    progress: Option<f64>,
+}
+
+fn emit_jdk_progress(app: &tauri::AppHandle, stage: &str, message: &str, progress: Option<f64>) {
+    let _ = app.emit(
+        "soloncode-jdk-progress",
+        JdkInstallProgress {
+            stage: stage.to_string(),
+            message: message.to_string(),
+            progress,
+        },
+    );
+}
+
+fn ensure_parent_dir(path: &PathBuf) -> Result<(), String> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| format!("创建目录失败: {}", e))?;
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn install_jdk_macos(app: tauri::AppHandle) -> Result<String, String> {
+    let home = dirs::home_dir().ok_or_else(|| "无法获取用户目录".to_string())?;
+    let archive_path = home.join("openjdk-26_macos-x64_bin.tar.gz");
+    let extracted_jdk_dir = home.join("jdk-26.jdk");
+    let extracted_java = extracted_jdk_dir.join("Contents/Home/bin/java");
+
+    if extracted_java.exists() {
+        emit_jdk_progress(&app, "done", "已发现本地 JDK，无需重复安装", Some(1.0));
+        return Ok(extracted_java.to_string_lossy().to_string());
+    }
+
+    if extracted_jdk_dir.exists() {
+        fs::remove_dir_all(&extracted_jdk_dir)
+            .map_err(|e| format!("清理旧 JDK 目录失败: {}", e))?;
+    }
+
+    if !archive_path.exists() {
+        emit_jdk_progress(&app, "prepare", "正在准备下载 JDK", Some(0.05));
+        let client = reqwest::blocking::Client::builder()
+            .timeout(Duration::from_secs(30))
+            .build()
+            .map_err(|e| format!("创建下载客户端失败: {}", e))?;
+        let response = client
+            .get(MACOS_JDK_URL)
+            .send()
+            .map_err(|e| format!("下载 JDK 失败: {}", e))?
+            .error_for_status()
+            .map_err(|e| format!("下载 JDK 失败: {}", e))?;
+
+        ensure_parent_dir(&archive_path)?;
+        let total = response.content_length();
+        let mut file = fs::File::create(&archive_path).map_err(|e| format!("创建 JDK 文件失败: {}", e))?;
+        let mut downloaded: u64 = 0;
+        let mut source = response;
+        let mut buffer = [0u8; 8192];
+
+        emit_jdk_progress(&app, "download", "正在下载 JDK", Some(0.1));
+        loop {
+            let count = source
+                .read(&mut buffer)
+                .map_err(|e| format!("读取下载数据失败: {}", e))?;
+            if count == 0 {
+                break;
+            }
+            file.write_all(&buffer[..count])
+                .map_err(|e| format!("写入 JDK 文件失败: {}", e))?;
+            downloaded += count as u64;
+            if let Some(total) = total {
+                let progress = 0.1 + 0.55 * (downloaded as f64 / total as f64).min(1.0);
+                emit_jdk_progress(&app, "download", "正在下载 JDK", Some(progress));
+            }
+        }
+    } else {
+        emit_jdk_progress(&app, "prepare", "已存在压缩包，直接解压 JDK", Some(0.05));
+    }
+
+    emit_jdk_progress(&app, "extract", "正在解压 JDK", Some(0.7));
+    let tar_status = Command::new("tar")
+        .args([
+            "-xzf",
+            archive_path.to_string_lossy().as_ref(),
+            "-C",
+            home.to_string_lossy().as_ref(),
+        ])
+        .status()
+        .map_err(|e| format!("解压 JDK 失败: {}", e))?;
+    if !tar_status.success() {
+        return Err("解压 JDK 失败".to_string());
+    }
+
+    if !extracted_java.exists() {
+        return Err(format!("解压后未找到 java 可执行文件: {}", extracted_java.display()));
+    }
+
+    emit_jdk_progress(&app, "done", "JDK 安装完成，请重启 SolonCode Studio", Some(1.0));
+    Ok(extracted_java.to_string_lossy().to_string())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn install_jdk_macos(_app: tauri::AppHandle) -> Result<String, String> {
+    Err("当前系统暂未实现 JDK 自动安装".to_string())
 }
 
 fn cleanup_soloncode_process(state: &SolonState) {
@@ -550,6 +716,13 @@ async fn check_java() -> bool {
     tauri::async_runtime::spawn_blocking(is_java_available)
         .await
         .unwrap_or(false)
+}
+
+#[tauri::command]
+async fn install_jdk(app: tauri::AppHandle) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || install_jdk_macos(app))
+        .await
+        .map_err(|e| format!("执行 JDK 安装任务失败: {}", e))?
 }
 
 /// 获取 CLI 和 Studio 版本状态
@@ -1009,6 +1182,7 @@ fn start_soloncode(
     if !is_java_available() {
         return Err("未检测到 Java 运行环境，请先安装 Java 后再安装/启动 SolonCode".to_string());
     }
+    let java_path = java_path_string();
 
     let used_ports: HashSet<u16> = state
         .processes
@@ -1052,6 +1226,21 @@ fn start_soloncode(
             #[cfg(not(target_os = "windows"))]
             {
                 path_env = format!("{}:{}", bin_dir, path_env);
+            }
+        }
+    }
+    if let Some(java_path) = java_path.as_deref() {
+        if let Some(java_bin_dir) = PathBuf::from(java_path).parent() {
+            let java_bin_dir = java_bin_dir.to_string_lossy().to_string();
+            if !path_env.contains(&java_bin_dir) {
+                #[cfg(target_os = "windows")]
+                {
+                    path_env = format!("{};{}", java_bin_dir, path_env);
+                }
+                #[cfg(not(target_os = "windows"))]
+                {
+                    path_env = format!("{}:{}", java_bin_dir, path_env);
+                }
             }
         }
     }
@@ -1553,6 +1742,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             check_soloncode,
             check_java,
+            install_jdk,
             check_versions,
             pick_workspace,
             home_workspace_path,
