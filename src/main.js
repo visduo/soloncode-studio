@@ -11,7 +11,7 @@ let cliUpdateAvailable = false;
 let isJavaAvailable = false;
 let cliUpdatePromptShown = false;
 let installCliPromptShown = false;
-let installJavaPromptShown = false;
+let javaPromptShown = false;
 const pendingPrompts = [];
 const runningProjects = new Map();
 const projectFrames = new Map();
@@ -549,11 +549,11 @@ function showInstallCliPrompt() {
     });
 }
 
-function showInstallJavaPrompt() {
+function showJavaPrompt() {
     queuePrompt({
-        key: "install-java",
+        key: "missing-java",
         title: "缺少 Java 环境",
-        message: "未检测到 Java 运行环境，请先安装 Java 运行环境后再安装或启动 SolonCode。",
+        message: "未检测到 Java 运行环境，请先安装 Java 后再安装/启动 SolonCode CLI。",
         actions: [{ label: "知道了", primary: true, handler: closePromptDialog }]
     });
 }
@@ -630,14 +630,27 @@ async function refreshHomeWorkspacePath() {
 }
 
 async function refreshJavaStatus() {
+    const previousJavaStatus = isJavaAvailable;
     try {
         isJavaAvailable = Boolean(await invoke("check_java"));
+        if (!isJavaAvailable && !javaPromptShown) {
+            javaPromptShown = true;
+            showJavaPrompt();
+        }
     } catch (e) {
         isJavaAvailable = false;
+        if (!javaPromptShown) {
+            javaPromptShown = true;
+            queuePrompt({
+                key: "java-check-failed",
+                title: "Java 检测失败",
+                message: "Java 运行环境检测失败: " + e,
+                actions: [{ label: "知道了", primary: true, handler: closePromptDialog }]
+            });
+        }
     }
-    if (!isJavaAvailable && !installJavaPromptShown) {
-        installJavaPromptShown = true;
-        showInstallJavaPrompt();
+    if (previousJavaStatus !== isJavaAvailable) {
+        renderWorkspaces();
     }
     refreshButtons();
 }
@@ -1375,6 +1388,16 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
     if (isBusy || getRunningProjectByWorkspace(targetWorkspace) || startingWorkspaceKeys.has(workspaceKey)) return;
     if (!isInstalled) {
         showInstallCliPrompt();
+        return;
+    }
+    if (!isJavaAvailable) {
+        showJavaPrompt();
+        appendLog(
+            formatError("未检测到 Java 运行环境，请先安装 Java 后再启动 SolonCode"),
+            workspaceKey,
+            getWorkspaceName(targetWorkspace)
+        );
+        refreshButtons();
         return;
     }
     setBusy(true);
