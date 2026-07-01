@@ -861,13 +861,31 @@ function hideProjectFrames() {
 
 function removeProjectFrame(key) {
     const session = terminalSessions.get(key);
-    if (session) {
-        session.terminal.dispose();
-        terminalSessions.delete(key);
-    }
+    if (session) terminalSessions.delete(key);
     const frame = projectFrames.get(key);
     if (frame) frame.remove();
     projectFrames.delete(key);
+    if (session) disposeTerminalSessionLater(session);
+}
+
+function disposeTerminalSessionLater(session) {
+    if (session.disposing) return;
+    session.disposing = true;
+
+    const dispose = () => {
+        try {
+            session.webglAddon?.dispose?.();
+        } catch (_) {}
+        try {
+            session.terminal.dispose();
+        } catch (_) {}
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(dispose, { timeout: 500 });
+    } else {
+        window.setTimeout(dispose, 0);
+    }
 }
 
 function shouldRenderProjectTab(project) {
@@ -1000,20 +1018,41 @@ function initXtermTerminal(panel, project) {
     const session = {
         terminal,
         fitAddon,
+        webglAddon: null,
         projectKey: project.project_key,
         commandBuffer: "",
         renderedOutput: null
     };
+    session.webglAddon = loadXtermWebglAddon(terminal, session);
     terminal.onData((data) => handleXtermData(session, data));
     terminalSessions.set(project.project_key, session);
     fitXtermTerminal(session);
     return session;
 }
 
+function loadXtermWebglAddon(terminal, session) {
+    const WebglAddonCtor = window.WebglAddon?.WebglAddon;
+    if (!WebglAddonCtor) return null;
+
+    try {
+        const webglAddon = new WebglAddonCtor();
+        webglAddon.onContextLoss?.(() => {
+            webglAddon.dispose();
+            session.webglAddon = null;
+        });
+        terminal.loadAddon(webglAddon);
+        return webglAddon;
+    } catch (error) {
+        console.warn("xterm WebGL renderer unavailable, using default renderer.", error);
+        return null;
+    }
+}
+
 function fitXtermTerminal(session) {
     requestAnimationFrame(() => {
         try {
             session.fitAddon.fit();
+            session.terminal.refresh(0, session.terminal.rows - 1);
         } catch (_) {
             // xterm can reject fitting while its element is hidden during tab switches.
         }
@@ -1092,10 +1131,8 @@ async function closeProjectTab(key) {
     const project = runningProjects.get(key);
     if (!project || isBusy) return;
     setBusy(true);
+    const shouldStopProcess = project.type !== PROJECT_TYPES.webPage && project.launch_target !== RUN_TARGETS.cliSystem;
     try {
-        if (project.type !== PROJECT_TYPES.webPage && project.launch_target !== RUN_TARGETS.cliSystem) {
-            await invoke("stop_soloncode", { workspace: project.workspace, mode: project.mode });
-        }
         runningProjects.delete(key);
         startingWorkspaceKeys.delete(project.workspace_key);
         removeProjectFrame(key);
@@ -1107,6 +1144,9 @@ async function closeProjectTab(key) {
             runningProjects.size > 0 ? "部分工作区运行中" : "已停止",
             runningProjects.size > 0 ? "running" : "installed"
         );
+        if (shouldStopProcess) {
+            await invoke("stop_soloncode", { workspace: project.workspace, mode: project.mode });
+        }
     } catch (e) {
         appendLog(formatError(e), key, project.name);
     } finally {

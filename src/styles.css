@@ -453,6 +453,10 @@ button {
     padding: 10px 12px;
 }
 
+.terminal-surface .xterm-screen canvas {
+    display: block;
+}
+
 .terminal-surface .xterm-viewport {
     overflow-y: auto;
 }
