@@ -1452,7 +1452,7 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
 
 async function openRunningProject(project) {
     if (project.launch_target === RUN_TARGETS.webSystem) {
-        if (project.url) await invoke("open_external_url", { url: withStudioParam(project.url) });
+        if (project.url) await invoke("open_external_url", { url: project.url });
         return;
     }
     if (project.launch_target === RUN_TARGETS.cliSystem || project.external) return;
