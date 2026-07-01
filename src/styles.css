@@ -249,6 +249,28 @@ button {
     border-radius: 0;
     background: #f8fafc;
     box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.72);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.7) transparent;
+}
+
+.tab-bar::-webkit-scrollbar {
+    height: 8px;
+}
+
+.tab-bar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tab-bar::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.7);
+    background-clip: content-box;
+}
+
+.tab-bar::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.88);
+    background-clip: content-box;
 }
 
 .tab-item {
@@ -1027,7 +1049,7 @@ h1 {
 }
 
 .run-target-menu {
-    min-width: 260px;
+    min-width: 220px;
 }
 
 .workspace-menu-item {
