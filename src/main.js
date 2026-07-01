@@ -1070,7 +1070,8 @@ function rememberWorkspace(path) {
 
 function removeWorkspace(path) {
     if (!path) return;
-    saveWorkspaces(loadWorkspaces().filter((item) => item !== path));
+    const workspaces = loadWorkspaces().filter((item) => item.path !== path);
+    saveWorkspaces(workspaces);
     const aliases = loadWorkspaceAliases();
     if (path in aliases) {
         delete aliases[path];
@@ -1669,16 +1670,6 @@ async function init() {
         if (event.key === "Escape") {
             event.preventDefault();
             closeWebPageUrlDialog();
-        }
-    });
-    document.getElementById("workspace-alias-input")?.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            saveWorkspaceAlias();
-        }
-        if (event.key === "Escape") {
-            event.preventDefault();
-            closeWorkspaceAliasDialog();
         }
     });
     document.addEventListener("click", (event) => {
