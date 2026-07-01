@@ -77,6 +77,50 @@ body {
     line-height: 1.55;
 }
 
+.terminal-settings-panel {
+    width: min(520px, 100%);
+}
+
+.terminal-settings-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.terminal-settings-field {
+    display: grid;
+    gap: 7px;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.terminal-settings-field-wide {
+    grid-column: 1 / -1;
+}
+
+.terminal-settings-field input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: #ffffff;
+    color: var(--text-primary);
+    font-size: 0.94rem;
+}
+
+.terminal-settings-field input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.12);
+}
+
+.terminal-settings-field.color-field input {
+    padding: 4px;
+    cursor: pointer;
+}
+
 .jdk-install-panel {
     width: min(500px, 100%);
 }
@@ -426,6 +470,7 @@ button {
 }
 
 .project-terminal {
+    position: relative;
     display: grid;
     grid-template-rows: minmax(0, 1fr);
     width: 100%;
@@ -445,6 +490,49 @@ button {
     overflow: hidden;
     outline: none;
     background: #07101d;
+}
+
+.terminal-settings-button {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.72);
+    color: #d8e7f6;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24);
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.terminal-settings-button:hover {
+    border-color: rgba(216, 231, 246, 0.62);
+    background: rgba(30, 41, 59, 0.9);
+}
+
+.terminal-settings-button .app-icon {
+    width: 19px;
+    height: 19px;
+}
+
+@media (max-width: 640px) {
+    .terminal-settings-form {
+        grid-template-columns: 1fr;
+    }
+
+    .terminal-settings-button {
+        right: 12px;
+        bottom: 12px;
+    }
 }
 
 .terminal-surface .xterm {

@@ -28,7 +28,16 @@ const WORKSPACE_ALIASES_KEY = "soloncode.workspaceAliases";
 const HOME_TAB_KEY = "home";
 const HOME_WORKSPACE_KEY = "__home__";
 const HIDDEN_STUDIO_UPDATE_KEY = "soloncode.hiddenStudioUpdate";
+const TERMINAL_SETTINGS_KEY = "soloncode.terminalSettings";
 const MAX_LOG_LINES = 500;
+const DEFAULT_TERMINAL_SETTINGS = {
+    fontFamily: '"SF Mono", Menlo, Consolas, monospace',
+    fontSize: 14,
+    lineHeight: 1.45,
+    background: "#07101d",
+    foreground: "#d8e7f6",
+    cursor: "#d8e7f6"
+};
 const LAUNCH_MODES = {
     web: "web",
     cli: "cli"
@@ -51,6 +60,7 @@ const RUN_TARGET_OPTIONS = [
 ];
 const pendingRunTargets = new Map();
 const terminalSessions = new Map();
+let terminalSettings = loadTerminalSettings();
 const logViewState = {
     query: "",
     filter: "all",
@@ -72,6 +82,8 @@ const ICON_PATHS = {
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-plus-icon lucide-folder-plus"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
     run: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play-icon lucide-play"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>',
     stop: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-icon lucide-square"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>',
+    settings:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>',
     loading:
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-icon lucide-loader"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>',
     edit: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pen-icon lucide-square-pen"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>',
@@ -91,6 +103,126 @@ function iconSvg(name) {
             .replace(/<svg\b([^>]*)>/, `<svg$1 class="app-icon app-icon-${name}" aria-hidden="true">`);
     }
     return `<svg class="app-icon app-icon-${name}" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+}
+
+function loadTerminalSettings() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(TERMINAL_SETTINGS_KEY) || "{}");
+        return normalizeTerminalSettings(parsed);
+    } catch (_) {
+        return { ...DEFAULT_TERMINAL_SETTINGS };
+    }
+}
+
+function normalizeTerminalSettings(settings) {
+    const next = { ...DEFAULT_TERMINAL_SETTINGS };
+    if (settings && typeof settings === "object") {
+        if (typeof settings.fontFamily === "string" && settings.fontFamily.trim())
+            next.fontFamily = settings.fontFamily.trim();
+        if (Number.isFinite(Number(settings.fontSize))) next.fontSize = clampNumber(Number(settings.fontSize), 10, 24);
+        if (Number.isFinite(Number(settings.lineHeight)))
+            next.lineHeight = clampNumber(Number(settings.lineHeight), 1, 2);
+        if (isHexColor(settings.background)) next.background = settings.background;
+        if (isHexColor(settings.foreground)) next.foreground = settings.foreground;
+        if (isHexColor(settings.cursor)) next.cursor = settings.cursor;
+    }
+    return next;
+}
+
+function clampNumber(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
+
+function isHexColor(value) {
+    return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
+}
+
+function getTerminalTheme() {
+    return {
+        background: terminalSettings.background,
+        foreground: terminalSettings.foreground,
+        cursor: terminalSettings.cursor,
+        selectionBackground: "#315f91"
+    };
+}
+
+function applyTerminalSettingsToSession(session) {
+    const terminal = session?.terminal;
+    if (!terminal) return;
+    terminal.options.fontFamily = terminalSettings.fontFamily;
+    terminal.options.fontSize = terminalSettings.fontSize;
+    terminal.options.lineHeight = terminalSettings.lineHeight;
+    terminal.options.theme = getTerminalTheme();
+    updateTerminalHostStyles(terminal.element);
+    fitXtermTerminal(session);
+}
+
+function updateTerminalHostStyles(element) {
+    const terminalSurface = element?.closest?.(".terminal-surface") || element?.querySelector?.(".terminal-surface");
+    const terminalPanel = terminalSurface?.closest?.(".project-terminal");
+    if (terminalSurface) terminalSurface.style.background = terminalSettings.background;
+    if (terminalPanel) {
+        terminalPanel.style.background = terminalSettings.background;
+        terminalPanel.style.color = terminalSettings.foreground;
+    }
+}
+
+function applyTerminalSettingsToAllSessions() {
+    for (const session of terminalSessions.values()) {
+        applyTerminalSettingsToSession(session);
+    }
+}
+
+function saveTerminalSettings(settings) {
+    terminalSettings = normalizeTerminalSettings(settings);
+    localStorage.setItem(TERMINAL_SETTINGS_KEY, JSON.stringify(terminalSettings));
+    applyTerminalSettingsToAllSessions();
+}
+
+function fillTerminalSettingsForm(settings) {
+    const assignments = {
+        "terminal-font-family": settings.fontFamily,
+        "terminal-font-size": settings.fontSize,
+        "terminal-line-height": settings.lineHeight,
+        "terminal-background": settings.background,
+        "terminal-foreground": settings.foreground,
+        "terminal-cursor": settings.cursor
+    };
+    for (const [id, value] of Object.entries(assignments)) {
+        const input = document.getElementById(id);
+        if (input) input.value = value;
+    }
+}
+
+function readTerminalSettingsForm() {
+    return normalizeTerminalSettings({
+        fontFamily: document.getElementById("terminal-font-family")?.value,
+        fontSize: document.getElementById("terminal-font-size")?.value,
+        lineHeight: document.getElementById("terminal-line-height")?.value,
+        background: document.getElementById("terminal-background")?.value,
+        foreground: document.getElementById("terminal-foreground")?.value,
+        cursor: document.getElementById("terminal-cursor")?.value
+    });
+}
+
+function showTerminalSettingsDialog() {
+    fillTerminalSettingsForm(terminalSettings);
+    const dialog = document.getElementById("terminal-settings-dialog");
+    if (dialog) dialog.hidden = false;
+}
+
+function closeTerminalSettingsDialog() {
+    const dialog = document.getElementById("terminal-settings-dialog");
+    if (dialog) dialog.hidden = true;
+}
+
+function saveTerminalSettingsFromDialog() {
+    saveTerminalSettings(readTerminalSettingsForm());
+    closeTerminalSettingsDialog();
+}
+
+function resetTerminalSettingsDialog() {
+    fillTerminalSettingsForm(DEFAULT_TERMINAL_SETTINGS);
 }
 
 function withStudioParam(url) {
@@ -935,7 +1067,13 @@ function createProjectView(project) {
         const panel = document.createElement("div");
         panel.className = "project-terminal";
         panel.dataset.projectKey = project.project_key;
-        panel.innerHTML = `<div class="terminal-surface" role="textbox" aria-label="SolonCode CLI 终端"></div>`;
+        panel.innerHTML = `
+            <div class="terminal-surface" role="textbox" aria-label="SolonCode CLI 终端"></div>
+            <button class="terminal-settings-button" type="button" aria-label="终端设置" title="终端设置">
+                ${iconSvg("settings")}
+            </button>
+        `;
+        panel.querySelector(".terminal-settings-button")?.addEventListener("click", showTerminalSettingsDialog);
         initXtermTerminal(panel, project);
         updateProjectView(panel, project);
         return panel;
@@ -1000,20 +1138,16 @@ function initXtermTerminal(panel, project) {
         convertEol: true,
         cursorBlink: true,
         cursorStyle: "block",
-        fontFamily: '"SF Mono", Menlo, Consolas, monospace',
-        fontSize: 14,
-        lineHeight: 1.45,
+        fontFamily: terminalSettings.fontFamily,
+        fontSize: terminalSettings.fontSize,
+        lineHeight: terminalSettings.lineHeight,
         scrollback: 2000,
-        theme: {
-            background: "#07101d",
-            foreground: "#d8e7f6",
-            cursor: "#d8e7f6",
-            selectionBackground: "#315f91"
-        }
+        theme: getTerminalTheme()
     });
     const fitAddon = new FitAddonCtor();
     terminal.loadAddon(fitAddon);
     terminal.open(terminalHost);
+    updateTerminalHostStyles(terminalHost);
 
     const session = {
         terminal,
@@ -1800,6 +1934,13 @@ async function init() {
             event.preventDefault();
             closeWebPageUrlDialog();
         }
+    });
+    document.getElementById("terminal-settings-cancel")?.addEventListener("click", closeTerminalSettingsDialog);
+    document.getElementById("terminal-settings-save")?.addEventListener("click", saveTerminalSettingsFromDialog);
+    document.getElementById("terminal-settings-reset")?.addEventListener("click", resetTerminalSettingsDialog);
+    document.getElementById("terminal-settings-form")?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        saveTerminalSettingsFromDialog();
     });
     document.addEventListener("click", (event) => {
         if (!event.target.closest(".workspace-menu-wrap")) {

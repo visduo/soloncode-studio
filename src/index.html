@@ -205,7 +205,6 @@
                 <section class="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="workspace-alias-title">
                     <div>
                         <h2 id="workspace-alias-title">修改工作区名称</h2>
-                        <p id="workspace-alias-message">可以填写一个更容易识别的名称或备注。</p>
                     </div>
                     <div class="workspace-alias-form">
                         <input
@@ -242,6 +241,50 @@
                     <div class="dialog-actions">
                         <button class="dialog-btn" type="button" id="web-page-url-cancel">取消</button>
                         <button class="dialog-btn primary" type="button" id="web-page-url-confirm">打开</button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="dialog-backdrop" id="terminal-settings-dialog" hidden>
+                <section
+                    class="dialog-panel terminal-settings-panel"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="terminal-settings-title"
+                >
+                    <div>
+                        <h2 id="terminal-settings-title">终端设置</h2>
+                    </div>
+                    <form class="terminal-settings-form" id="terminal-settings-form">
+                        <label class="terminal-settings-field terminal-settings-field-wide">
+                            <span>字体</span>
+                            <input id="terminal-font-family" type="text" autocomplete="off" spellcheck="false" />
+                        </label>
+                        <label class="terminal-settings-field">
+                            <span>字号</span>
+                            <input id="terminal-font-size" type="number" min="10" max="24" step="1" />
+                        </label>
+                        <label class="terminal-settings-field">
+                            <span>行高</span>
+                            <input id="terminal-line-height" type="number" min="1" max="2" step="0.05" />
+                        </label>
+                        <label class="terminal-settings-field color-field">
+                            <span>背景色</span>
+                            <input id="terminal-background" type="color" />
+                        </label>
+                        <label class="terminal-settings-field color-field">
+                            <span>文字色</span>
+                            <input id="terminal-foreground" type="color" />
+                        </label>
+                        <label class="terminal-settings-field color-field">
+                            <span>光标色</span>
+                            <input id="terminal-cursor" type="color" />
+                        </label>
+                    </form>
+                    <div class="dialog-actions">
+                        <button class="dialog-btn" type="button" id="terminal-settings-reset">恢复默认</button>
+                        <button class="dialog-btn" type="button" id="terminal-settings-cancel">取消</button>
+                        <button class="dialog-btn primary" type="button" id="terminal-settings-save">保存</button>
                     </div>
                 </section>
             </div>
