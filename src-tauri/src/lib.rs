@@ -1513,14 +1513,29 @@ fn send_cli_input(
     let Some(stdin) = process.child.stdin.as_mut() else {
         return Err("CLI 会话不可写入".to_string());
     };
-    writeln!(stdin, "{}", input).map_err(|e| format!("发送到 CLI 失败: {}", e))?;
-    let output = if let Ok(mut outputs) = state.cli_outputs.lock() {
-        let entry = outputs.entry(workspace_key.clone()).or_default();
-        entry.push_str(&input);
-        entry.push('\n');
-        entry.clone()
+    let is_raw_control = input.chars().any(|ch| ch.is_control() && ch != '\n' && ch != '\r');
+    if is_raw_control {
+        stdin
+            .write_all(input.as_bytes())
+            .map_err(|e| format!("发送到 CLI 失败: {}", e))?;
+        stdin.flush().map_err(|e| format!("发送到 CLI 失败: {}", e))?;
+        let output = state
+            .cli_outputs
+            .lock()
+            .ok()
+            .and_then(|outputs| outputs.get(&workspace_key).cloned())
+            .unwrap_or_default();
+        return Ok(CliOutput {
+            workspace_key: workspace_key.clone(),
+            output,
+        });
     } else {
-        format!("> {}\n", input)
+        writeln!(stdin, "{}", input).map_err(|e| format!("发送到 CLI 失败: {}", e))?;
+    }
+    let output = if let Ok(mut outputs) = state.cli_outputs.lock() {
+        outputs.entry(workspace_key.clone()).or_default().clone()
+    } else {
+        String::new()
     };
     let payload = CliOutput {
         workspace_key: workspace_key.clone(),

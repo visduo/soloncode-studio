@@ -331,10 +331,6 @@ button {
     background: #2563eb;
 }
 
-.tab-item.active .tab-label {
-    font-weight: 680;
-}
-
 .tab-dot {
     width: 6px;
     height: 6px;

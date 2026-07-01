@@ -983,7 +983,7 @@ function initXtermTerminal(panel, project) {
         cursorBlink: true,
         cursorStyle: "block",
         fontFamily: '"SF Mono", Menlo, Consolas, monospace',
-        fontSize: 13,
+        fontSize: 14,
         lineHeight: 1.45,
         scrollback: 2000,
         theme: {
@@ -1022,13 +1022,29 @@ function fitXtermTerminal(session) {
 
 function writeXtermSnapshot(session, output) {
     if (session.renderedOutput === output) return;
-    session.terminal.reset();
+    const previousOutput = session.renderedOutput || "";
+    if (output.startsWith(previousOutput)) {
+        writeXtermOutput(session, output.slice(previousOutput.length));
+    } else {
+        session.terminal.reset();
+        writeXtermOutput(session, output);
+    }
     session.commandBuffer = "";
-    if (output) session.terminal.write(output.replace(/\n/g, "\r\n"));
     session.renderedOutput = output;
 }
 
+function writeXtermOutput(session, text) {
+    if (text) session.terminal.write(text.replace(/\n/g, "\r\n"));
+}
+
 function handleXtermData(session, data) {
+    if (isTerminalControlSequence(data)) {
+        session.commandBuffer = "";
+        if (data === "\u0003") session.terminal.write("^C\r\n");
+        sendCliInput(session.projectKey, data);
+        return;
+    }
+
     for (const char of data) {
         if (char === "\r") {
             const input = session.commandBuffer;
@@ -1038,16 +1054,11 @@ function handleXtermData(session, data) {
             continue;
         }
         if (char === "\u007f") {
-            if (session.commandBuffer.length > 0) {
-                session.commandBuffer = session.commandBuffer.slice(0, -1);
-                session.terminal.write("\b \b");
+            const lastChar = getLastTerminalInputChar(session.commandBuffer);
+            if (lastChar) {
+                session.commandBuffer = removeLastTerminalInputChar(session.commandBuffer);
+                session.terminal.write("\b \b".repeat(getTerminalCharWidth(lastChar)));
             }
-            continue;
-        }
-        if (char === "\u0003") {
-            session.commandBuffer = "";
-            session.terminal.write("^C\r\n");
-            sendCliInput(session.projectKey, "\u0003");
             continue;
         }
         if (char >= " " || char === "\t") {
@@ -1055,6 +1066,26 @@ function handleXtermData(session, data) {
             session.terminal.write(char);
         }
     }
+}
+
+function isTerminalControlSequence(data) {
+    return data !== "\r" && data !== "\u007f" && data !== "\t" && /[\u0000-\u001f\u007f]/.test(data);
+}
+
+function getLastTerminalInputChar(input) {
+    return Array.from(input).at(-1) || "";
+}
+
+function removeLastTerminalInputChar(input) {
+    const chars = Array.from(input);
+    chars.pop();
+    return chars.join("");
+}
+
+function getTerminalCharWidth(char) {
+    if (!char) return 0;
+    if (/^[\u0300-\u036f\ufe00-\ufe0f]$/.test(char)) return 0;
+    return /[^\u0000-\u00ff]/.test(char) ? 2 : 1;
 }
 
 async function closeProjectTab(key) {
@@ -1748,6 +1779,7 @@ async function sendCliInput(projectKey, input) {
     if (!project) return;
     try {
         const response = await invoke("send_cli_input", { workspace: project.workspace, input });
+        if (isTerminalControlSequence(input)) return;
         project.terminal_output = response.output || project.terminal_output || "";
         upsertProject(project);
     } catch (e) {
