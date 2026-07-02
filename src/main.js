@@ -18,6 +18,11 @@ const projectFrames = new Map();
 const startingWorkspaceKeys = new Set();
 const workspaceLogs = new Map();
 const queuedPromptKeys = new Set();
+let tabOrder = [];
+let draggedTabKey = null;
+let tabDragState = null;
+let suppressNextTabClickKey = null;
+let suppressNextTabClickUntil = 0;
 let editingWorkspacePath = null;
 let openWorkspaceMenuKey = null;
 let openRunMenuKey = null;
@@ -415,6 +420,11 @@ function getActiveProject() {
 
 function getModeLabel(mode) {
     return mode === LAUNCH_MODES.cli ? "CLI" : "Web";
+}
+
+function getProjectTabModeLabel(project) {
+    if (!project || project.type === PROJECT_TYPES.webPage) return "Web";
+    return getModeLabel(project.mode);
 }
 
 function formatModeLog(mode, text) {
@@ -974,6 +984,7 @@ function upsertProject(project) {
         project.project_key = `${project.workspace_key}::${project.mode || LAUNCH_MODES.web}`;
     }
     runningProjects.set(project.project_key, project);
+    syncTabOrder();
     renderTabs();
     renderWorkspaces();
 }
@@ -1271,6 +1282,7 @@ async function closeProjectTab(key) {
     const shouldStopProcess = project.type !== PROJECT_TYPES.webPage && project.launch_target !== RUN_TARGETS.cliSystem;
     try {
         runningProjects.delete(key);
+        syncTabOrder();
         startingWorkspaceKeys.delete(project.workspace_key);
         removeProjectFrame(key);
         if (activeTabKey === key) activateHomeTab();
@@ -1296,6 +1308,88 @@ function closeCurrentWorkspace() {
     closeProjectTab(activeTabKey);
 }
 
+function syncTabOrder() {
+    const openKeys = new Set(runningProjects.keys());
+    tabOrder = tabOrder.filter((key) => openKeys.has(key));
+    for (const key of openKeys) {
+        if (!tabOrder.includes(key)) tabOrder.push(key);
+    }
+}
+
+function getOrderedProjectTabs() {
+    syncTabOrder();
+    return tabOrder
+        .map((key) => runningProjects.get(key))
+        .filter((project) => project && shouldRenderProjectTab(project));
+}
+
+function reorderProjectTabAt(sourceKey, insertIndex) {
+    if (!sourceKey) return;
+    syncTabOrder();
+    const sourceIndex = tabOrder.indexOf(sourceKey);
+    if (sourceIndex === -1) return;
+    const [source] = tabOrder.splice(sourceIndex, 1);
+    const normalizedIndex = Math.max(0, Math.min(insertIndex, tabOrder.length));
+    tabOrder.splice(normalizedIndex, 0, source);
+    renderTabs();
+}
+
+function getTabDropIndex(tabBar, clientX) {
+    const tabs = Array.from(tabBar.querySelectorAll(".tab-item[data-tab-key]")).filter(
+        (tab) => tab.dataset.tabKey !== draggedTabKey
+    );
+    const targetIndex = tabs.findIndex((tab) => {
+        const rect = tab.getBoundingClientRect();
+        return clientX < rect.left + rect.width / 2;
+    });
+    return targetIndex === -1 ? tabs.length : targetIndex;
+}
+
+function startTabPointerDrag(event, projectKey, tabBar) {
+    if (event.button !== 0 || event.target.closest(".tab-close")) return;
+    tabDragState = {
+        projectKey,
+        tabBar,
+        startX: event.clientX,
+        startY: event.clientY,
+        dragging: false
+    };
+    document.addEventListener("pointermove", handleTabPointerMove);
+    document.addEventListener("pointerup", finishTabPointerDrag, { once: true });
+    document.addEventListener("pointercancel", finishTabPointerDrag, { once: true });
+}
+
+function handleTabPointerMove(event) {
+    if (!tabDragState) return;
+    const deltaX = Math.abs(event.clientX - tabDragState.startX);
+    const deltaY = Math.abs(event.clientY - tabDragState.startY);
+    if (!tabDragState.dragging && deltaX + deltaY < 6) return;
+    event.preventDefault();
+    tabDragState.dragging = true;
+    draggedTabKey = tabDragState.projectKey;
+    reorderProjectTabAt(tabDragState.projectKey, getTabDropIndex(tabDragState.tabBar, event.clientX));
+}
+
+function finishTabPointerDrag() {
+    if (tabDragState?.dragging) {
+        suppressNextTabClickKey = tabDragState.projectKey;
+        suppressNextTabClickUntil = Date.now() + 250;
+        window.setTimeout(() => {
+            if (Date.now() >= suppressNextTabClickUntil) suppressNextTabClickKey = null;
+        }, 260);
+    }
+    document.removeEventListener("pointermove", handleTabPointerMove);
+    tabDragState = null;
+    clearTabDragState();
+}
+
+function clearTabDragState() {
+    draggedTabKey = null;
+    document.querySelectorAll(".tab-item.dragging, .tab-item.drag-over").forEach((tab) => {
+        tab.classList.remove("dragging", "drag-over");
+    });
+}
+
 function renderTabs() {
     const tabBar = document.getElementById("tab-bar");
     if (!tabBar) return;
@@ -1308,15 +1402,27 @@ function renderTabs() {
     homeTab.addEventListener("click", activateHomeTab);
     tabBar.appendChild(homeTab);
 
-    for (const project of runningProjects.values()) {
-        if (!shouldRenderProjectTab(project)) continue;
+    for (const project of getOrderedProjectTabs()) {
         const tab = document.createElement("button");
         tab.className = "tab-item" + (activeTabKey === project.project_key ? " active" : "");
+        if (draggedTabKey === project.project_key) tab.classList.add("dragging");
         tab.type = "button";
+        tab.dataset.tabKey = project.project_key;
         const isWebPage = project.type === PROJECT_TYPES.webPage;
-        tab.innerHTML = `<span class="tab-main"><span class="tab-dot ${isWebPage ? "web" : "running"}"></span><span class="tab-label"></span></span><span class="tab-close">${iconSvg("close")}</span>`;
+        const modeLabel = getProjectTabModeLabel(project);
+        tab.title = `${project.name} · ${modeLabel}`;
+        tab.innerHTML = `<span class="tab-main"><span class="tab-dot ${isWebPage ? "web" : "running"}"></span><span class="tab-label"></span><span class="tab-mode"></span></span><span class="tab-close">${iconSvg("close")}</span>`;
         tab.querySelector(".tab-label").textContent = isWebPage ? shortWebPageTitle(project.name) : project.name;
-        tab.addEventListener("click", () => activateProjectTab(project.project_key));
+        tab.querySelector(".tab-mode").textContent = modeLabel;
+        tab.addEventListener("pointerdown", (event) => startTabPointerDrag(event, project.project_key, tabBar));
+        tab.addEventListener("click", () => {
+            if (suppressNextTabClickKey === project.project_key && Date.now() < suppressNextTabClickUntil) {
+                suppressNextTabClickKey = null;
+                return;
+            }
+            suppressNextTabClickKey = null;
+            activateProjectTab(project.project_key);
+        });
         tab.querySelector(".tab-close").addEventListener("click", (event) => {
             event.stopPropagation();
             closeProjectTab(project.project_key);
