@@ -495,6 +495,44 @@ function closeRunMenu() {
     renderWorkspaces();
 }
 
+function positionWorkspaceMenus() {
+    const list = document.getElementById("workspace-list");
+    const listRect = list?.getBoundingClientRect();
+    const boundaryTop = Math.max(0, listRect?.top ?? 0);
+    const boundaryBottom = Math.min(window.innerHeight, listRect?.bottom ?? window.innerHeight);
+
+    document.querySelectorAll(".workspace-menu").forEach((menu) => {
+        const wrap = menu.closest(".workspace-menu-wrap");
+        const trigger = wrap?.querySelector(".workspace-icon-btn");
+        if (!trigger) return;
+
+        menu.style.visibility = "hidden";
+        menu.style.left = "0px";
+        menu.style.top = "0px";
+
+        const triggerRect = trigger.getBoundingClientRect();
+        const menuRect = menu.getBoundingClientRect();
+        const gap = 6;
+        const edgeGap = 8;
+        const availableBelow = boundaryBottom - triggerRect.bottom - gap;
+        const availableAbove = triggerRect.top - boundaryTop - gap;
+        const opensDown = availableBelow >= menuRect.height || availableBelow >= availableAbove;
+        const preferredTop = opensDown ? triggerRect.bottom + gap : triggerRect.top - menuRect.height - gap;
+        const maxTop = boundaryBottom - menuRect.height - edgeGap;
+        const minTop = boundaryTop + edgeGap;
+        const top = Math.max(minTop, Math.min(preferredTop, maxTop));
+        const left = Math.max(
+            edgeGap,
+            Math.min(triggerRect.right - menuRect.width, window.innerWidth - menuRect.width - edgeGap)
+        );
+
+        menu.classList.toggle("opens-up", !opensDown);
+        menu.style.left = `${left}px`;
+        menu.style.top = `${top}px`;
+        menu.style.visibility = "visible";
+    });
+}
+
 function refreshButtons() {
     const btnInstall = document.getElementById("btn-install");
     const btnUninstall = document.getElementById("btn-uninstall");
@@ -1688,6 +1726,8 @@ function renderWorkspaces() {
             })
         );
     }
+
+    positionWorkspaceMenus();
 }
 
 // ─── 按钮操作 ────────────────────────────────────────────
@@ -2060,6 +2100,8 @@ async function init() {
             closeWorkspaceMenu();
         }
     });
+    document.getElementById("workspace-list")?.addEventListener("scroll", positionWorkspaceMenus);
+    window.addEventListener("resize", positionWorkspaceMenus);
     refreshButtons();
     refreshHomeWorkspacePath();
     initIframeMessageListener();

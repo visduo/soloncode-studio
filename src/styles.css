@@ -1103,10 +1103,8 @@ h1 {
 }
 
 .workspace-menu {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    z-index: 10;
+    position: fixed;
+    z-index: 30;
     display: grid;
     gap: 4px;
     min-width: 156px;
