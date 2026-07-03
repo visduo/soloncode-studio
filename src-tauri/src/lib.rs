@@ -1671,6 +1671,9 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| match event {
+            RunEvent::Reopen { .. } => {
+                show_main_window(app_handle);
+            }
             RunEvent::WindowEvent {
                 event: WindowEvent::CloseRequested { api, .. },
                 ..
