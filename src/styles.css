@@ -281,6 +281,8 @@ button {
 }
 
 .tab-bar {
+    position: relative;
+    z-index: 20;
     grid-column: 1 / -1;
     display: flex;
     align-items: flex-end;
@@ -445,6 +447,15 @@ button {
 .tab-close:hover {
     background: #f1f5f9;
     color: var(--red);
+}
+
+.tab-context-menu {
+    min-width: 172px;
+    z-index: 40;
+}
+
+.tab-menu-item {
+    font-size: 0.82rem;
 }
 
 .home-view {

@@ -26,6 +26,8 @@ let suppressNextTabClickUntil = 0;
 let editingWorkspacePath = null;
 let openWorkspaceMenuKey = null;
 let openRunMenuKey = null;
+let openTabMenuKey = null;
+let openTabMenuPosition = null;
 let openWebPageDialogShown = false;
 
 const WORKSPACES_KEY = "soloncode.workspaces";
@@ -462,6 +464,8 @@ function setBusy(busy) {
     if (busy) {
         openWorkspaceMenuKey = null;
         openRunMenuKey = null;
+        openTabMenuKey = null;
+        openTabMenuPosition = null;
     }
     renderWorkspaces();
     refreshButtons();
@@ -996,6 +1000,8 @@ function setSelectedWorkspace(path) {
     localStorage.setItem("soloncode.selectedWorkspace", selectedWorkspace || "");
     openWorkspaceMenuKey = null;
     openRunMenuKey = null;
+    openTabMenuKey = null;
+    openTabMenuPosition = null;
     renderWorkspaces();
     renderLogs();
     refreshButtons();
@@ -1435,6 +1441,7 @@ function clearTabDragState() {
 function renderTabs() {
     const tabBar = document.getElementById("tab-bar");
     if (!tabBar) return;
+    removeTabContextMenuPortal();
     tabBar.innerHTML = "";
 
     const homeTab = document.createElement("button");
@@ -1459,6 +1466,11 @@ function renderTabs() {
         tabMode.title = modeLabel;
         tabMode.innerHTML = iconSvg(project.mode === LAUNCH_MODES.cli ? "tabCli" : "tabWeb");
         tab.addEventListener("pointerdown", (event) => startTabPointerDrag(event, project.project_key, tabBar));
+        tab.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openTabContextMenu(project.project_key, event);
+        });
         tab.addEventListener("click", () => {
             if (suppressNextTabClickKey === project.project_key && Date.now() < suppressNextTabClickUntil) {
                 suppressNextTabClickKey = null;
@@ -1473,6 +1485,7 @@ function renderTabs() {
         });
         tabBar.appendChild(tab);
     }
+    renderTabContextMenuPortal();
 }
 
 function rememberWorkspace(path) {
@@ -1549,6 +1562,79 @@ function createWorkspaceMenuItem(icon, label, onClick) {
         closeWorkspaceMenu();
     });
     return button;
+}
+
+function createTabMenuItem(icon, label, onClick) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "workspace-menu-item tab-menu-item";
+    button.innerHTML = `<span class="workspace-menu-icon">${getWorkspaceIcon(icon)}</span><span>${label}</span>`;
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        onClick();
+        closeTabMenu();
+    });
+    return button;
+}
+
+function createTabContextMenu(project) {
+    const menu = document.createElement("div");
+    menu.className = "workspace-menu tab-context-menu";
+    const position = getTabMenuPosition();
+    menu.style.left = `${position.left}px`;
+    menu.style.top = `${position.top}px`;
+    if (project.mode === LAUNCH_MODES.web && project.url) {
+        menu.appendChild(createTabMenuItem("open", "使用系统浏览器打开", () => openProjectInDefaultBrowser(project)));
+    }
+    menu.appendChild(createTabMenuItem("folder", "打开文件夹", () => openWorkspaceInExplorer(project.workspace)));
+    return menu;
+}
+
+function renderTabContextMenuPortal() {
+    if (!openTabMenuKey) return;
+    const project = runningProjects.get(openTabMenuKey);
+    if (!project) return;
+    document.body.appendChild(createTabContextMenu(project));
+}
+
+function removeTabContextMenuPortal() {
+    document.querySelectorAll("body > .tab-context-menu").forEach((menu) => menu.remove());
+}
+
+function getTabMenuPosition() {
+    const edgeGap = 8;
+    const estimatedWidth = 220;
+    const estimatedHeight = 92;
+    const left = openTabMenuPosition?.left ?? edgeGap;
+    const top = openTabMenuPosition?.top ?? edgeGap;
+    return {
+        left: Math.max(edgeGap, Math.min(left, window.innerWidth - estimatedWidth - edgeGap)),
+        top: Math.max(edgeGap, Math.min(top, window.innerHeight - estimatedHeight - edgeGap))
+    };
+}
+
+function closeTabMenu() {
+    if (!openTabMenuKey) return;
+    openTabMenuKey = null;
+    openTabMenuPosition = null;
+    renderTabs();
+}
+
+function openTabContextMenu(projectKey, event) {
+    openWorkspaceMenuKey = null;
+    openRunMenuKey = null;
+    openTabMenuKey = projectKey;
+    openTabMenuPosition = { left: event.clientX, top: event.clientY };
+    renderTabs();
+}
+
+async function openProjectInDefaultBrowser(project) {
+    if (!project?.url) return;
+    try {
+        await invoke("open_external_url", { url: project.url });
+    } catch (e) {
+        appendLog(formatError("使用系统浏览器打开失败: " + e), project.project_key, project.name);
+    }
 }
 
 function createWorkspaceMenu(path, removable) {
@@ -2099,6 +2185,10 @@ async function init() {
             closeRunMenu();
             closeWorkspaceMenu();
         }
+        if (!event.target.closest(".tab-context-menu")) closeTabMenu();
+    });
+    window.addEventListener("blur", () => {
+        if (document.activeElement?.tagName === "IFRAME") closeTabMenu();
     });
     document.getElementById("workspace-list")?.addEventListener("scroll", positionWorkspaceMenus);
     window.addEventListener("resize", positionWorkspaceMenus);
