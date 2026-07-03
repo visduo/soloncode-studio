@@ -36,6 +36,7 @@ const HOME_TAB_KEY = "home";
 const HOME_WORKSPACE_KEY = "__home__";
 const HIDDEN_STUDIO_UPDATE_KEY = "soloncode.hiddenStudioUpdate";
 const TERMINAL_SETTINGS_KEY = "soloncode.terminalSettings";
+const CLOSE_WINDOW_BEHAVIOR_KEY = "soloncode.closeWindowBehavior";
 const MAX_LOG_LINES = 500;
 const DEFAULT_TERMINAL_SETTINGS = {
     fontFamily: '"SF Mono", Menlo, Consolas, monospace',
@@ -717,17 +718,76 @@ function renderNextPrompt() {
     title.textContent = prompt.title;
     message.textContent = prompt.message;
     actions.innerHTML = "";
+    actions.classList.toggle("has-checkbox", Boolean(prompt.checkbox));
+
+    let checkbox = null;
+    if (prompt.checkbox) {
+        const label = document.createElement("label");
+        label.className = "dialog-checkbox";
+        checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = Boolean(prompt.checkbox.checked);
+        const text = document.createElement("span");
+        text.textContent = prompt.checkbox.label;
+        label.append(checkbox, text);
+        actions.appendChild(label);
+    }
 
     for (const action of prompt.actions) {
         const button = document.createElement("button");
         button.type = "button";
-        button.className = `dialog-btn ${action.primary ? "primary" : "secondary"}`;
+        button.className = `dialog-btn ${action.danger ? "danger" : action.primary ? "primary" : "secondary"}`;
         button.textContent = action.label;
-        button.addEventListener("click", action.handler);
+        button.addEventListener("click", () => action.handler({ checked: Boolean(checkbox?.checked) }));
         actions.appendChild(button);
     }
 
     dialog.hidden = false;
+}
+
+async function applyCloseWindowBehavior(behavior) {
+    if (behavior === "quit") {
+        await invoke("quit_studio");
+        return;
+    }
+    await invoke("minimize_to_tray");
+}
+
+function handleCloseWindowRequested() {
+    const savedBehavior = localStorage.getItem(CLOSE_WINDOW_BEHAVIOR_KEY);
+    if (savedBehavior === "quit" || savedBehavior === "tray") {
+        applyCloseWindowBehavior(savedBehavior).catch((error) => appendLog(formatError(error)));
+        return;
+    }
+
+    queuePrompt({
+        key: "close-window-behavior",
+        title: "关闭 Studio？",
+        message: "退出会停止所有正在运行的工作区；最小化到托盘可保留工作区后台持续运行。",
+        checkbox: { label: "记住我的选择，下次不再提醒" },
+        actions: [
+            { label: "取消", primary: false, handler: closePromptDialog },
+            {
+                label: "退出",
+                danger: true,
+                primary: false,
+                handler: ({ checked }) => {
+                    if (checked) localStorage.setItem(CLOSE_WINDOW_BEHAVIOR_KEY, "quit");
+                    closePromptDialog();
+                    applyCloseWindowBehavior("quit").catch((error) => appendLog(formatError(error)));
+                }
+            },
+            {
+                label: "最小化",
+                primary: true,
+                handler: ({ checked }) => {
+                    if (checked) localStorage.setItem(CLOSE_WINDOW_BEHAVIOR_KEY, "tray");
+                    closePromptDialog();
+                    applyCloseWindowBehavior("tray").catch((error) => appendLog(formatError(error)));
+                }
+            }
+        ]
+    });
 }
 
 function showInstallCliPrompt() {
@@ -2161,6 +2221,10 @@ listen("soloncode-failed", (e) => {
     appendLog(formatError(payload.message || "启动失败"), workspaceKey, payload.name || getWorkspaceName(null));
     setStatus("启动失败", "installed");
     setBusy(false);
+});
+
+listen("soloncode-close-requested", () => {
+    handleCloseWindowRequested();
 });
 
 // ─── 初始化 ────────────────────────────────────────────────

@@ -190,6 +190,28 @@ body {
     gap: 10px;
 }
 
+.dialog-actions.has-checkbox {
+    align-items: center;
+    row-gap: 16px;
+}
+
+.dialog-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 0 100%;
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+    font-weight: 400;
+}
+
+.dialog-checkbox input {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: var(--accent);
+}
+
 .dialog-btn {
     display: inline-flex;
     align-items: center;
@@ -226,6 +248,17 @@ body {
 .dialog-btn.primary:hover {
     border-color: var(--accent-strong);
     background: var(--accent-strong);
+}
+
+.dialog-btn.danger {
+    border-color: #dc2626;
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.dialog-btn.danger:hover {
+    border-color: #b91c1c;
+    background: #b91c1c;
 }
 
 button {

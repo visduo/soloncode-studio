@@ -13,11 +13,17 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tauri::{Emitter, Manager, RunEvent};
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+    Emitter, Manager, RunEvent, WindowEvent,
+};
 
 const PORT_START: u16 = 49152;
 const PORT_END: u16 = 60999;
 const VERSION_URL: &str = "https://soloncode.studio/version.php";
+const TRAY_MENU_OPEN: &str = "open";
+const TRAY_MENU_QUIT: &str = "quit";
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -26,6 +32,7 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
 struct SolonState {
     processes: Mutex<HashMap<String, SolonProcess>>,
     cli_outputs: Arc<Mutex<HashMap<String, String>>>,
+    should_exit: Mutex<bool>,
 }
 
 struct SolonProcess {
@@ -212,6 +219,59 @@ fn cleanup_soloncode_process(state: &SolonState) {
             kill_child_tree(process.child, process.process_group_id, Some(process.port));
         }
     }
+}
+
+fn mark_should_exit(state: &SolonState) {
+    if let Ok(mut should_exit) = state.should_exit.lock() {
+        *should_exit = true;
+    }
+}
+
+fn should_exit(state: &SolonState) -> bool {
+    state
+        .should_exit
+        .lock()
+        .map(|should_exit| *should_exit)
+        .unwrap_or(true)
+}
+
+fn show_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+fn minimize_main_window_to_tray(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+}
+
+fn exit_app(app: &tauri::AppHandle) {
+    let state = app.state::<SolonState>();
+    mark_should_exit(&state);
+    app.exit(0);
+}
+
+fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
+    let open = MenuItem::with_id(app, TRAY_MENU_OPEN, "打开", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, TRAY_MENU_QUIT, "退出", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&open, &quit])?;
+    let mut tray = TrayIconBuilder::new()
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .tooltip("SolonCode Studio")
+        .on_menu_event(|app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
+            TRAY_MENU_OPEN => show_main_window(app),
+            TRAY_MENU_QUIT => exit_app(app),
+            _ => {}
+        });
+    if let Some(icon) = app.default_window_icon().cloned() {
+        tray = tray.icon(icon);
+    }
+    tray.build(app)?;
+    Ok(())
 }
 
 fn workspace_name(path: Option<&str>) -> String {
@@ -1555,6 +1615,18 @@ fn go_home(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn minimize_to_tray(app: tauri::AppHandle) -> Result<(), String> {
+    minimize_main_window_to_tray(&app);
+    Ok(())
+}
+
+#[tauri::command]
+fn quit_studio(app: tauri::AppHandle) -> Result<(), String> {
+    exit_app(&app);
+    Ok(())
+}
+
 // ─── 入口 ───────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -1564,6 +1636,11 @@ pub fn run() {
         .manage(SolonState {
             processes: Mutex::new(HashMap::new()),
             cli_outputs: Arc::new(Mutex::new(HashMap::new())),
+            should_exit: Mutex::new(false),
+        })
+        .setup(|app| {
+            setup_tray(app)?;
+            Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             check_soloncode,
@@ -1583,10 +1660,22 @@ pub fn run() {
             stop_soloncode,
             send_cli_input,
             go_home,
+            minimize_to_tray,
+            quit_studio,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| match event {
+            RunEvent::WindowEvent {
+                event: WindowEvent::CloseRequested { api, .. },
+                ..
+            } => {
+                let state = app_handle.state::<SolonState>();
+                if !should_exit(&state) {
+                    api.prevent_close();
+                    let _ = app_handle.emit("soloncode-close-requested", ());
+                }
+            }
             RunEvent::ExitRequested { .. } | RunEvent::Exit => {
                 let state = app_handle.state::<SolonState>();
                 cleanup_soloncode_process(&state);
