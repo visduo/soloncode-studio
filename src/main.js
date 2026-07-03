@@ -1351,9 +1351,31 @@ async function closeProjectTab(key) {
     }
 }
 
+function requestCloseProjectTab(key) {
+    const project = runningProjects.get(key);
+    if (!project || isBusy) return;
+    const targetLabel = project.type === PROJECT_TYPES.webPage ? "页面" : "工作区";
+    queuePrompt({
+        key: `close-project-${key}`,
+        title: `关闭${targetLabel}`,
+        message: `确认关闭「${project.name}」吗？`,
+        actions: [
+            { label: "取消", primary: false, handler: closePromptDialog },
+            {
+                label: "关闭",
+                primary: true,
+                handler: () => {
+                    closePromptDialog();
+                    closeProjectTab(key);
+                }
+            }
+        ]
+    });
+}
+
 function closeCurrentWorkspace() {
     if (activeTabKey === HOME_TAB_KEY) return;
-    closeProjectTab(activeTabKey);
+    requestCloseProjectTab(activeTabKey);
 }
 
 function syncTabOrder() {
@@ -1481,7 +1503,7 @@ function renderTabs() {
         });
         tab.querySelector(".tab-close").addEventListener("click", (event) => {
             event.stopPropagation();
-            closeProjectTab(project.project_key);
+            requestCloseProjectTab(project.project_key);
         });
         tabBar.appendChild(tab);
     }

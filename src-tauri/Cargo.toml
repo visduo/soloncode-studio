@@ -1,6 +1,6 @@
 [package]
 name = "soloncode-studio"
-version = "0.13.5"
+version = "0.13.6"
 description = "SolonCode Studio"
 authors = ["visduo"]
 edition = "2021"
