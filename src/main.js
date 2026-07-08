@@ -18,6 +18,7 @@ const projectFrames = new Map();
 const startingWorkspaceKeys = new Set();
 const workspaceLogs = new Map();
 const queuedPromptKeys = new Set();
+const projectTaskSessions = new Map();
 let tabOrder = [];
 let draggedTabKey = null;
 let tabDragState = null;
@@ -1216,10 +1217,93 @@ function initIframeMessageListener() {
 
     window.addEventListener("message", async (event) => {
         const data = event.data;
-        if (!data?.type || data.type !== "studio-blocked-navigation") return;
-        const payload = data.payload;
-        await invoke("open_external_url", { url: payload.url });
+        if (!data?.type) return;
+
+        if (data.type === "studio-blocked-navigation") {
+            const payload = data.payload;
+            await invoke("open_external_url", { url: payload.url });
+            return;
+        }
+
+        if (data.type === "studio-task-lifecycle") {
+            handleStudioTaskLifecycle(event, data.payload);
+        }
     });
+}
+
+function handleStudioTaskLifecycle(event, payload) {
+    if (!payload || !["start", "end"].includes(payload.action) || !payload.sessionId) return;
+    const project = getProjectByFrameSource(event.source);
+    if (!project) return;
+
+    if (payload.action === "start") {
+        setProjectTaskSession(project.project_key, payload);
+        renderTabs();
+        return;
+    }
+
+    const previousPayload = removeProjectTaskSession(project.project_key, payload.sessionId);
+    renderTabs();
+    if (previousPayload && shouldNotifyTaskFinished(project.project_key)) {
+        notifyTaskFinished(project, payload, previousPayload);
+    }
+}
+
+function getProjectByFrameSource(source) {
+    for (const [projectKey, frame] of projectFrames.entries()) {
+        if (frame.contentWindow === source) return runningProjects.get(projectKey) || null;
+    }
+    return null;
+}
+
+function setProjectTaskSession(projectKey, payload) {
+    const sessions = projectTaskSessions.get(projectKey) || new Map();
+    sessions.set(payload.sessionId, payload);
+    projectTaskSessions.set(projectKey, sessions);
+}
+
+function removeProjectTaskSession(projectKey, sessionId) {
+    const sessions = projectTaskSessions.get(projectKey);
+    if (!sessions?.has(sessionId)) return null;
+    const payload = sessions.get(sessionId);
+    sessions.delete(sessionId);
+    if (sessions.size === 0) projectTaskSessions.delete(projectKey);
+    return payload;
+}
+
+function isProjectTaskRunning(projectKey) {
+    return (projectTaskSessions.get(projectKey)?.size || 0) > 0;
+}
+
+function shouldNotifyTaskFinished(projectKey) {
+    return activeTabKey !== projectKey || document.visibilityState === "hidden" || !document.hasFocus();
+}
+
+function getTaskNotificationWorkspaceName(project) {
+    if (project.type === PROJECT_TYPES.webPage) return "开发模式工作区";
+    return project.name || "当前工作区";
+}
+
+function readTaskName(payload) {
+    const taskName = payload?.taskName;
+    return typeof taskName === "string" && taskName.trim() ? taskName.trim() : "";
+}
+
+function getTaskNotificationName(payload, previousPayload) {
+    return readTaskName(payload) || readTaskName(previousPayload) || "任务";
+}
+
+async function notifyTaskFinished(project, payload, previousPayload) {
+    const workspaceName = getTaskNotificationWorkspaceName(project);
+    const taskName = getTaskNotificationName(payload, previousPayload);
+    try {
+        await invoke("show_task_finished_notification", {
+            title: "任务完成",
+            body: `${workspaceName} - ${taskName}`
+        });
+    } catch (error) {
+        appendLog(formatError(`任务完成通知发送失败: ${error}`), project.workspace_key, project.name);
+    }
 }
 
 function updateProjectView(element, project) {
@@ -1548,7 +1632,13 @@ function renderTabs() {
         tab.querySelector(".tab-label").textContent = isWebPage ? shortWebPageTitle(project.name) : project.name;
         const tabMode = tab.querySelector(".tab-mode");
         tabMode.title = modeLabel;
-        tabMode.innerHTML = iconSvg(project.mode === LAUNCH_MODES.cli ? "tabCli" : "tabWeb");
+        if (isProjectTaskRunning(project.project_key)) {
+            tab.classList.add("task-running");
+            tabMode.title = "任务运行中";
+            tabMode.innerHTML = iconSvg("loading");
+        } else {
+            tabMode.innerHTML = iconSvg(project.mode === LAUNCH_MODES.cli ? "tabCli" : "tabWeb");
+        }
         tab.addEventListener("pointerdown", (event) => startTabPointerDrag(event, project.project_key, tabBar));
         tab.addEventListener("contextmenu", (event) => {
             event.preventDefault();

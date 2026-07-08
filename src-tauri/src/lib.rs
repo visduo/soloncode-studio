@@ -18,6 +18,7 @@ use tauri::{
     tray::TrayIconBuilder,
     Emitter, Manager, RunEvent, WindowEvent,
 };
+use tauri_plugin_notification::NotificationExt;
 
 const PORT_START: u16 = 49152;
 const PORT_END: u16 = 60999;
@@ -1632,12 +1633,23 @@ fn quit_studio(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn show_task_finished_notification(app: tauri::AppHandle, title: String, body: String) -> Result<(), String> {
+    app.notification()
+        .builder()
+        .title(title)
+        .body(body)
+        .show()
+        .map_err(|e| e.to_string())
+}
+
 // ─── 入口 ───────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(SolonState {
             processes: Mutex::new(HashMap::new()),
             cli_outputs: Arc::new(Mutex::new(HashMap::new())),
@@ -1667,6 +1679,7 @@ pub fn run() {
             go_home,
             minimize_to_tray,
             quit_studio,
+            show_task_finished_notification,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

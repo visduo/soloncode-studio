@@ -414,6 +414,10 @@ button {
     stroke-width: 2.2;
 }
 
+.tab-item.task-running .tab-mode .app-icon {
+    animation: spin 0.9s linear infinite;
+}
+
 .tab-item:hover {
     background: rgba(255, 255, 255, 0.78);
     color: var(--text-primary);
@@ -1498,6 +1502,12 @@ h1 {
     }
     50% {
         opacity: 0.4;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
 }
 
