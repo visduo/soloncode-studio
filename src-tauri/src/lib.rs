@@ -696,7 +696,7 @@ fn home_workspace_path() -> String {
         .to_string()
 }
 
-/// 在系统文件管理器中打开工作区目录
+/// 在系统文件管理器中新增工作区目录
 #[tauri::command]
 fn reveal_workspace(workspace: Option<String>) -> Result<(), String> {
     let (_, _, workspace_path, _) = normalize_workspace(workspace)?;
@@ -725,7 +725,7 @@ fn reveal_workspace(workspace: Option<String>) -> Result<(), String> {
 
     command
         .spawn()
-        .map_err(|e| format!("打开工作区失败: {}", e))?;
+        .map_err(|e| format!("新增工作区失败: {}", e))?;
     Ok(())
 }
 
@@ -1639,6 +1639,7 @@ fn show_task_finished_notification(app: tauri::AppHandle, title: String, body: S
         .builder()
         .title(title)
         .body(body)
+        .sound("default")
         .show()
         .map_err(|e| e.to_string())
 }
