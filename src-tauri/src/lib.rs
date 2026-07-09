@@ -1644,10 +1644,46 @@ fn show_task_finished_notification(app: tauri::AppHandle, title: String, body: S
         .map_err(|e| e.to_string())
 }
 
+#[cfg(target_os = "linux")]
+fn configure_linux_webkit_gpu_fallback() {
+    if !should_disable_webkit_gpu() {
+        return;
+    }
+
+    std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    std::env::set_var("LIBGL_ALWAYS_SOFTWARE", "1");
+}
+
+#[cfg(target_os = "linux")]
+fn should_disable_webkit_gpu() -> bool {
+    match std::env::var("SOLONCODE_STUDIO_DISABLE_GPU") {
+        Ok(value) if matches!(value.as_str(), "0" | "false" | "FALSE" | "off" | "OFF") => return false,
+        Ok(_) => return true,
+        Err(_) => {}
+    }
+
+    match fs::read_dir("/dev/dri") {
+        Ok(entries) => entries
+            .filter_map(Result::ok)
+            .map(|entry| entry.path())
+            .filter(|path| {
+                path.file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| name == "renderD128" || name.starts_with("card"))
+            })
+            .any(|path| fs::OpenOptions::new().read(true).write(true).open(path).is_err()),
+        Err(_) => true,
+    }
+}
+
 // ─── 入口 ───────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(target_os = "linux")]
+    configure_linux_webkit_gpu_fallback();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
