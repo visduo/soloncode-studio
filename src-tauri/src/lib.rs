@@ -814,7 +814,11 @@ fn open_soloncode_system_terminal(workspace: Option<String>) -> Result<(), Strin
         ];
         let mut last_error = None;
         for (program, args) in candidates {
-            match Command::new(program).args(args).spawn() {
+            match Command::new(program)
+                .args(args)
+                .env_remove("LD_LIBRARY_PATH")
+                .spawn()
+            {
                 Ok(_) => return Ok(()),
                 Err(e) => last_error = Some(format!("{}: {}", program, e)),
             }
@@ -899,6 +903,10 @@ fn run_shell_with_live_output(
     let mut command = {
         let mut command = Command::new("bash");
         command.args(["-c", script]);
+        // AppImage 运行时 LD_LIBRARY_PATH 指向其内部打包的库（如旧版 libnghttp2），
+        // 子进程继承后会导致系统 libcurl 等动态库加载 AppImage 内的不兼容版本，
+        // 出现 undefined symbol 错误。清除后子进程使用系统库。
+        command.env_remove("LD_LIBRARY_PATH");
         command
     };
 
@@ -1159,6 +1167,7 @@ fn start_soloncode(
         .env("SOLONCODE_BIN", &soloncode_path)
         .env("SOLONCODE_PORT", port.to_string())
         .env("PATH", &path_env)
+        .env_remove("LD_LIBRARY_PATH")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
