@@ -602,7 +602,7 @@ function renderVersionFooterItem(element, { label, version, installed, updateAva
     element.classList.add("is-clickable");
     element.setAttribute("role", "button");
     element.setAttribute("tabindex", "0");
-    element.innerHTML = `<span class="version-main">${versionLabel}${versionText}</span><span class="version-update-text">${updateAvailable ? "（有新版本）" : ""}</span>`;
+    element.innerHTML = `<span class="version-main">${versionLabel}${versionText}</span><span class="version-update-text">${updateAvailable ? "有新版本" : ""}</span>`;
     element.onclick = onClick;
     element.onkeydown = (event) => {
         if (event.key === "Enter" || event.key === " ") {
