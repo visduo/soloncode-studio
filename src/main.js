@@ -2049,7 +2049,7 @@ function renderWorkspaces() {
             const leftActive = Boolean(getRunningProjectByWorkspace(left.path) || isWorkspaceStarting(left.path));
             const rightActive = Boolean(getRunningProjectByWorkspace(right.path) || isWorkspaceStarting(right.path));
             if (leftActive !== rightActive) return leftActive ? -1 : 1;
-            return right.lastOpenedAt - left.lastOpenedAt;
+            return 0;
         });
     if (current) current.textContent = selectedWorkspace || homeWorkspacePath || "用户目录";
     list.innerHTML = "";
