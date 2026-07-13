@@ -677,21 +677,15 @@ function submitRemoteWorkspaceDialog() {
     else rememberRemoteWorkspace(url);
 }
 
-function shortWebPageTitle(url) {
-    try {
-        const parsed = new URL(url);
-        return parsed.hostname.replace(/^www\./, "") || url;
-    } catch (_) {
-        return url;
-    }
-}
-
 function openWebPageTab(urlValue) {
     const url = normalizeWebPageUrl(urlValue);
     if (!url) return;
     const projectKey = `web::${url}`;
+    const workspaceName = getWorkspaceDisplayName(url, url);
     const existing = runningProjects.get(projectKey);
     if (existing) {
+        existing.name = workspaceName;
+        existing.workspace = url;
         activateProjectTab(projectKey);
         return;
     }
@@ -699,8 +693,8 @@ function openWebPageTab(urlValue) {
     const project = {
         project_key: projectKey,
         workspace_key: projectKey,
-        workspace: null,
-        name: url,
+        workspace: url,
+        name: workspaceName,
         mode: LAUNCH_MODES.web,
         type: PROJECT_TYPES.webPage,
         url,
@@ -1328,8 +1322,7 @@ function shouldNotifyTaskFinished(projectKey) {
 }
 
 function getTaskNotificationWorkspaceName(project) {
-    if (project.type === PROJECT_TYPES.webPage) return "开发模式工作区";
-    return project.name || "当前工作区";
+    return getWorkspaceDisplayName(project.workspace, project.name || "当前工作区");
 }
 
 function readTaskName(payload) {
@@ -1548,10 +1541,9 @@ async function closeProjectTab(key) {
 function requestCloseProjectTab(key) {
     const project = runningProjects.get(key);
     if (!project || isBusy) return;
-    const targetLabel = project.type === PROJECT_TYPES.webPage ? "页面" : "工作区";
     queuePrompt({
         key: `close-project-${key}`,
-        title: `关闭${targetLabel}`,
+        title: "关闭工作区",
         message: `确认关闭「${project.name}」？`,
         actions: [
             { label: "取消", primary: false, handler: closePromptDialog },
@@ -1673,9 +1665,8 @@ function renderTabs() {
         if (draggedTabKey === project.project_key) tab.classList.add("dragging");
         tab.type = "button";
         tab.dataset.tabKey = project.project_key;
-        const isWebPage = project.type === PROJECT_TYPES.webPage;
         tab.innerHTML = `<span class="tab-main"><span class="tab-mode"></span><span class="tab-label"></span></span><span class="tab-close">${iconSvg("close")}</span>`;
-        tab.querySelector(".tab-label").textContent = isWebPage ? shortWebPageTitle(project.name) : project.name;
+        tab.querySelector(".tab-label").textContent = getWorkspaceDisplayName(project.workspace, project.name);
         const tabMode = tab.querySelector(".tab-mode");
         if (isProjectTaskRunning(project.project_key)) {
             tab.classList.add("task-running");
@@ -1837,7 +1828,9 @@ function createTabContextMenu(project) {
         menu.appendChild(createTabMenuItem("refresh", "刷新", () => refreshProjectTab(project)));
         menu.appendChild(createTabMenuItem("open", "使用系统浏览器打开", () => openProjectInDefaultBrowser(project)));
     }
-    menu.appendChild(createTabMenuItem("folder", "打开文件夹", () => openWorkspaceInExplorer(project.workspace)));
+    if (project.type !== PROJECT_TYPES.webPage) {
+        menu.appendChild(createTabMenuItem("folder", "打开文件夹", () => openWorkspaceInExplorer(project.workspace)));
+    }
     return menu;
 }
 
