@@ -729,22 +729,10 @@ fn reveal_workspace(workspace: Option<String>) -> Result<(), String> {
     Ok(())
 }
 
-/// 打开 Studio GitHub 首页
-#[tauri::command]
-fn open_studio_github_home_page() -> Result<(), String> {
-    open_url("https://github.com/visduo/soloncode-studio")
-}
-
 /// 打开 Studio GitHub 下载页面
 #[tauri::command]
 fn open_studio_github_release_page() -> Result<(), String> {
     open_url("https://github.com/visduo/soloncode-studio/releases")
-}
-
-/// 打开 Studio 官网
-#[tauri::command]
-fn open_studio_website_page() -> Result<(), String> {
-    open_url("https://soloncode.studio/")
 }
 
 #[tauri::command]
@@ -1712,9 +1700,7 @@ pub fn run() {
             pick_workspace,
             home_workspace_path,
             reveal_workspace,
-            open_studio_github_home_page,
             open_studio_github_release_page,
-            open_studio_website_page,
             open_external_url,
             open_soloncode_system_terminal,
             install_soloncode,

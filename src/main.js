@@ -87,6 +87,7 @@ const ICON_PATHS = {
     tabHome:
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house-icon lucide-house"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
     tabCli: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-terminal-icon lucide-square-terminal"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/></svg>',
+    log: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-notepad-text-dashed-icon lucide-notepad-text-dashed"><path d="M8 2v4"/><path d="M12 2v4"/><path d="M16 2v4"/><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M20 12v2"/><path d="M20 18v2a2 2 0 0 1-2 2h-1"/><path d="M13 22h-2"/><path d="M7 22H6a2 2 0 0 1-2-2v-2"/><path d="M4 14v-2"/><path d="M4 8V6a2 2 0 0 1 2-2h2"/><path d="M8 10h6"/><path d="M8 14h8"/><path d="M8 18h5"/></svg>',
     tabWeb: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe-icon lucide-globe"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>',
     website:
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-laptop-minimal-icon lucide-laptop-minimal"><rect width="18" height="12" x="3" y="4" rx="2" ry="2"/><line x1="2" x2="22" y1="20" y2="20"/></svg>',
@@ -401,6 +402,18 @@ function clearLog() {
     document.getElementById("log-content").innerHTML = '<div class="log-empty">当前工作区还没有运行日志。</div>';
 }
 
+function openLogDialog() {
+    const dialog = document.getElementById("log-dialog");
+    if (!dialog) return;
+    renderLogs();
+    dialog.hidden = false;
+}
+
+function closeLogDialog() {
+    const dialog = document.getElementById("log-dialog");
+    if (dialog) dialog.hidden = true;
+}
+
 function setStatus(text, type) {
     const statusText = document.getElementById("status-text");
     if (statusText) statusText.textContent = text;
@@ -599,7 +612,6 @@ function renderVersionFooterItem(element, { label, version, installed, updateAva
     element.classList.add("is-clickable");
     element.setAttribute("role", "button");
     element.setAttribute("tabindex", "0");
-    element.setAttribute("aria-label", `${label} ${versionText}${updateAvailable ? "，有新版本" : ""}`);
     element.innerHTML = `<span class="version-main">${label} ${versionText}</span><span class="version-update-text">${updateAvailable ? "（有新版本）" : ""}</span>`;
     element.onclick = onClick;
     element.onkeydown = (event) => {
@@ -611,7 +623,7 @@ function renderVersionFooterItem(element, { label, version, installed, updateAva
 }
 
 function handleFooterVersionClick(source) {
-    openWebsitePage();
+    openExternalUrl("https://soloncode.studio/");
 }
 
 function closePromptDialog() {
@@ -797,7 +809,7 @@ function showInstallCliPrompt() {
     queuePrompt({
         key: "install-cli",
         title: "CLI 未安装",
-        message: "SolonCode CLI 未安装，请先点击右上角安装 CLI。",
+        message: "SolonCode CLI 未安装，请先点击左下角安装 CLI。",
         actions: [{ label: "知道了", primary: true, handler: closePromptDialog }]
     });
 }
@@ -827,8 +839,18 @@ function showUpdatePrompts(info) {
         queuePrompt({
             key: "cli-update",
             title: "CLI 可更新",
-            message: "SolonCode CLI 有新版本，请点击右上角更新按钮进行更新。",
-            actions: [{ label: "知道了", primary: true, handler: closePromptDialog }]
+            message: "SolonCode CLI 有新版本可用，是否立即更新？",
+            actions: [
+                { label: "稍后", primary: false, handler: closePromptDialog },
+                {
+                    label: "立即更新",
+                    primary: true,
+                    handler: () => {
+                        closePromptDialog();
+                        performUpdate();
+                    }
+                }
+            ]
         });
     }
 
@@ -855,7 +877,7 @@ function showUpdatePrompts(info) {
                     primary: true,
                     handler: () => {
                         closePromptDialog();
-                        openWebsitePage();
+                        openExternalUrl("https://soloncode.studio/");
                     }
                 }
             ]
@@ -1027,10 +1049,14 @@ function loadWorkspaces() {
         return parsed
             .map((item) => {
                 if (typeof item === "string") {
-                    return { path: item, pinned: false };
+                    return { path: item, pinned: false, lastOpenedAt: 0 };
                 }
                 if (item && typeof item === "object" && item.path) {
-                    return { path: item.path, pinned: Boolean(item.pinned) };
+                    return {
+                        path: item.path,
+                        pinned: Boolean(item.pinned),
+                        lastOpenedAt: Number.isFinite(Number(item.lastOpenedAt)) ? Number(item.lastOpenedAt) : 0
+                    };
                 }
                 return null;
             })
@@ -1058,8 +1084,18 @@ function setWorkspacePinned(path, pinned) {
     renderWorkspaces();
 }
 
+function touchWorkspace(path) {
+    if (!path) return;
+    const workspaces = loadWorkspaces();
+    const index = workspaces.findIndex((item) => item.path === path);
+    if (index === -1) return;
+    workspaces[index] = { ...workspaces[index], lastOpenedAt: Date.now() };
+    saveWorkspaces(workspaces);
+}
+
 function setSelectedWorkspace(path) {
     selectedWorkspace = path || null;
+    touchWorkspace(selectedWorkspace);
     localStorage.setItem("soloncode.selectedWorkspace", selectedWorkspace || "");
     openWorkspaceMenuKey = null;
     openRunMenuKey = null;
@@ -1071,16 +1107,11 @@ function setSelectedWorkspace(path) {
 }
 
 function updateActiveWorkspace() {
-    const name = document.getElementById("active-workspace-name");
-    const path = document.getElementById("active-workspace-path");
     const status = document.getElementById("active-workspace-status");
-    if (!name || !path || !status) return;
+    if (!status) return;
     const activeProject = getActiveProject();
     const activeStarting = isWorkspaceStarting(selectedWorkspace);
 
-    name.textContent = getWorkspaceDisplayName(selectedWorkspace);
-    path.textContent = selectedWorkspace || homeWorkspacePath || "用户目录";
-    path.title = path.textContent;
     status.textContent = activeProject
         ? `${getModeLabel(activeProject.mode)} 运行中`
         : activeStarting
@@ -1103,7 +1134,6 @@ function upsertProject(project) {
 function activateHomeTab() {
     activeTabKey = HOME_TAB_KEY;
     document.body.classList.remove("project-mode");
-    document.querySelector(".app-header").style.display = "flex";
     document.getElementById("home-view").style.display = "grid";
     document.getElementById("project-view").style.display = "none";
     hideProjectFrames();
@@ -1160,7 +1190,6 @@ function activateProjectTab(key) {
     }
     activeTabKey = key;
     document.body.classList.add("project-mode");
-    document.querySelector(".app-header").style.display = "none";
     document.getElementById("home-view").style.display = "none";
     const projectView = document.getElementById("project-view");
     projectView.style.display = "block";
@@ -1194,8 +1223,8 @@ function createProjectView(project) {
         panel.className = "project-terminal";
         panel.dataset.projectKey = project.project_key;
         panel.innerHTML = `
-            <div class="terminal-surface" role="textbox" aria-label="SolonCode CLI 终端"></div>
-            <button class="terminal-settings-button" type="button" aria-label="终端设置" title="终端设置">
+            <div class="terminal-surface" role="textbox"></div>
+            <button class="terminal-settings-button" type="button">
                 ${iconSvg("settings")}
             </button>
         `;
@@ -1616,7 +1645,7 @@ function renderTabs() {
     const homeTab = document.createElement("button");
     homeTab.className = "tab-item" + (activeTabKey === HOME_TAB_KEY ? " active" : "");
     homeTab.type = "button";
-    homeTab.innerHTML = `<span class="tab-main"><span class="tab-mode" title="首页">${iconSvg("tabHome")}</span><span class="tab-label">首页</span></span>`;
+    homeTab.innerHTML = `<span class="tab-main"><span class="tab-mode">${iconSvg("tabHome")}</span><span class="tab-label">首页</span></span>`;
     homeTab.addEventListener("click", activateHomeTab);
     tabBar.appendChild(homeTab);
 
@@ -1627,15 +1656,11 @@ function renderTabs() {
         tab.type = "button";
         tab.dataset.tabKey = project.project_key;
         const isWebPage = project.type === PROJECT_TYPES.webPage;
-        const modeLabel = getProjectTabModeLabel(project);
-        tab.title = `${project.name} · ${modeLabel}`;
         tab.innerHTML = `<span class="tab-main"><span class="tab-mode"></span><span class="tab-label"></span></span><span class="tab-close">${iconSvg("close")}</span>`;
         tab.querySelector(".tab-label").textContent = isWebPage ? shortWebPageTitle(project.name) : project.name;
         const tabMode = tab.querySelector(".tab-mode");
-        tabMode.title = modeLabel;
         if (isProjectTaskRunning(project.project_key)) {
             tab.classList.add("task-running");
-            tabMode.title = "任务运行中";
             tabMode.innerHTML = iconSvg("loading");
         } else {
             tabMode.innerHTML = iconSvg(project.mode === LAUNCH_MODES.cli ? "tabCli" : "tabWeb");
@@ -1665,8 +1690,8 @@ function renderTabs() {
 
 function rememberWorkspace(path) {
     if (!path) return;
-    const workspaces = loadWorkspaces().filter((item) => item !== path);
-    workspaces.unshift(path);
+    const workspaces = loadWorkspaces().filter((item) => item.path !== path);
+    workspaces.push({ path, pinned: false, lastOpenedAt: Date.now() });
     saveWorkspaces(workspaces);
     setSelectedWorkspace(path);
 }
@@ -1692,19 +1717,11 @@ async function openWorkspaceInExplorer(path) {
     }
 }
 
-async function openGitHubPage() {
+async function openExternalUrl(url) {
     try {
-        await invoke("open_studio_github_home_page");
+        await invoke("open_external_url", { url });
     } catch (e) {
-        appendLog(formatError("打开 GitHub 失败: " + e));
-    }
-}
-
-async function openWebsitePage() {
-    try {
-        await invoke("open_studio_website_page");
-    } catch (e) {
-        appendLog(formatError("打开官网失败: " + e));
+        appendLog(formatError("打开链接失败: " + e));
     }
 }
 
@@ -1722,7 +1739,8 @@ function getWorkspaceIcon(name) {
         more: "more",
         pin: "pin",
         remove: "remove",
-        folder: "openFolder"
+        folder: "openFolder",
+        log: "log"
     };
     return iconSvg(iconNames[name] || "run");
 }
@@ -1845,7 +1863,12 @@ function createWorkspaceMenu(path, removable) {
             menu.appendChild(createWorkspaceMenuItem("edit", "重命名", () => renameWorkspace(path)));
             menu.appendChild(createWorkspaceMenuItem("remove", "移除工作区", () => removeWorkspace(path)));
         }
-        menu.appendChild(createWorkspaceMenuItem("folder", "打开文件夹", () => openWorkspaceInExplorer(path)));
+        menu.appendChild(
+            createWorkspaceMenuItem("log", "运行日志", () => {
+                setSelectedWorkspace(path);
+                openLogDialog();
+            })
+        );
         menuWrap.appendChild(menu);
     }
 
@@ -1899,7 +1922,6 @@ function createWorkspaceButton(icon, title, className, onClick, options = {}) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `workspace-icon-btn ${className} icon-${icon}`;
-    button.setAttribute("aria-label", title);
     if (options.disabled) {
         button.disabled = true;
         button.classList.add("is-disabled");
@@ -1916,6 +1938,7 @@ function createWorkspaceButton(icon, title, className, onClick, options = {}) {
 function createWorkspaceItem({ path, name, detail, active, running, removable }) {
     const item = document.createElement("div");
     item.className = "workspace-item" + (active ? " active" : "") + (running ? " running" : "");
+    item.dataset.searchText = `${name} ${detail}`.toLowerCase();
     item.addEventListener("click", () => setSelectedWorkspace(path));
 
     const copy = document.createElement("button");
@@ -1951,6 +1974,7 @@ function createWorkspaceItem({ path, name, detail, active, running, removable })
     } else {
         actions.appendChild(createRunMenu(path, workspaceStarting || !canStartWorkspace(path)));
     }
+    actions.appendChild(createWorkspaceButton("folder", "打开文件夹", "folder", () => openWorkspaceInExplorer(path)));
     actions.appendChild(createWorkspaceMenu(path, removable));
     item.appendChild(actions);
 
@@ -1965,8 +1989,11 @@ function renderWorkspaces() {
     const workspaces = loadWorkspaces()
         .slice()
         .sort((left, right) => {
-            if (left.pinned === right.pinned) return 0;
-            return left.pinned ? -1 : 1;
+            if (left.pinned !== right.pinned) return left.pinned ? -1 : 1;
+            const leftActive = Boolean(getRunningProjectByWorkspace(left.path) || isWorkspaceStarting(left.path));
+            const rightActive = Boolean(getRunningProjectByWorkspace(right.path) || isWorkspaceStarting(right.path));
+            if (leftActive !== rightActive) return leftActive ? -1 : 1;
+            return right.lastOpenedAt - left.lastOpenedAt;
         });
     if (current) current.textContent = selectedWorkspace || homeWorkspacePath || "用户目录";
     list.innerHTML = "";
@@ -1999,6 +2026,14 @@ function renderWorkspaces() {
     }
 
     positionWorkspaceMenus();
+    filterWorkspaceList();
+}
+
+function filterWorkspaceList() {
+    const query = document.getElementById("workspace-search")?.value.trim().toLowerCase() || "";
+    document.querySelectorAll("#workspace-list .workspace-item").forEach((item) => {
+        item.hidden = Boolean(query) && !item.dataset.searchText.includes(query);
+    });
 }
 
 // ─── 按钮操作 ────────────────────────────────────────────
@@ -2017,6 +2052,8 @@ async function handleInstall() {
 async function performInstall() {
     if (isBusy) return;
     setSelectedWorkspace(null);
+    openLogDialog();
+    appendLog("正在安装 SolonCode CLI...");
     setBusy(true);
     setStatus("正在安装 CLI...", "detecting");
     try {
@@ -2058,9 +2095,10 @@ async function handleUpdate() {
 async function performUpdate() {
     if (isBusy || !isInstalled || !cliUpdateAvailable || runningProjects.size > 0) return;
     setSelectedWorkspace(null);
+    openLogDialog();
+    appendLog("正在更新 SolonCode CLI...");
     setBusy(true);
     setStatus("正在更新 CLI...", "detecting");
-    appendLog("正在更新 SolonCode CLI...");
     try {
         await invoke("install_soloncode");
         isInstalled = true;
@@ -2244,6 +2282,8 @@ async function handleUninstall() {
 async function performUninstall() {
     if (isBusy) return;
     setSelectedWorkspace(null);
+    openLogDialog();
+    appendLog("正在卸载 SolonCode CLI...");
     setBusy(true);
     setStatus("正在卸载 CLI...", "detecting");
     try {
@@ -2271,10 +2311,11 @@ window.handleRun = handleRun;
 window.handleStop = handleStop;
 window.handleUninstall = handleUninstall;
 window.handleOpenWorkspace = handleOpenWorkspace;
-window.openGitHubPage = openGitHubPage;
-window.openWebsitePage = openWebsitePage;
+window.openExternalUrl = openExternalUrl;
 window.openWebPage = openWebPage;
 window.clearLog = clearLog;
+window.openLogDialog = openLogDialog;
+window.closeLogDialog = closeLogDialog;
 window.activateHomeTab = activateHomeTab;
 window.closeCurrentWorkspace = closeCurrentWorkspace;
 
@@ -2340,7 +2381,7 @@ async function init() {
     renderTabs();
     activateHomeTab();
     renderWorkspaces();
-    document.getElementById("app-actions").style.display = "flex";
+    document.getElementById("app-actions").style.display = "grid";
     document.getElementById("workspace-alias-cancel")?.addEventListener("click", closeWorkspaceAliasDialog);
     document.getElementById("workspace-alias-confirm")?.addEventListener("click", saveWorkspaceAlias);
     document.getElementById("web-page-url-cancel")?.addEventListener("click", closeWebPageUrlDialog);
@@ -2380,6 +2421,10 @@ async function init() {
         if (document.activeElement?.tagName === "IFRAME") closeTabMenu();
     });
     document.getElementById("workspace-list")?.addEventListener("scroll", positionWorkspaceMenus);
+    document.getElementById("workspace-search")?.addEventListener("input", filterWorkspaceList);
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeLogDialog();
+    });
     window.addEventListener("resize", positionWorkspaceMenus);
     refreshButtons();
     refreshHomeWorkspacePath();

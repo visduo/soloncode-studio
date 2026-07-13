@@ -15,7 +15,7 @@
                 <nav class="tab-bar" id="tab-bar">
                     <button class="tab-item active" type="button" data-tab-key="home" onclick="activateHomeTab()">
                         <span class="tab-main">
-                            <span class="tab-mode" title="首页">
+                            <span class="tab-mode">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="24"
@@ -38,137 +38,109 @@
                     </button>
                 </nav>
 
-                <header class="app-header">
-                    <div class="brand-row">
-                        <h1>SolonCode Studio</h1>
-                    </div>
-
-                    <div class="app-actions" id="app-actions" style="display: none">
-                        <div class="action-group status-group">
-                            <div class="status-badge" id="status-badge" title="运行状态">
-                                <span class="status-dot" id="status-dot"></span>
-                                <span id="status-label">检测中</span>
-                            </div>
-                        </div>
-                        <div class="action-group cli-group">
-                            <button
-                                class="tool-btn tool-install"
-                                id="btn-install"
-                                onclick="handleCliPrimaryAction()"
-                                title="安装或更新 SolonCode CLI">
-                                <span class="tool-icon" data-icon="install" aria-hidden="true"></span>
-                                <span>安装 CLI</span>
-                            </button>
-                            <button
-                                class="tool-btn tool-uninstall"
-                                id="btn-uninstall"
-                                onclick="handleUninstall()"
-                                title="卸载本机 SolonCode CLI"
-                                disabled>
-                                <span class="tool-icon" data-icon="close" aria-hidden="true"></span>
-                                <span>卸载 CLI</span>
-                            </button>
-                        </div>
-                        <div class="action-group repo-group">
-                            <button
-                                class="tool-btn tool-website"
-                                type="button"
-                                onclick="openWebsitePage()"
-                                aria-label="打开官网"
-                                title="打开 SolonCode 官网">
-                                <span class="tool-icon" data-icon="website" aria-hidden="true"></span>
-                                <span>官网</span>
-                            </button>
-                            <button
-                                class="tool-btn tool-github"
-                                type="button"
-                                onclick="openGitHubPage()"
-                                aria-label="打开 GitHub"
-                                title="打开 GitHub 仓库">
-                                <span class="tool-icon" data-icon="github" aria-hidden="true"></span>
-                                <span>GitHub</span>
-                            </button>
-                            <!-- <button
-                                class="tool-btn tool-webpage"
-                                type="button"
-                                onclick="openWebPage()"
-                                aria-label="打开网页"
-                                title="输入 URL 并在内置 tab 中打开">
-                                <span class="tool-icon" data-icon="website" aria-hidden="true"></span>
-                                <span>打开网页</span>
-                            </button> -->
-                        </div>
-                    </div>
-                </header>
-
                 <div class="home-view" id="home-view">
                     <section class="sidebar">
-                        <div class="workspace-header">
-                            <div>
-                                <span class="workspace-title">工作区</span>
-                            </div>
+                        <div class="welcome-brand">
+                            <img class="welcome-logo" src="assets/logo.png" alt="" />
+                            <span class="welcome-brand-copy">
+                                <strong>SolonCode Studio</strong>
+                                <small class="welcome-brand-versions">
+                                    <span class="version-item" id="cli-version">CLI：检测中</span>
+                                    <span class="version-item" id="studio-version">Studio：检测中</span>
+                                </small>
+                            </span>
+                        </div>
+                        <div class="welcome-nav">
+                            <button class="welcome-nav-item active" type="button">
+                                <span class="welcome-nav-icon" data-icon="openFolder" aria-hidden="true"></span>
+                                <span>我的工作区</span>
+                            </button>
                             <button
-                                class="workspace-add"
+                                class="welcome-nav-item"
                                 type="button"
-                                aria-label="新增工作区"
-                                onclick="handleOpenWorkspace()">
-                                <span class="workspace-add-icon" data-icon="addWorkspace" aria-hidden="true"></span>
-                                <span>新增工作区</span>
+                                onclick="openExternalUrl('https://solon.noear.org/article/soloncode')">
+                                <span class="welcome-nav-icon" data-icon="website" aria-hidden="true"></span>
+                                <span>CLI 文档</span>
+                            </button>
+                            <button
+                                class="welcome-nav-item"
+                                type="button"
+                                onclick="openExternalUrl('https://soloncode.studio/')">
+                                <span class="welcome-nav-icon" data-icon="website" aria-hidden="true"></span>
+                                <span>Studio 官网</span>
+                            </button>
+                            <button
+                                class="welcome-nav-item"
+                                type="button"
+                                onclick="openExternalUrl('https://github.com/visduo/soloncode-studio')">
+                                <span class="welcome-nav-icon" data-icon="github" aria-hidden="true"></span>
+                                <span>GitHub</span>
                             </button>
                         </div>
-                        <div class="workspace-list" id="workspace-list"></div>
+                        <div class="sidebar-cli" id="app-actions" style="display: none">
+                            <div class="sidebar-cli-actions">
+                                <button
+                                    class="tool-btn tool-install"
+                                    id="btn-install"
+                                    onclick="handleCliPrimaryAction()">
+                                    <span class="tool-icon" data-icon="install" aria-hidden="true"></span>
+                                    <span>安装 CLI</span>
+                                </button>
+                                <button
+                                    class="tool-btn tool-uninstall"
+                                    id="btn-uninstall"
+                                    onclick="handleUninstall()"
+                                    disabled>
+                                    <span class="tool-icon" data-icon="close" aria-hidden="true"></span>
+                                    <span>卸载 CLI</span>
+                                </button>
+                            </div>
+                        </div>
                     </section>
 
                     <section class="main-panel">
-                        <div class="workspace-status-bar">
-                            <div>
-                                <h2 id="active-workspace-name">用户目录</h2>
-                                <p id="active-workspace-path">用户目录</p>
+                        <div class="welcome-toolbar">
+                            <label class="workspace-search">
+                                <span class="workspace-search-icon" aria-hidden="true">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="m21 21-4.34-4.34" />
+                                        <circle cx="11" cy="11" r="8" />
+                                    </svg>
+                                </span>
+                                <input
+                                    id="workspace-search"
+                                    type="search"
+                                    placeholder="搜索工作区"
+                                    autocomplete="off" />
+                            </label>
+                            <div class="welcome-actions">
+                                <button class="welcome-action primary" type="button" onclick="handleOpenWorkspace()">
+                                    <span class="workspace-add-icon" data-icon="addWorkspace" aria-hidden="true"></span>
+                                    <span>添加工作区</span>
+                                </button>
                             </div>
-                            <div class="workspace-status-actions">
+                        </div>
+                        <!--
+                        <div class="project-list-heading">
+                            <div>
+                                <h2>工作区</h2>
+                            </div>
+                            <div class="active-workspace-summary">
                                 <span class="workspace-status-label" id="active-workspace-status">未启动</span>
                             </div>
                         </div>
-
-                        <div class="log-area" id="log-area">
-                            <div class="log-header">
-                                <span>运行日志</span>
-                                <div class="log-toolbar" aria-label="日志工具栏">
-                                    <!--
-                                    <input
-                                        class="log-search"
-                                        id="log-search"
-                                        type="search"
-                                        placeholder="搜索日志"
-                                        autocomplete="off"
-                                        aria-label="搜索日志"
-                                    />
-                                    <select class="log-filter" id="log-filter" aria-label="日志类型筛选">
-                                        <option value="all">全部</option>
-                                        <option value="success">成功</option>
-                                        <option value="info">关键信息</option>
-                                        <option value="wait">等待</option>
-                                        <option value="error">错误</option>
-                                    </select>
-                                    <label class="log-autoscroll">
-                                        <input id="log-autoscroll" type="checkbox" checked />
-                                        <span>自动滚动</span>
-                                    </label>
-                                    -->
-                                    <button class="log-clear" type="button" onclick="clearLog()">清除</button>
-                                </div>
-                            </div>
-                            <div class="log-content" id="log-content">
-                                <div class="log-empty">当前工作区还没有运行日志。</div>
-                            </div>
-                        </div>
+                        -->
+                        <div class="workspace-list" id="workspace-list"></div>
                     </section>
-
-                    <footer class="version-footer" id="version-footer">
-                        <span class="version-item" id="cli-version">CLI：检测中</span>
-                        <span class="version-separator" aria-hidden="true">/</span>
-                        <span class="version-item" id="studio-version">Studio：检测中</span>
-                    </footer>
                 </div>
 
                 <section class="project-view" id="project-view"></section>
@@ -194,7 +166,7 @@
                         <h2 id="jdk-install-title">缺少 Java 环境</h2>
                         <p id="jdk-install-message"></p>
                     </div>
-                    <div class="jdk-install-progress-wrap" aria-label="JDK 安装进度">
+                    <div class="jdk-install-progress-wrap">
                         <div class="jdk-install-progress-track">
                             <div class="jdk-install-progress-bar" id="jdk-install-progress-bar"></div>
                         </div>
@@ -225,6 +197,25 @@
                     <div class="dialog-actions">
                         <button class="dialog-btn" type="button" id="workspace-alias-cancel">取消</button>
                         <button class="dialog-btn primary" type="button" id="workspace-alias-confirm">保存</button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="dialog-backdrop" id="log-dialog" hidden>
+                <section
+                    class="dialog-panel log-dialog-panel"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="log-dialog-title">
+                    <div class="log-header">
+                        <h2 id="log-dialog-title">运行日志</h2>
+                        <div class="log-toolbar">
+                            <button class="log-clear" type="button" onclick="clearLog()">清除</button>
+                            <button class="dialog-close" type="button" onclick="closeLogDialog()">×</button>
+                        </div>
+                    </div>
+                    <div class="log-content" id="log-content">
+                        <div class="log-empty">当前工作区还没有运行日志。</div>
                     </div>
                 </section>
             </div>
