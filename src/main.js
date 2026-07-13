@@ -598,11 +598,30 @@ function renderVersionFooterItem(element, { label, version, installed, updateAva
     if (!element) return;
     const versionText = normalizeVersionText(version || (installed ? "未知版本" : "未安装"));
     const versionLabel = label ? `${label} ` : "";
+    const updateText = updateAvailable ? "有新版本" : "";
     element.classList.toggle("version-update", Boolean(updateAvailable));
     element.classList.add("is-clickable");
     element.setAttribute("role", "button");
     element.setAttribute("tabindex", "0");
-    element.innerHTML = `<span class="version-main">${versionLabel}${versionText}</span><span class="version-update-text">${updateAvailable ? "有新版本" : ""}</span>`;
+    const versionMain = element.querySelector(".version-main");
+    const versionUpdateText = element.querySelector(".version-update-text");
+    if (versionMain && versionUpdateText) {
+        if (versionMain.textContent !== `${versionLabel}${versionText}`) {
+            versionMain.textContent = `${versionLabel}${versionText}`;
+        }
+        if (versionUpdateText.textContent !== updateText) {
+            versionUpdateText.textContent = updateText;
+        }
+    } else {
+        element.replaceChildren();
+        const main = document.createElement("span");
+        main.className = "version-main";
+        main.textContent = `${versionLabel}${versionText}`;
+        const update = document.createElement("span");
+        update.className = "version-update-text";
+        update.textContent = updateText;
+        element.append(main, update);
+    }
     element.onclick = onClick;
     element.onkeydown = (event) => {
         if (event.key === "Enter" || event.key === " ") {

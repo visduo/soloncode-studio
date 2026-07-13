@@ -653,9 +653,10 @@ body.project-mode .project-view {
 .version-item {
     display: inline-flex;
     align-items: center;
+    height: 24px;
     min-width: 0;
     gap: 6px;
-    padding: 3px 6px;
+    padding: 0 6px;
     border-radius: 5px;
     color: var(--text-secondary);
     cursor: pointer;
@@ -682,6 +683,7 @@ body.project-mode .project-view {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1;
 }
 
 .version-dot {
@@ -691,15 +693,19 @@ body.project-mode .project-view {
 }
 
 .version-update-text {
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    box-sizing: border-box;
     flex: 0 0 auto;
-    padding: 1px 5px;
+    padding: 0 5px;
     border: 1px solid rgba(214, 129, 18, 0.24);
     border-radius: 999px;
     background: rgba(214, 129, 18, 0.1);
     color: #9a5b08;
     font-size: 0.66rem;
     font-weight: 700;
-    line-height: 1.35;
+    line-height: 1;
 }
 
 .version-update-text:empty {
