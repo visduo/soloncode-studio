@@ -123,10 +123,59 @@
                                     autocomplete="off" />
                             </label>
                             <div class="welcome-actions">
-                                <button class="welcome-action primary" type="button" onclick="handleOpenWorkspace()">
-                                    <span class="workspace-add-icon" data-icon="addWorkspace" aria-hidden="true"></span>
-                                    <span>添加工作区</span>
-                                </button>
+                                <div class="app-menu-wrap workspace-add-menu-wrap">
+                                    <button
+                                        class="welcome-action primary workspace-add-trigger"
+                                        id="workspace-add-trigger"
+                                        type="button"
+                                        aria-haspopup="menu"
+                                        aria-expanded="false">
+                                        <span
+                                            class="workspace-add-icon"
+                                            data-icon="addWorkspace"
+                                            aria-hidden="true"></span>
+                                        <span>添加工作区</span>
+                                    </button>
+                                    <div class="app-menu workspace-add-menu" id="workspace-add-menu" role="menu" hidden>
+                                        <button
+                                            class="app-menu-item"
+                                            type="button"
+                                            role="menuitem"
+                                            data-workspace-add="local">
+                                            <span
+                                                class="app-menu-icon"
+                                                data-icon="openFolder"
+                                                aria-hidden="true"></span>
+                                            <span>本地工作区</span>
+                                        </button>
+                                        <button
+                                            class="app-menu-item"
+                                            type="button"
+                                            role="menuitem"
+                                            data-workspace-add="remote">
+                                            <span class="app-menu-icon" aria-hidden="true">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-width="2"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    class="app-icon lucide lucide-monitor-up-icon lucide-monitor-up">
+                                                    <path d="m9 10 3-3 3 3" />
+                                                    <path d="M12 13V7" />
+                                                    <rect width="20" height="14" x="2" y="3" rx="2" />
+                                                    <path d="M12 17v4" />
+                                                    <path d="M8 21h8" />
+                                                </svg>
+                                            </span>
+                                            <span>远程工作区</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <!--
@@ -223,8 +272,7 @@
             <div class="dialog-backdrop" id="web-page-url-dialog" hidden>
                 <section class="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="web-page-url-title">
                     <div>
-                        <h2 id="web-page-url-title">打开网页</h2>
-                        <p id="web-page-url-message">请输入要打开的 URL，确认后会在内置 tab 中以 iframe 方式显示。</p>
+                        <h2 id="web-page-url-title">添加远程工作区</h2>
                     </div>
                     <div class="workspace-alias-form">
                         <input
@@ -237,7 +285,7 @@
                     </div>
                     <div class="dialog-actions">
                         <button class="dialog-btn" type="button" id="web-page-url-cancel">取消</button>
-                        <button class="dialog-btn primary" type="button" id="web-page-url-confirm">打开</button>
+                        <button class="dialog-btn primary" type="button" id="web-page-url-confirm">添加</button>
                     </div>
                 </section>
             </div>

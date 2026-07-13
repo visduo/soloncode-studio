@@ -29,7 +29,7 @@ let openWorkspaceMenuKey = null;
 let openRunMenuKey = null;
 let openTabMenuKey = null;
 let openTabMenuPosition = null;
-let openWebPageDialogShown = false;
+let editingRemoteWorkspacePath = null;
 
 const WORKSPACES_KEY = "soloncode.workspaces";
 const WORKSPACE_ALIASES_KEY = "soloncode.workspaceAliases";
@@ -522,8 +522,8 @@ function positionWorkspaceMenus() {
     const boundaryTop = Math.max(0, listRect?.top ?? 0);
     const boundaryBottom = Math.min(window.innerHeight, listRect?.bottom ?? window.innerHeight);
 
-    document.querySelectorAll(".workspace-menu").forEach((menu) => {
-        const wrap = menu.closest(".workspace-menu-wrap");
+    document.querySelectorAll(".app-menu").forEach((menu) => {
+        const wrap = menu.closest(".app-menu-wrap");
         const trigger = wrap?.querySelector(".workspace-icon-btn");
         if (!trigger) return;
 
@@ -641,13 +641,18 @@ function normalizeWebPageUrl(value) {
     return `https://${raw}`;
 }
 
-function showWebPageUrlDialog() {
+function showRemoteWorkspaceDialog(path = null) {
     const dialog = document.getElementById("web-page-url-dialog");
     const input = document.getElementById("web-page-url-input");
+    const title = document.getElementById("web-page-url-title");
+    const confirm = document.getElementById("web-page-url-confirm");
     if (!dialog || !input) return;
-    openWebPageDialogShown = true;
+    const workspace = path ? getWorkspaceEntry(path) : null;
+    editingRemoteWorkspacePath = workspace?.type === "remote" ? path : null;
+    if (title) title.textContent = editingRemoteWorkspacePath ? "修改远程工作区地址" : "添加远程工作区";
+    if (confirm) confirm.textContent = editingRemoteWorkspacePath ? "保存" : "添加";
     dialog.hidden = false;
-    input.value = "";
+    input.value = editingRemoteWorkspacePath ? workspace.url || workspace.path : "";
     requestAnimationFrame(() => {
         input.focus();
         input.select();
@@ -659,7 +664,17 @@ function closeWebPageUrlDialog() {
     const input = document.getElementById("web-page-url-input");
     if (input) input.value = "";
     if (dialog) dialog.hidden = true;
-    openWebPageDialogShown = false;
+    editingRemoteWorkspacePath = null;
+}
+
+function submitRemoteWorkspaceDialog() {
+    const input = document.getElementById("web-page-url-input");
+    const url = normalizeWebPageUrl(input?.value);
+    if (!url) return;
+    const previousPath = editingRemoteWorkspacePath;
+    closeWebPageUrlDialog();
+    if (previousPath) updateRemoteWorkspaceUrl(previousPath, url);
+    else rememberRemoteWorkspace(url);
 }
 
 function shortWebPageTitle(url) {
@@ -1011,7 +1026,8 @@ function renameWorkspace(path) {
     const input = document.getElementById("workspace-alias-input");
     if (!dialog || !input) return;
 
-    input.value = getWorkspaceDisplayName(path);
+    const workspace = getWorkspaceEntry(path);
+    input.value = getWorkspaceDisplayName(path, workspace?.type === "remote" ? workspace.url || path : undefined);
     dialog.hidden = false;
     input.focus();
     input.select();
@@ -1054,6 +1070,8 @@ function loadWorkspaces() {
                 if (item && typeof item === "object" && item.path) {
                     return {
                         path: item.path,
+                        type: item.type === "remote" ? "remote" : "local",
+                        url: item.type === "remote" ? item.url || item.path : undefined,
                         pinned: Boolean(item.pinned),
                         lastOpenedAt: Number.isFinite(Number(item.lastOpenedAt)) ? Number(item.lastOpenedAt) : 0
                     };
@@ -1534,7 +1552,7 @@ function requestCloseProjectTab(key) {
     queuePrompt({
         key: `close-project-${key}`,
         title: `关闭${targetLabel}`,
-        message: `确认关闭「${project.name}」吗？`,
+        message: `确认关闭「${project.name}」？`,
         actions: [
             { label: "取消", primary: false, handler: closePromptDialog },
             {
@@ -1696,6 +1714,48 @@ function rememberWorkspace(path) {
     setSelectedWorkspace(path);
 }
 
+function rememberRemoteWorkspace(urlValue) {
+    const url = normalizeWebPageUrl(urlValue);
+    if (!url) return;
+    const workspaces = loadWorkspaces().filter((item) => item.path !== url);
+    workspaces.push({ path: url, type: "remote", url, pinned: false, lastOpenedAt: Date.now() });
+    saveWorkspaces(workspaces);
+    setSelectedWorkspace(url);
+    openWebPageTab(url);
+}
+
+function updateRemoteWorkspaceUrl(path, urlValue) {
+    const url = normalizeWebPageUrl(urlValue);
+    if (!path || !url) return;
+    const workspaces = loadWorkspaces();
+    const index = workspaces.findIndex((item) => item.path === path && item.type === "remote");
+    if (index === -1) return;
+
+    const current = workspaces[index];
+    workspaces.splice(index, 1);
+    const duplicateIndex = workspaces.findIndex((item) => item.path === url);
+    if (duplicateIndex !== -1) workspaces.splice(duplicateIndex, 1);
+    workspaces.push({ ...current, path: url, url, lastOpenedAt: Date.now() });
+    saveWorkspaces(workspaces);
+
+    const aliases = loadWorkspaceAliases();
+    if (path in aliases) {
+        aliases[url] = aliases[path];
+        delete aliases[path];
+        saveWorkspaceAliases(aliases);
+    }
+
+    const previousProjectKey = `web::${path}`;
+    if (runningProjects.has(previousProjectKey)) {
+        runningProjects.delete(previousProjectKey);
+        removeProjectFrame(previousProjectKey);
+        if (activeTabKey === previousProjectKey) activateHomeTab();
+        else renderTabs();
+    }
+    if (selectedWorkspace === path) setSelectedWorkspace(url);
+    else renderWorkspaces();
+}
+
 function removeWorkspace(path) {
     if (!path) return;
     const workspaces = loadWorkspaces().filter((item) => item.path !== path);
@@ -1725,10 +1785,6 @@ async function openExternalUrl(url) {
     }
 }
 
-function openWebPage() {
-    showWebPageUrlDialog();
-}
-
 function getWorkspaceIcon(name) {
     const iconNames = {
         play: "run",
@@ -1748,8 +1804,8 @@ function getWorkspaceIcon(name) {
 function createWorkspaceMenuItem(icon, label, onClick) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "workspace-menu-item";
-    button.innerHTML = `<span class="workspace-menu-icon">${getWorkspaceIcon(icon)}</span><span>${label}</span>`;
+    button.className = "app-menu-item";
+    button.innerHTML = `<span class="app-menu-icon">${getWorkspaceIcon(icon)}</span><span>${label}</span>`;
     button.addEventListener("click", (event) => {
         event.stopPropagation();
         onClick();
@@ -1761,8 +1817,8 @@ function createWorkspaceMenuItem(icon, label, onClick) {
 function createTabMenuItem(icon, label, onClick) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "workspace-menu-item tab-menu-item";
-    button.innerHTML = `<span class="workspace-menu-icon">${getWorkspaceIcon(icon)}</span><span>${label}</span>`;
+    button.className = "app-menu-item tab-menu-item";
+    button.innerHTML = `<span class="app-menu-icon">${getWorkspaceIcon(icon)}</span><span>${label}</span>`;
     button.addEventListener("click", (event) => {
         event.stopPropagation();
         onClick();
@@ -1773,7 +1829,7 @@ function createTabMenuItem(icon, label, onClick) {
 
 function createTabContextMenu(project) {
     const menu = document.createElement("div");
-    menu.className = "workspace-menu tab-context-menu";
+    menu.className = "app-menu tab-context-menu";
     const position = getTabMenuPosition();
     menu.style.left = `${position.left}px`;
     menu.style.top = `${position.top}px`;
@@ -1840,12 +1896,12 @@ function refreshProjectTab(project) {
     frame.src = withStudioParam(project.url);
 }
 
-function createWorkspaceMenu(path, removable) {
+function createWorkspaceMenu(path, removable, remoteUrl = "") {
     const workspaceKey = getWorkspaceKey(path);
     const workspaceEntry = getWorkspaceEntry(path);
     const pinned = Boolean(workspaceEntry?.pinned);
     const menuWrap = document.createElement("div");
-    menuWrap.className = "workspace-menu-wrap";
+    menuWrap.className = "app-menu-wrap";
 
     const trigger = createWorkspaceButton("more", "更多操作", "more", () => toggleWorkspaceMenu(workspaceKey));
     trigger.setAttribute("aria-expanded", openWorkspaceMenuKey === workspaceKey ? "true" : "false");
@@ -1853,7 +1909,7 @@ function createWorkspaceMenu(path, removable) {
 
     if (openWorkspaceMenuKey === workspaceKey) {
         const menu = document.createElement("div");
-        menu.className = "workspace-menu";
+        menu.className = "app-menu";
         if (path) {
             menu.appendChild(
                 createWorkspaceMenuItem("pin", pinned ? "取消置顶" : "置顶", () => setWorkspacePinned(path, !pinned))
@@ -1861,14 +1917,22 @@ function createWorkspaceMenu(path, removable) {
         }
         if (removable) {
             menu.appendChild(createWorkspaceMenuItem("edit", "重命名", () => renameWorkspace(path)));
+            if (remoteUrl) {
+                menu.appendChild(createWorkspaceMenuItem("edit", "修改地址", () => showRemoteWorkspaceDialog(path)));
+                menu.appendChild(
+                    createWorkspaceMenuItem("open", "使用系统浏览器打开", () => openExternalUrl(remoteUrl))
+                );
+            }
             menu.appendChild(createWorkspaceMenuItem("remove", "移除工作区", () => removeWorkspace(path)));
         }
-        menu.appendChild(
-            createWorkspaceMenuItem("log", "运行日志", () => {
-                setSelectedWorkspace(path);
-                openLogDialog();
-            })
-        );
+        if (!remoteUrl) {
+            menu.appendChild(
+                createWorkspaceMenuItem("log", "运行日志", () => {
+                    setSelectedWorkspace(path);
+                    openLogDialog();
+                })
+            );
+        }
         menuWrap.appendChild(menu);
     }
 
@@ -1878,7 +1942,7 @@ function createWorkspaceMenu(path, removable) {
 function createRunMenuItem(option, path, disabled) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "workspace-menu-item run-target-menu-item";
+    button.className = "app-menu-item run-target-menu-item";
     button.disabled = disabled;
     button.textContent = option.label;
     button.addEventListener("click", (event) => {
@@ -1892,7 +1956,7 @@ function createRunMenuItem(option, path, disabled) {
 function createRunMenu(path, disabled) {
     const workspaceKey = getWorkspaceKey(path);
     const menuWrap = document.createElement("div");
-    menuWrap.className = "workspace-menu-wrap";
+    menuWrap.className = "app-menu-wrap";
 
     const trigger = createWorkspaceButton(
         "play",
@@ -1908,7 +1972,7 @@ function createRunMenu(path, disabled) {
 
     if (openRunMenuKey === workspaceKey && !disabled) {
         const menu = document.createElement("div");
-        menu.className = "workspace-menu run-target-menu";
+        menu.className = "app-menu run-target-menu";
         for (const option of RUN_TARGET_OPTIONS) {
             menu.appendChild(createRunMenuItem(option, path, disabled));
         }
@@ -1935,11 +1999,15 @@ function createWorkspaceButton(icon, title, className, onClick, options = {}) {
     return button;
 }
 
-function createWorkspaceItem({ path, name, detail, active, running, removable }) {
+function createWorkspaceItem({ path, name, detail, active, running, removable, remoteUrl = "" }) {
     const item = document.createElement("div");
     item.className = "workspace-item" + (active ? " active" : "") + (running ? " running" : "");
     item.dataset.searchText = `${name} ${detail}`.toLowerCase();
-    item.addEventListener("click", () => setSelectedWorkspace(path));
+    const activate = () => {
+        setSelectedWorkspace(path);
+        if (remoteUrl) openWebPageTab(remoteUrl);
+    };
+    item.addEventListener("click", activate);
 
     const copy = document.createElement("button");
     copy.type = "button";
@@ -1951,15 +2019,17 @@ function createWorkspaceItem({ path, name, detail, active, running, removable })
     copy.querySelector(".workspace-path").title = detail;
     copy.addEventListener("click", (event) => {
         event.stopPropagation();
-        setSelectedWorkspace(path);
+        activate();
     });
     item.appendChild(copy);
 
     const actions = document.createElement("div");
     actions.className = "workspace-actions";
-    const currentProject = getRunningProjectByWorkspace(path);
-    const workspaceStarting = isWorkspaceStarting(path);
-    if (currentProject) {
+    const currentProject = remoteUrl ? null : getRunningProjectByWorkspace(path);
+    const workspaceStarting = remoteUrl ? false : isWorkspaceStarting(path);
+    if (remoteUrl) {
+        actions.appendChild(createWorkspaceButton("open", "打开远程工作区", "run", activate));
+    } else if (currentProject) {
         actions.appendChild(
             createWorkspaceButton("open", `打开${getModeLabel(currentProject.mode)}`, "run", () => {
                 setSelectedWorkspace(path);
@@ -1974,8 +2044,11 @@ function createWorkspaceItem({ path, name, detail, active, running, removable })
     } else {
         actions.appendChild(createRunMenu(path, workspaceStarting || !canStartWorkspace(path)));
     }
-    actions.appendChild(createWorkspaceButton("folder", "打开文件夹", "folder", () => openWorkspaceInExplorer(path)));
-    actions.appendChild(createWorkspaceMenu(path, removable));
+    if (!remoteUrl)
+        actions.appendChild(
+            createWorkspaceButton("folder", "打开文件夹", "folder", () => openWorkspaceInExplorer(path))
+        );
+    actions.appendChild(createWorkspaceMenu(path, removable, remoteUrl));
     item.appendChild(actions);
 
     return item;
@@ -2012,15 +2085,19 @@ function renderWorkspaces() {
     );
 
     for (const workspace of workspaces) {
-        const project = getProjectsByWorkspace(workspace.path).length > 0;
+        const remoteUrl = workspace.type === "remote" ? workspace.url || workspace.path : "";
+        const project = remoteUrl
+            ? runningProjects.has(`web::${remoteUrl}`)
+            : getProjectsByWorkspace(workspace.path).length > 0;
         list.appendChild(
             createWorkspaceItem({
                 path: workspace.path,
-                name: getWorkspaceDisplayName(workspace.path),
-                detail: workspace.path,
+                name: getWorkspaceDisplayName(workspace.path, remoteUrl || undefined),
+                detail: remoteUrl || workspace.path,
                 active: workspace.path === selectedWorkspace,
                 running: Boolean(project),
-                removable: true
+                removable: true,
+                remoteUrl
             })
         );
     }
@@ -2043,7 +2120,7 @@ async function handleInstall() {
     confirmCliAction({
         key: "confirm-install-cli",
         title: "安装 CLI",
-        message: "确认安装 SolonCode CLI？安装过程中会下载并写入本机 CLI 文件。",
+        message: "确认安装 SolonCode CLI？",
         confirmLabel: "确认安装",
         onConfirm: performInstall
     });
@@ -2086,7 +2163,7 @@ async function handleUpdate() {
     confirmCliAction({
         key: "confirm-update-cli",
         title: "更新 CLI",
-        message: "确认更新 SolonCode CLI？更新会替换当前本机已安装的 CLI 版本。",
+        message: "确认更新 SolonCode CLI？",
         confirmLabel: "确认更新",
         onConfirm: performUpdate
     });
@@ -2205,6 +2282,15 @@ async function handleOpenWorkspace() {
     }
 }
 
+function toggleWorkspaceAddMenu(forceOpen) {
+    const menu = document.getElementById("workspace-add-menu");
+    const trigger = document.getElementById("workspace-add-trigger");
+    if (!menu || !trigger) return;
+    const open = typeof forceOpen === "boolean" ? forceOpen : menu.hidden;
+    menu.hidden = !open;
+    trigger.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
 async function handleStop() {
     const workspaceKey = getWorkspaceKey(selectedWorkspace);
     const project = getRunningProjectByWorkspace(selectedWorkspace);
@@ -2273,7 +2359,7 @@ async function handleUninstall() {
     confirmCliAction({
         key: "confirm-uninstall-cli",
         title: "卸载 CLI",
-        message: "确认卸载 SolonCode CLI？卸载后需要重新安装才能启动工作区。",
+        message: "确认卸载 SolonCode CLI？",
         confirmLabel: "确认卸载",
         onConfirm: performUninstall
     });
@@ -2312,7 +2398,6 @@ window.handleStop = handleStop;
 window.handleUninstall = handleUninstall;
 window.handleOpenWorkspace = handleOpenWorkspace;
 window.openExternalUrl = openExternalUrl;
-window.openWebPage = openWebPage;
 window.clearLog = clearLog;
 window.openLogDialog = openLogDialog;
 window.closeLogDialog = closeLogDialog;
@@ -2384,19 +2469,23 @@ async function init() {
     document.getElementById("app-actions").style.display = "grid";
     document.getElementById("workspace-alias-cancel")?.addEventListener("click", closeWorkspaceAliasDialog);
     document.getElementById("workspace-alias-confirm")?.addEventListener("click", saveWorkspaceAlias);
-    document.getElementById("web-page-url-cancel")?.addEventListener("click", closeWebPageUrlDialog);
-    document.getElementById("web-page-url-confirm")?.addEventListener("click", () => {
-        const input = document.getElementById("web-page-url-input");
-        const url = normalizeWebPageUrl(input?.value);
-        closeWebPageUrlDialog();
-        if (url) openWebPageTab(url);
+    document.getElementById("workspace-add-trigger")?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleWorkspaceAddMenu();
     });
+    document.querySelectorAll("[data-workspace-add]").forEach((button) => {
+        button.addEventListener("click", () => {
+            toggleWorkspaceAddMenu(false);
+            if (button.dataset.workspaceAdd === "remote") showRemoteWorkspaceDialog();
+            else handleOpenWorkspace();
+        });
+    });
+    document.getElementById("web-page-url-cancel")?.addEventListener("click", closeWebPageUrlDialog);
+    document.getElementById("web-page-url-confirm")?.addEventListener("click", submitRemoteWorkspaceDialog);
     document.getElementById("web-page-url-input")?.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
             event.preventDefault();
-            const url = normalizeWebPageUrl(event.currentTarget?.value);
-            closeWebPageUrlDialog();
-            if (url) openWebPageTab(url);
+            submitRemoteWorkspaceDialog();
         }
         if (event.key === "Escape") {
             event.preventDefault();
@@ -2411,7 +2500,8 @@ async function init() {
         saveTerminalSettingsFromDialog();
     });
     document.addEventListener("click", (event) => {
-        if (!event.target.closest(".workspace-menu-wrap")) {
+        if (!event.target.closest(".workspace-add-menu-wrap")) toggleWorkspaceAddMenu(false);
+        if (!event.target.closest(".app-menu-wrap")) {
             closeRunMenu();
             closeWorkspaceMenu();
         }
