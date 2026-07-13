@@ -45,8 +45,7 @@
                             <span class="welcome-brand-copy">
                                 <strong>SolonCode Studio</strong>
                                 <small class="welcome-brand-versions">
-                                    <span class="version-item" id="cli-version">CLI：检测中</span>
-                                    <span class="version-item" id="studio-version">Studio：检测中</span>
+                                    <span class="version-item" id="studio-version">检测中</span>
                                 </small>
                             </span>
                         </div>
@@ -78,22 +77,44 @@
                             </button>
                         </div>
                         <div class="sidebar-cli" id="app-actions" style="display: none">
-                            <div class="sidebar-cli-actions">
+                            <div class="app-menu-wrap sidebar-cli-menu-wrap">
                                 <button
-                                    class="tool-btn tool-install"
-                                    id="btn-install"
-                                    onclick="handleCliPrimaryAction()">
-                                    <span class="tool-icon" data-icon="install" aria-hidden="true"></span>
-                                    <span>安装 CLI</span>
+                                    class="sidebar-cli-settings"
+                                    id="cli-actions-trigger"
+                                    type="button"
+                                    title="CLI 设置"
+                                    aria-label="CLI 设置"
+                                    aria-haspopup="menu"
+                                    aria-expanded="false">
+                                    <span data-icon="settings" aria-hidden="true"></span>
                                 </button>
-                                <button
-                                    class="tool-btn tool-uninstall"
-                                    id="btn-uninstall"
-                                    onclick="handleUninstall()"
-                                    disabled>
-                                    <span class="tool-icon" data-icon="close" aria-hidden="true"></span>
-                                    <span>卸载 CLI</span>
-                                </button>
+                                <div class="app-menu cli-actions-menu" id="cli-actions-menu" role="menu" hidden>
+                                    <button
+                                        class="app-menu-item"
+                                        id="btn-install"
+                                        type="button"
+                                        role="menuitem"
+                                        onclick="handleCliPrimaryAction()">
+                                        <span
+                                            class="app-menu-icon tool-icon"
+                                            data-icon="install"
+                                            aria-hidden="true"></span>
+                                        <span>安装 CLI</span>
+                                    </button>
+                                    <button
+                                        class="app-menu-item cli-uninstall-item"
+                                        id="btn-uninstall"
+                                        type="button"
+                                        role="menuitem"
+                                        onclick="handleUninstall()"
+                                        disabled>
+                                        <span
+                                            class="app-menu-icon tool-icon"
+                                            data-icon="close"
+                                            aria-hidden="true"></span>
+                                        <span>卸载 CLI</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </section>

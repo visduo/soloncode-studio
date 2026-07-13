@@ -564,8 +564,6 @@ function refreshButtons() {
     const canUpdateCli = isInstalled && isJavaAvailable && cliUpdateAvailable && !hasRunningProjects;
     const installIcon = isInstalled ? "update" : "install";
     btnInstall.disabled = isBusy || !(canInstallCli || canUpdateCli);
-    btnInstall.classList.toggle("tool-update", isInstalled);
-    btnInstall.classList.toggle("tool-install", !isInstalled);
     btnInstall.querySelector("span:last-child").textContent = isInstalled ? "更新 CLI" : "安装 CLI";
     setIcon(btnInstall.querySelector(".tool-icon"), installIcon);
     btnUninstall.disabled = isBusy || !isInstalled || !isJavaAvailable || hasRunningProjects || hasStartingProjects;
@@ -584,20 +582,11 @@ function normalizeVersionText(version) {
 }
 
 function updateVersionFooter(info) {
-    const cliVersion = document.getElementById("cli-version");
     const studioVersion = document.getElementById("studio-version");
-    if (!cliVersion || !studioVersion) return;
+    if (!studioVersion) return;
 
     cliUpdateAvailable = Boolean(info.cli_update_available);
-    renderVersionFooterItem(cliVersion, {
-        label: "CLI",
-        version: info.cli_current,
-        installed: Boolean(info.installed),
-        updateAvailable: Boolean(info.cli_update_available),
-        onClick: () => handleFooterVersionClick("cli")
-    });
     renderVersionFooterItem(studioVersion, {
-        label: "Studio",
         version: info.studio_current,
         installed: true,
         updateAvailable: Boolean(info.studio_update_available),
@@ -608,11 +597,12 @@ function updateVersionFooter(info) {
 function renderVersionFooterItem(element, { label, version, installed, updateAvailable, onClick }) {
     if (!element) return;
     const versionText = normalizeVersionText(version || (installed ? "未知版本" : "未安装"));
+    const versionLabel = label ? `${label} ` : "";
     element.classList.toggle("version-update", Boolean(updateAvailable));
     element.classList.add("is-clickable");
     element.setAttribute("role", "button");
     element.setAttribute("tabindex", "0");
-    element.innerHTML = `<span class="version-main">${label} ${versionText}</span><span class="version-update-text">${updateAvailable ? "（有新版本）" : ""}</span>`;
+    element.innerHTML = `<span class="version-main">${versionLabel}${versionText}</span><span class="version-update-text">${updateAvailable ? "（有新版本）" : ""}</span>`;
     element.onclick = onClick;
     element.onkeydown = (event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -2284,6 +2274,28 @@ function toggleWorkspaceAddMenu(forceOpen) {
     trigger.setAttribute("aria-expanded", open ? "true" : "false");
 }
 
+function toggleCliActionsMenu(forceOpen) {
+    const menu = document.getElementById("cli-actions-menu");
+    const trigger = document.getElementById("cli-actions-trigger");
+    if (!menu || !trigger) return;
+    const open = typeof forceOpen === "boolean" ? forceOpen : menu.hidden;
+    menu.hidden = !open;
+    trigger.setAttribute("aria-expanded", open ? "true" : "false");
+    if (!open) return;
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const edgeGap = 8;
+    const gap = 6;
+    const top = Math.max(edgeGap, triggerRect.top - menuRect.height - gap);
+    const left = Math.max(
+        edgeGap,
+        Math.min(triggerRect.right - menuRect.width, window.innerWidth - menuRect.width - edgeGap)
+    );
+    menu.style.top = `${top}px`;
+    menu.style.left = `${left}px`;
+}
+
 async function handleStop() {
     const workspaceKey = getWorkspaceKey(selectedWorkspace);
     const project = getRunningProjectByWorkspace(selectedWorkspace);
@@ -2466,6 +2478,11 @@ async function init() {
         event.stopPropagation();
         toggleWorkspaceAddMenu();
     });
+    document.getElementById("cli-actions-trigger")?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleCliActionsMenu();
+    });
+    document.getElementById("cli-actions-menu")?.addEventListener("click", () => toggleCliActionsMenu(false));
     document.querySelectorAll("[data-workspace-add]").forEach((button) => {
         button.addEventListener("click", () => {
             toggleWorkspaceAddMenu(false);
@@ -2494,6 +2511,7 @@ async function init() {
     });
     document.addEventListener("click", (event) => {
         if (!event.target.closest(".workspace-add-menu-wrap")) toggleWorkspaceAddMenu(false);
+        if (!event.target.closest(".sidebar-cli-menu-wrap")) toggleCliActionsMenu(false);
         if (!event.target.closest(".app-menu-wrap")) {
             closeRunMenu();
             closeWorkspaceMenu();
@@ -2506,9 +2524,15 @@ async function init() {
     document.getElementById("workspace-list")?.addEventListener("scroll", positionWorkspaceMenus);
     document.getElementById("workspace-search")?.addEventListener("input", filterWorkspaceList);
     document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") closeLogDialog();
+        if (event.key === "Escape") {
+            closeLogDialog();
+            toggleCliActionsMenu(false);
+        }
     });
-    window.addEventListener("resize", positionWorkspaceMenus);
+    window.addEventListener("resize", () => {
+        positionWorkspaceMenus();
+        toggleCliActionsMenu(false);
+    });
     refreshButtons();
     refreshHomeWorkspacePath();
     initIframeMessageListener();

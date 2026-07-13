@@ -680,7 +680,6 @@ body.project-mode .project-view {
 .version-main {
     min-width: 0;
     overflow: hidden;
-    font-variant-numeric: tabular-nums;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -726,38 +725,59 @@ h1 {
 }
 
 .sidebar-cli {
-    display: grid;
+    display: flex;
+    justify-content: flex-start;
     margin: auto 4px 0;
-    padding: 14px 8px 0;
-    border-top: 1px solid #dde1e6;
+    padding: 14px 0 0 8px;
 }
 
-.sidebar-cli-actions {
+.sidebar-cli-menu-wrap {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.sidebar-cli-settings {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 6px;
+    place-items: center;
+    width: 16px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.15s ease;
 }
 
-.sidebar-cli .tool-btn {
-    justify-content: center;
-    min-width: 0;
-    min-height: 32px;
-    padding: 5px 7px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    font-weight: 600;
+.sidebar-cli-settings:hover,
+.sidebar-cli-settings[aria-expanded="true"] {
+    color: var(--text-primary);
 }
 
-.sidebar-cli .tool-icon {
+.sidebar-cli-settings .app-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.cli-actions-menu {
+    min-width: 170px;
+}
+
+.cli-actions-menu[hidden] {
+    display: none;
+}
+
+.cli-actions-menu .tool-icon {
     flex-basis: 16px;
     width: 16px;
     height: 16px;
-    border-radius: 4px;
+    border-radius: 0;
+    background: transparent;
 }
 
-.sidebar-cli .tool-icon .app-icon {
-    width: 12px;
-    height: 12px;
+.cli-actions-menu .tool-icon .app-icon {
+    width: 16px;
+    height: 16px;
 }
 
 .tool-btn {
