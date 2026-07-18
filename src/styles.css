@@ -1330,6 +1330,17 @@ h1 {
     color: var(--state-running);
 }
 
+.workspace-icon-btn.loading {
+    color: var(--state-loading);
+    background: #fffaf0;
+    border-color: #f5deb3;
+    cursor: wait;
+}
+
+.workspace-icon-btn.loading .app-icon {
+    animation: spin 0.9s linear infinite;
+}
+
 .workspace-icon-btn.stop {
     color: var(--state-loading);
     background: #fffaf0;

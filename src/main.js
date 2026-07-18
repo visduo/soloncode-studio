@@ -1789,6 +1789,7 @@ function getWorkspaceIcon(name) {
     const iconNames = {
         play: "run",
         stop: "stop",
+        loading: "loading",
         edit: "edit",
         open: "openExternal",
         refresh: "refresh",
@@ -1959,14 +1960,15 @@ function createRunMenu(path, disabled) {
     const workspaceKey = getWorkspaceKey(path);
     const menuWrap = document.createElement("div");
     menuWrap.className = "app-menu-wrap";
+    const isStarting = isWorkspaceStarting(path);
 
     const trigger = createWorkspaceButton(
-        "play",
-        disabled ? "启动不可用" : "选择运行方式",
-        "run",
+        isStarting ? "loading" : "play",
+        isStarting ? "启动中" : disabled ? "启动不可用" : "选择运行方式",
+        isStarting ? "run loading" : "run",
         () => toggleRunMenu(workspaceKey),
         {
-            disabled
+            disabled: disabled || isStarting
         }
     );
     trigger.setAttribute("aria-expanded", openRunMenuKey === workspaceKey ? "true" : "false");
@@ -2217,6 +2219,8 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
         return;
     }
     setBusy(true);
+    startingWorkspaceKeys.add(workspaceKey);
+    renderWorkspaces();
     setStatus("正在启动...", "detecting");
     const workspaceName = getWorkspaceName(targetWorkspace);
     const workspaceDisplayName = getWorkspaceDisplayName(targetWorkspace, workspaceName);
@@ -2224,6 +2228,7 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
         appendLog(`📁 本次启动工作区: ${targetWorkspace || "用户目录"}`, workspaceKey, workspaceDisplayName);
         if (target === RUN_TARGETS.cliSystem) {
             await invoke("open_soloncode_system_terminal", { workspace: targetWorkspace });
+            startingWorkspaceKeys.delete(workspaceKey);
             appendLog(`✅ 已打开系统终端，请关注系统终端状态`, workspaceKey, workspaceDisplayName);
             appendLog(`✅ 就绪: ${workspaceDisplayName}`, workspaceKey, workspaceDisplayName);
             setStatus(
@@ -2256,6 +2261,7 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
     } catch (e) {
         pendingRunTargets.delete(projectKey);
         startingWorkspaceKeys.delete(workspaceKey);
+        renderWorkspaces();
         appendLog(formatError(e), workspaceKey, workspaceDisplayName);
         setStatus("启动失败", "installed");
     } finally {
