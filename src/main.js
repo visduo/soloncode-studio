@@ -2263,6 +2263,7 @@ async function handleRun(workspace = selectedWorkspace, target = RUN_TARGETS.web
         startingWorkspaceKeys.delete(workspaceKey);
         renderWorkspaces();
         appendLog(formatError(e), workspaceKey, workspaceDisplayName);
+        openLogDialog();
         setStatus("启动失败", "installed");
     } finally {
         setBusy(false);
@@ -2478,6 +2479,7 @@ listen("soloncode-failed", (e) => {
         if (project.workspace_key === workspaceKey) runningProjects.delete(project.project_key);
     }
     appendLog(formatError(payload.message || "启动失败"), workspaceKey, payload.name || getWorkspaceName(null));
+    openLogDialog();
     setStatus("启动失败", "installed");
     setBusy(false);
 });
