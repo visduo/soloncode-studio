@@ -77,6 +77,38 @@ body {
     line-height: 1.55;
 }
 
+.close-behavior-dialog {
+    gap: 16px;
+}
+
+.close-behavior-dialog .dialog-actions {
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.close-behavior-options {
+    display: grid;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.close-behavior-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 22px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.close-behavior-option input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--accent);
+}
+
 .terminal-settings-panel {
     width: min(520px, 100%);
 }

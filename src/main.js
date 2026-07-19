@@ -742,6 +742,7 @@ function confirmCliAction({ key, title, message, confirmLabel, onConfirm }) {
 
 function renderNextPrompt() {
     const dialog = document.getElementById("prompt-dialog");
+    const panel = dialog?.querySelector(".prompt-dialog-panel");
     const title = document.getElementById("prompt-dialog-title");
     const message = document.getElementById("prompt-dialog-message");
     const actions = document.getElementById("prompt-dialog-actions");
@@ -750,10 +751,35 @@ function renderNextPrompt() {
     const prompt = pendingPrompts[0];
     title.textContent = prompt.title;
     message.textContent = prompt.message;
+    dialog.querySelector(".close-behavior-options")?.remove();
     actions.innerHTML = "";
+    panel?.classList.toggle("close-behavior-dialog", Boolean(prompt.closeBehavior));
     actions.classList.toggle("has-checkbox", Boolean(prompt.checkbox));
 
     let checkbox = null;
+    let selectedBehavior = prompt.closeBehavior?.selected || "quit";
+    if (prompt.closeBehavior) {
+        const options = document.createElement("div");
+        options.className = "close-behavior-options";
+        for (const option of prompt.closeBehavior.options) {
+            const label = document.createElement("label");
+            label.className = "close-behavior-option";
+            const input = document.createElement("input");
+            input.type = "radio";
+            input.name = "close-behavior";
+            input.value = option.value;
+            input.checked = option.value === selectedBehavior;
+            input.addEventListener("change", () => {
+                selectedBehavior = input.value;
+            });
+            const text = document.createElement("span");
+            text.textContent = option.label;
+            label.append(input, text);
+            options.appendChild(label);
+        }
+        message.textContent = "点击关闭按钮时：";
+        message.after(options);
+    }
     if (prompt.checkbox) {
         const label = document.createElement("label");
         label.className = "dialog-checkbox";
@@ -771,7 +797,9 @@ function renderNextPrompt() {
         button.type = "button";
         button.className = `dialog-btn ${action.danger ? "danger" : action.primary ? "primary" : "secondary"}`;
         button.textContent = action.label;
-        button.addEventListener("click", () => action.handler({ checked: Boolean(checkbox?.checked) }));
+        button.addEventListener("click", () =>
+            action.handler({ checked: Boolean(checkbox?.checked), behavior: selectedBehavior })
+        );
         actions.appendChild(button);
     }
 
@@ -795,28 +823,25 @@ function handleCloseWindowRequested() {
 
     queuePrompt({
         key: "close-window-behavior",
-        title: "关闭 Studio？",
-        message: "退出会停止所有正在运行的工作区；最小化到托盘可保留工作区后台持续运行。",
-        checkbox: { label: "记住我的选择，下次不再提醒" },
+        title: "关闭提示",
+        message: "点击关闭按钮时：",
+        closeBehavior: {
+            selected: "quit",
+            options: [
+                { value: "tray", label: "最小化到系统托盘" },
+                { value: "quit", label: "退出 SolonCode Studio" }
+            ]
+        },
+        checkbox: { label: "不再提醒" },
         actions: [
             { label: "取消", primary: false, handler: closePromptDialog },
             {
-                label: "退出",
-                danger: true,
-                primary: false,
-                handler: ({ checked }) => {
-                    if (checked) localStorage.setItem(CLOSE_WINDOW_BEHAVIOR_KEY, "quit");
-                    closePromptDialog();
-                    applyCloseWindowBehavior("quit").catch((error) => appendLog(formatError(error)));
-                }
-            },
-            {
-                label: "最小化",
+                label: "确定",
                 primary: true,
-                handler: ({ checked }) => {
-                    if (checked) localStorage.setItem(CLOSE_WINDOW_BEHAVIOR_KEY, "tray");
+                handler: ({ checked, behavior }) => {
+                    if (checked) localStorage.setItem(CLOSE_WINDOW_BEHAVIOR_KEY, behavior);
                     closePromptDialog();
-                    applyCloseWindowBehavior("tray").catch((error) => appendLog(formatError(error)));
+                    applyCloseWindowBehavior(behavior).catch((error) => appendLog(formatError(error)));
                 }
             }
         ]
