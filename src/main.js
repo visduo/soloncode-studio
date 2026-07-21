@@ -8,6 +8,7 @@ let selectedWorkspace = null;
 let homeWorkspacePath = "";
 let activeTabKey = "home";
 let cliUpdateAvailable = false;
+let studioUpdateAvailable = false;
 let isJavaAvailable = false;
 let cliUpdatePromptShown = false;
 let installCliPromptShown = false;
@@ -559,6 +560,7 @@ function positionWorkspaceMenus() {
 function refreshButtons() {
     const btnInstall = document.getElementById("btn-install");
     const btnUninstall = document.getElementById("btn-uninstall");
+    const btnUpdateStudio = document.getElementById("btn-update-studio");
     const hasRunningProjects = runningProjects.size > 0;
     const hasStartingProjects = startingWorkspaceKeys.size > 0;
 
@@ -569,6 +571,7 @@ function refreshButtons() {
     btnInstall.querySelector("span:last-child").textContent = isInstalled ? "更新 CLI" : "安装 CLI";
     setIcon(btnInstall.querySelector(".tool-icon"), installIcon);
     btnUninstall.disabled = isBusy || !isInstalled || !isJavaAvailable || hasRunningProjects || hasStartingProjects;
+    btnUpdateStudio.disabled = !studioUpdateAvailable;
     updateActiveWorkspace();
 }
 
@@ -588,6 +591,7 @@ function updateVersionFooter(info) {
     if (!studioVersion) return;
 
     cliUpdateAvailable = Boolean(info.cli_update_available);
+    studioUpdateAvailable = Boolean(info.studio_update_available);
     renderVersionFooterItem(studioVersion, {
         version: info.studio_current,
         installed: true,
@@ -933,7 +937,7 @@ function showUpdatePrompts(info) {
                 },
                 **/
                 {
-                    label: "访问官网",
+                    label: "更新 Studio",
                     primary: true,
                     handler: () => {
                         closePromptDialog();
