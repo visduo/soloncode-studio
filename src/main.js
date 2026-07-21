@@ -2567,6 +2567,10 @@ listen("soloncode-close-requested", () => {
     handleCloseWindowRequested();
 });
 
+listen("soloncode-go-home", () => {
+    activateHomeTab();
+});
+
 // ─── 初始化 ────────────────────────────────────────────────
 
 function bindWindowTitleBar() {

@@ -259,22 +259,33 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, TRAY_MENU_OPEN, "打开", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, TRAY_MENU_QUIT, "退出", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &quit])?;
+    #[cfg(target_os = "macos")]
+    let tray_menu = menu.clone();
     let mut tray = TrayIconBuilder::new()
-        .menu(&menu)
         .show_menu_on_left_click(false)
         .tooltip("SolonCode Studio")
-        .on_tray_icon_event(|tray, event| {
-            if matches!(
-                event,
+        .on_tray_icon_event(move |tray, event| {
+            match event {
                 tauri::tray::TrayIconEvent::Click {
                     button: tauri::tray::MouseButton::Left,
-                    ..
-                } | tauri::tray::TrayIconEvent::DoubleClick {
-                    button: tauri::tray::MouseButton::Left,
+                    button_state: tauri::tray::MouseButtonState::Up,
                     ..
                 }
-            ) {
-                show_main_window(tray.app_handle());
+                | tauri::tray::TrayIconEvent::DoubleClick {
+                    button: tauri::tray::MouseButton::Left,
+                    ..
+                } => show_main_window(tray.app_handle()),
+                #[cfg(target_os = "macos")]
+                tauri::tray::TrayIconEvent::Click {
+                    button: tauri::tray::MouseButton::Right,
+                    button_state: tauri::tray::MouseButtonState::Up,
+                    ..
+                } => {
+                    if let Some(window) = tray.app_handle().get_webview_window("main") {
+                        let _ = window.popup_menu(&tray_menu);
+                    }
+                }
+                _ => {}
             }
         })
         .on_menu_event(|app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
@@ -282,6 +293,10 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
             TRAY_MENU_QUIT => exit_app(app),
             _ => {}
         });
+    #[cfg(not(target_os = "macos"))]
+    {
+        tray = tray.menu(&menu);
+    }
     if let Some(icon) = app.default_window_icon().cloned() {
         tray = tray.icon(icon);
     }
@@ -1625,11 +1640,7 @@ fn send_cli_input(
 /// 导航回启动器首页
 #[tauri::command]
 fn go_home(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(window) = app.get_webview_window("main") {
-        // 用 JS 导航回本地启动器
-        let _ = window.eval("window.location.href = 'index.html'");
-    }
-    Ok(())
+    app.emit("soloncode-go-home", ()).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
