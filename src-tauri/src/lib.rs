@@ -206,7 +206,7 @@ fn soloncode_command(soloncode_path: &str) -> Command {
 fn is_java_available() -> bool {
     let mut command = Command::new("java");
     command
-        .arg("-version")
+        .arg("-version2")
         .stdout(Stdio::null())
         .stderr(Stdio::null());
     #[cfg(windows)]

@@ -559,6 +559,7 @@ function positionWorkspaceMenus() {
 }
 
 function refreshButtons() {
+    const btnInstallJava = document.getElementById("btn-install-java");
     const btnInstall = document.getElementById("btn-install");
     const btnUninstall = document.getElementById("btn-uninstall");
     const btnUpdateStudio = document.getElementById("btn-update-studio");
@@ -568,6 +569,7 @@ function refreshButtons() {
     const canInstallCli = !isInstalled && isJavaAvailable;
     const canUpdateCli = isInstalled && isJavaAvailable && cliUpdateAvailable && !hasRunningProjects;
     const installIcon = isInstalled ? "update" : "install";
+    btnInstallJava.hidden = isJavaAvailable;
     btnInstall.disabled = isBusy || !(canInstallCli || canUpdateCli);
     btnInstall.querySelector("span:last-child").textContent = isInstalled ? "更新 CLI" : "安装 CLI";
     setIcon(btnInstall.querySelector(".tool-icon"), installIcon);
@@ -887,7 +889,7 @@ function showJavaPrompt() {
         actions: [
             { label: "知道了", primary: false, handler: closePromptDialog },
             {
-                label: "快速下载环境",
+                label: "快速安装环境",
                 primary: true,
                 handler: async () => {
                     closePromptDialog();

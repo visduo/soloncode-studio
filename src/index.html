@@ -79,6 +79,31 @@
                                 <div class="app-menu cli-actions-menu" id="cli-actions-menu" role="menu" hidden>
                                     <button
                                         class="app-menu-item"
+                                        id="btn-install-java"
+                                        type="button"
+                                        role="menuitem"
+                                        onclick="openExternalUrl('https://www.flyenv.com/zh/download.html')">
+                                        <span
+                                            class="app-menu-icon tool-icon"
+                                            data-icon="install"
+                                            aria-hidden="true"></span>
+                                        <span>安装 Java</span>
+                                    </button>
+                                    <button
+                                        class="app-menu-item"
+                                        id="btn-update-studio"
+                                        type="button"
+                                        role="menuitem"
+                                        onclick="openExternalUrl('https://soloncode.studio/')"
+                                        disabled>
+                                        <span
+                                            class="app-menu-icon tool-icon"
+                                            data-icon="update"
+                                            aria-hidden="true"></span>
+                                        <span>更新 Studio</span>
+                                    </button>
+                                    <button
+                                        class="app-menu-item"
                                         id="btn-install"
                                         type="button"
                                         role="menuitem"
@@ -101,19 +126,6 @@
                                             data-icon="close"
                                             aria-hidden="true"></span>
                                         <span>卸载 CLI</span>
-                                    </button>
-                                    <button
-                                        class="app-menu-item"
-                                        id="btn-update-studio"
-                                        type="button"
-                                        role="menuitem"
-                                        onclick="openExternalUrl('https://soloncode.studio/')"
-                                        disabled>
-                                        <span
-                                            class="app-menu-icon tool-icon"
-                                            data-icon="update"
-                                            aria-hidden="true"></span>
-                                        <span>更新 Studio</span>
                                     </button>
                                 </div>
                             </div>
@@ -366,31 +378,6 @@
                         <p id="prompt-dialog-message"></p>
                     </div>
                     <div class="dialog-actions" id="prompt-dialog-actions"></div>
-                </section>
-            </div>
-
-            <div class="dialog-backdrop" id="jdk-install-dialog" hidden>
-                <section
-                    class="dialog-panel jdk-install-panel"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="jdk-install-title">
-                    <div>
-                        <h2 id="jdk-install-title">缺少 Java 环境</h2>
-                        <p id="jdk-install-message"></p>
-                    </div>
-                    <div class="jdk-install-progress-wrap">
-                        <div class="jdk-install-progress-track">
-                            <div class="jdk-install-progress-bar" id="jdk-install-progress-bar"></div>
-                        </div>
-                        <div class="jdk-install-progress-meta">
-                            <span id="jdk-install-status">准备下载 JDK</span>
-                            <span id="jdk-install-progress-text">0%</span>
-                        </div>
-                    </div>
-                    <div class="dialog-actions">
-                        <button class="dialog-btn primary" type="button" id="jdk-install-confirm">一键下载 JDK</button>
-                    </div>
                 </section>
             </div>
 
