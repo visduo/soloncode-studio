@@ -264,7 +264,16 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .show_menu_on_left_click(false)
         .tooltip("SolonCode Studio")
         .on_tray_icon_event(|tray, event| {
-            if matches!(event, tauri::tray::TrayIconEvent::Click { .. } | tauri::tray::TrayIconEvent::DoubleClick { .. }) {
+            if matches!(
+                event,
+                tauri::tray::TrayIconEvent::Click {
+                    button: tauri::tray::MouseButton::Left,
+                    ..
+                } | tauri::tray::TrayIconEvent::DoubleClick {
+                    button: tauri::tray::MouseButton::Left,
+                    ..
+                }
+            ) {
                 show_main_window(tray.app_handle());
             }
         })
