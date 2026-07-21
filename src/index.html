@@ -45,35 +45,26 @@
                             <span class="welcome-brand-copy">
                                 <strong>SolonCode Studio</strong>
                                 <small class="welcome-brand-versions">
-                                    <span class="version-item" id="studio-version">检测中</span>
+                                    <span class="version-item" id="studio-version"></span>
                                 </small>
                             </span>
                         </div>
                         <div class="welcome-nav">
-                            <button class="welcome-nav-item active" type="button">
+                            <button
+                                class="welcome-nav-item active"
+                                type="button"
+                                data-home-section="workspace"
+                                onclick="activateHomeSection('workspace')">
                                 <span class="welcome-nav-icon" data-icon="openFolder" aria-hidden="true"></span>
                                 <span>我的工作区</span>
                             </button>
                             <button
                                 class="welcome-nav-item"
                                 type="button"
-                                onclick="openExternalUrl('https://solon.noear.org/article/soloncode')">
-                                <span class="welcome-nav-icon" data-icon="website" aria-hidden="true"></span>
-                                <span>CLI 文档</span>
-                            </button>
-                            <button
-                                class="welcome-nav-item"
-                                type="button"
-                                onclick="openExternalUrl('https://soloncode.studio/')">
-                                <span class="welcome-nav-icon" data-icon="website" aria-hidden="true"></span>
-                                <span>Studio 官网</span>
-                            </button>
-                            <button
-                                class="welcome-nav-item"
-                                type="button"
-                                onclick="openExternalUrl('https://github.com/visduo/soloncode-studio')">
-                                <span class="welcome-nav-icon" data-icon="github" aria-hidden="true"></span>
-                                <span>GitHub</span>
+                                data-home-section="learning"
+                                onclick="activateHomeSection('learning')">
+                                <span class="welcome-nav-icon" data-icon="learning" aria-hidden="true"></span>
+                                <span>学习中心</span>
                             </button>
                         </div>
                         <div class="sidebar-cli" id="app-actions" style="display: none">
@@ -119,7 +110,7 @@
                         </div>
                     </section>
 
-                    <section class="main-panel">
+                    <section class="main-panel" id="main-panel">
                         <div class="welcome-toolbar">
                             <label class="workspace-search">
                                 <span class="workspace-search-icon" aria-hidden="true">
@@ -210,6 +201,136 @@
                         </div>
                         -->
                         <div class="workspace-list" id="workspace-list"></div>
+                    </section>
+
+                    <section class="learning-panel" id="learning-panel" hidden>
+                        <header class="learning-header">
+                            <span class="learning-kicker">SOLONCODE STUDIO 学习中心</span>
+                            <h1>让“数字员工”参与思考、创作与实践</h1>
+                            <p>
+                                SolonCode Studio 是 SolonCode CLI
+                                的桌面专属工作台。你可以围绕资料、想法或项目建立工作区，通过 Web 或 CLI 持续推进任务。
+                            </p>
+                        </header>
+
+                        <div class="learning-content">
+                            <section class="learning-section" aria-labelledby="learning-start-title">
+                                <div class="learning-section-heading">
+                                    <span class="learning-section-index">01</span>
+                                    <div>
+                                        <h2 id="learning-start-title">开始一次工作</h2>
+                                        <p>从你正在处理的内容和目标出发。</p>
+                                    </div>
+                                </div>
+                                <ol class="learning-steps">
+                                    <li>
+                                        <strong>准备上下文</strong>
+                                        <span>选择包含资料、内容或项目的本地目录，也可以添加一个常用的远程页面。</span>
+                                    </li>
+                                    <li>
+                                        <strong>选择交互入口</strong>
+                                        <span>使用 Web 获得直观体验，或通过 CLI 进入更灵活的命令行工作方式。</span>
+                                    </li>
+                                    <li>
+                                        <strong>说清你的目标</strong>
+                                        <span>
+                                            描述想理解的问题、要整理的资料或希望完成的成果，再通过对话逐步完善。
+                                        </span>
+                                    </li>
+                                </ol>
+                            </section>
+
+                            <section class="learning-section" aria-labelledby="learning-possibilities-title">
+                                <div class="learning-section-heading">
+                                    <span class="learning-section-index">02</span>
+                                    <div>
+                                        <h2 id="learning-possibilities-title">探索更多可能</h2>
+                                        <p>同一个工作区，可以承载不同类型的任务。</p>
+                                    </div>
+                                </div>
+                                <div class="learning-possibilities">
+                                    <article class="learning-possibility">
+                                        <strong>学习与理解</strong>
+                                        <span>梳理概念、阅读资料、拆解问题，形成自己的知识脉络。</span>
+                                    </article>
+                                    <article class="learning-possibility">
+                                        <strong>内容与创作</strong>
+                                        <span>推演想法、组织结构、打磨表达，让零散灵感逐渐成形。</span>
+                                    </article>
+                                    <article class="learning-possibility">
+                                        <strong>分析与整理</strong>
+                                        <span>归纳本地内容、提取重点、比较方案，并沉淀可复用的结果。</span>
+                                    </article>
+                                    <article class="learning-possibility">
+                                        <strong>工程与实践</strong>
+                                        <span>理解代码、规划改动、执行任务，将想法落实到真实项目中。</span>
+                                    </article>
+                                </div>
+                            </section>
+
+                            <section class="learning-section" aria-labelledby="learning-resources-title">
+                                <div class="learning-section-heading">
+                                    <span class="learning-section-index">03</span>
+                                    <div>
+                                        <h2 id="learning-resources-title">官方资源</h2>
+                                        <p>文档、产品动态与开源代码集中在这里。</p>
+                                    </div>
+                                </div>
+                                <div class="learning-resources">
+                                    <button
+                                        class="learning-resource"
+                                        type="button"
+                                        onclick="openExternalUrl('https://solon.noear.org/article/soloncode')">
+                                        <span
+                                            class="learning-resource-icon"
+                                            data-icon="website"
+                                            aria-hidden="true"></span>
+                                        <span class="learning-resource-copy">
+                                            <strong>CLI 文档</strong>
+                                            <small>安装、命令与使用说明</small>
+                                        </span>
+                                        <span
+                                            class="learning-resource-arrow"
+                                            data-icon="openExternal"
+                                            aria-hidden="true"></span>
+                                    </button>
+                                    <button
+                                        class="learning-resource"
+                                        type="button"
+                                        onclick="openExternalUrl('https://soloncode.studio/')">
+                                        <span
+                                            class="learning-resource-icon"
+                                            data-icon="website"
+                                            aria-hidden="true"></span>
+                                        <span class="learning-resource-copy">
+                                            <strong>Studio 官网</strong>
+                                            <small>版本发布与产品信息</small>
+                                        </span>
+                                        <span
+                                            class="learning-resource-arrow"
+                                            data-icon="openExternal"
+                                            aria-hidden="true"></span>
+                                    </button>
+                                    <button
+                                        class="learning-resource"
+                                        type="button"
+                                        onclick="openExternalUrl('https://github.com/visduo/soloncode-studio')">
+                                        <span
+                                            class="learning-resource-icon"
+                                            data-icon="github"
+                                            aria-hidden="true"></span>
+                                        <span class="learning-resource-copy">
+                                            <strong>Studio 源码仓库</strong>
+                                            <small>查看源码、Issue 与版本记录</small>
+                                        </span>
+                                        <span
+                                            class="learning-resource-arrow"
+                                            data-icon="openExternal"
+                                            aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </section>
+                        </div>
                     </section>
                 </div>
 

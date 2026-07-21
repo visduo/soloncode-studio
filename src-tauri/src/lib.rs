@@ -618,6 +618,11 @@ async fn check_java() -> bool {
         .unwrap_or(false)
 }
 
+#[tauri::command]
+fn studio_version() -> String {
+    format!("v{}", env!("CARGO_PKG_VERSION"))
+}
+
 /// 获取 CLI 和 Studio 版本状态
 #[tauri::command]
 async fn check_versions() -> VersionStatus {
@@ -1696,6 +1701,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             check_soloncode,
             check_java,
+            studio_version,
             check_versions,
             pick_workspace,
             home_workspace_path,

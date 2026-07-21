@@ -62,10 +62,10 @@ const RUN_TARGETS = {
     cliSystem: "cli-system"
 };
 const RUN_TARGET_OPTIONS = [
-    { key: RUN_TARGETS.webInternal, mode: LAUNCH_MODES.web, label: "运行 Web（内置窗口）", external: false },
-    { key: RUN_TARGETS.webSystem, mode: LAUNCH_MODES.web, label: "运行 Web（系统浏览器）", external: true },
-    { key: RUN_TARGETS.cliInternal, mode: LAUNCH_MODES.cli, label: "运行 CLI（内置终端）", external: false },
-    { key: RUN_TARGETS.cliSystem, mode: LAUNCH_MODES.cli, label: "运行 CLI（系统终端）", external: true }
+    { key: RUN_TARGETS.webInternal, mode: LAUNCH_MODES.web, label: "启动 Web 模式（内置窗口）", external: false },
+    { key: RUN_TARGETS.webSystem, mode: LAUNCH_MODES.web, label: "启动 Web 模式（系统浏览器）", external: true },
+    { key: RUN_TARGETS.cliInternal, mode: LAUNCH_MODES.cli, label: "启动 CLI 模式（内置终端）", external: false },
+    { key: RUN_TARGETS.cliSystem, mode: LAUNCH_MODES.cli, label: "启动 CLI 模式（系统终端）", external: true }
 ];
 const pendingRunTargets = new Map();
 const terminalSessions = new Map();
@@ -91,6 +91,8 @@ const ICON_PATHS = {
     tabWeb: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe-icon lucide-globe"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>',
     website:
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-laptop-minimal-icon lucide-laptop-minimal"><rect width="18" height="12" x="3" y="4" rx="2" ry="2"/><line x1="2" x2="22" y1="20" y2="20"/></svg>',
+    learning:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open-icon lucide-book-open"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>',
     github: '<svg fill="currentColor" fill-rule="evenodd" height="1em" style="flex:none;line-height:1" viewBox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><title>Github</title><path d="M12 0c6.63 0 12 5.276 12 11.79-.001 5.067-3.29 9.567-8.175 11.187-.6.118-.825-.25-.825-.56 0-.398.015-1.665.015-3.242 0-1.105-.375-1.813-.81-2.181 2.67-.295 5.475-1.297 5.475-5.822 0-1.297-.465-2.344-1.23-3.169.12-.295.54-1.503-.12-3.125 0 0-1.005-.324-3.3 1.209a11.32 11.32 0 00-3-.398c-1.02 0-2.04.133-3 .398-2.295-1.518-3.3-1.209-3.3-1.209-.66 1.622-.24 2.83-.12 3.125-.765.825-1.23 1.887-1.23 3.169 0 4.51 2.79 5.527 5.46 5.822-.345.294-.66.81-.765 1.577-.69.31-2.415.81-3.495-.973-.225-.354-.9-1.223-1.845-1.209-1.005.015-.405.56.015.781.51.28 1.095 1.327 1.23 1.666.24.663 1.02 1.93 4.035 1.385 0 .988.015 1.916.015 2.196 0 .31-.225.664-.825.56C3.303 21.374-.003 16.867 0 11.791 0 5.276 5.37 0 12 0z"></path></svg>',
     addWorkspace:
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-plus-icon lucide-folder-plus"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
@@ -592,6 +594,21 @@ function updateVersionFooter(info) {
         updateAvailable: Boolean(info.studio_update_available),
         onClick: () => handleFooterVersionClick("studio")
     });
+}
+
+async function renderLocalStudioVersion() {
+    try {
+        const version = await invoke("studio_version");
+        renderVersionFooterItem(document.getElementById("studio-version"), {
+            version,
+            installed: true,
+            updateAvailable: false,
+            onClick: () => handleFooterVersionClick("studio")
+        });
+    } catch (_) {
+        const versionElement = document.getElementById("studio-version");
+        if (versionElement) versionElement.textContent = "版本未知";
+    }
 }
 
 function renderVersionFooterItem(element, { label, version, installed, updateAvailable, onClick }) {
@@ -1184,6 +1201,15 @@ function activateHomeTab() {
     document.getElementById("project-view").style.display = "none";
     hideProjectFrames();
     renderTabs();
+}
+
+function activateHomeSection(section) {
+    const showLearning = section === "learning";
+    document.getElementById("main-panel")?.toggleAttribute("hidden", showLearning);
+    document.getElementById("learning-panel")?.toggleAttribute("hidden", !showLearning);
+    document.querySelectorAll("[data-home-section]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.homeSection === section);
+    });
 }
 
 function hideProjectFrames() {
@@ -2458,6 +2484,7 @@ window.clearLog = clearLog;
 window.openLogDialog = openLogDialog;
 window.closeLogDialog = closeLogDialog;
 window.activateHomeTab = activateHomeTab;
+window.activateHomeSection = activateHomeSection;
 window.closeCurrentWorkspace = closeCurrentWorkspace;
 
 // ─── 监听 Rust 后端事件 ──────────────────────────────────
@@ -2517,6 +2544,7 @@ listen("soloncode-close-requested", () => {
 
 async function init() {
     hydrateStaticIcons();
+    await renderLocalStudioVersion();
     bindLogToolbar();
     selectedWorkspace = null;
     localStorage.setItem("soloncode.selectedWorkspace", "");
