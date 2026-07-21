@@ -29,8 +29,6 @@ let suppressNextTabClickUntil = 0;
 let editingWorkspacePath = null;
 let openWorkspaceMenuKey = null;
 let openRunMenuKey = null;
-let openTabMenuKey = null;
-let openTabMenuPosition = null;
 let editingRemoteWorkspacePath = null;
 
 const WORKSPACES_KEY = "soloncode.workspaces";
@@ -85,6 +83,8 @@ const ICON_PATHS = {
     install:
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download-icon lucide-download"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>',
     update: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw-icon lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>',
+    copy: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+    paste: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-paste-icon lucide-clipboard-paste"><path d="M11 14h10"/><path d="m17 10 4 4-4 4"/><path d="M16 4h2a2 2 0 0 1 2 2v1.5"/><path d="M4 13.5V6a2 2 0 0 1 2-2h2"/><path d="M13.5 20H6a2 2 0 0 1-2-2v-2"/><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/></svg>',
     close: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
     tabHome:
         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house-icon lucide-house"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
@@ -485,8 +485,6 @@ function setBusy(busy) {
     if (busy) {
         openWorkspaceMenuKey = null;
         openRunMenuKey = null;
-        openTabMenuKey = null;
-        openTabMenuPosition = null;
     }
     renderWorkspaces();
     refreshButtons();
@@ -1169,8 +1167,6 @@ function setSelectedWorkspace(path) {
     localStorage.setItem("soloncode.selectedWorkspace", selectedWorkspace || "");
     openWorkspaceMenuKey = null;
     openRunMenuKey = null;
-    openTabMenuKey = null;
-    openTabMenuPosition = null;
     renderWorkspaces();
     renderLogs();
     refreshButtons();
@@ -1315,7 +1311,7 @@ function createProjectView(project) {
 
     const frame = document.createElement("iframe");
     frame.className = "project-frame";
-    frame.allow = "clipboard-write *; microphone *; on-device-speech-recognition *; pointer-lock";
+    frame.allow = "clipboard-read *; clipboard-write *; microphone *; on-device-speech-recognition *; pointer-lock";
     updateProjectView(frame, project);
     return frame;
 }
@@ -1331,6 +1327,31 @@ function initIframeMessageListener() {
         if (data.type === "studio-blocked-navigation") {
             const payload = data.payload;
             await invoke("open_external_url", { url: payload.url });
+            return;
+        }
+
+        if (data.type === "soloncode-frame-context-action") {
+            const project = getProjectByFrameSource(event.source);
+            if (!project) return;
+            if (data.action === "refresh") refreshProjectTab(project);
+            if (data.action === "open-external") await openProjectInDefaultBrowser(project);
+            if (data.action === "open-workspace" && project.type !== PROJECT_TYPES.webPage) {
+                await openWorkspaceInExplorer(project.workspace);
+            }
+            return;
+        }
+
+        if (data.type === "soloncode-frame-context-request") {
+            const project = getProjectByFrameSource(event.source);
+            if (!project) return;
+            event.source.postMessage(
+                {
+                    type: "soloncode-frame-context-response",
+                    requestId: data.requestId,
+                    context: { localWorkspace: project.type !== PROJECT_TYPES.webPage }
+                },
+                "*"
+            );
             return;
         }
 
@@ -1730,7 +1751,6 @@ function updateTabScrollControls() {
 function renderTabs() {
     const tabBar = document.getElementById("tab-bar");
     if (!tabBar) return;
-    removeTabContextMenuPortal();
     tabBar.innerHTML = "";
 
     const homeTab = document.createElement("button");
@@ -1757,11 +1777,6 @@ function renderTabs() {
             tabMode.innerHTML = iconSvg(project.mode === LAUNCH_MODES.cli ? "tabCli" : "tabWeb");
         }
         tab.addEventListener("pointerdown", (event) => startTabPointerDrag(event, project.project_key, tabBar));
-        tab.addEventListener("contextmenu", (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            openTabContextMenu(project.project_key, event);
-        });
         tab.addEventListener("click", () => {
             if (suppressNextTabClickKey === project.project_key && Date.now() < suppressNextTabClickUntil) {
                 suppressNextTabClickKey = null;
@@ -1776,7 +1791,6 @@ function renderTabs() {
         });
         tabBar.appendChild(tab);
     }
-    renderTabContextMenuPortal();
     requestAnimationFrame(() => {
         tabBar.querySelector(`[data-tab-key="${CSS.escape(activeTabKey)}"]`)?.scrollIntoView({
             behavior: "smooth",
@@ -1893,73 +1907,6 @@ function createWorkspaceMenuItem(icon, label, onClick) {
         closeWorkspaceMenu();
     });
     return button;
-}
-
-function createTabMenuItem(icon, label, onClick) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "app-menu-item tab-menu-item";
-    button.innerHTML = `<span class="app-menu-icon">${getWorkspaceIcon(icon)}</span><span>${label}</span>`;
-    button.addEventListener("click", (event) => {
-        event.stopPropagation();
-        onClick();
-        closeTabMenu();
-    });
-    return button;
-}
-
-function createTabContextMenu(project) {
-    const menu = document.createElement("div");
-    menu.className = "app-menu tab-context-menu";
-    const position = getTabMenuPosition();
-    menu.style.left = `${position.left}px`;
-    menu.style.top = `${position.top}px`;
-    if (project.mode === LAUNCH_MODES.web && project.url) {
-        menu.appendChild(createTabMenuItem("refresh", "刷新", () => refreshProjectTab(project)));
-        menu.appendChild(createTabMenuItem("open", "使用系统浏览器打开", () => openProjectInDefaultBrowser(project)));
-    }
-    if (project.type !== PROJECT_TYPES.webPage) {
-        menu.appendChild(createTabMenuItem("folder", "打开文件夹", () => openWorkspaceInExplorer(project.workspace)));
-    }
-    return menu;
-}
-
-function renderTabContextMenuPortal() {
-    if (!openTabMenuKey) return;
-    const project = runningProjects.get(openTabMenuKey);
-    if (!project) return;
-    document.body.appendChild(createTabContextMenu(project));
-}
-
-function removeTabContextMenuPortal() {
-    document.querySelectorAll("body > .tab-context-menu").forEach((menu) => menu.remove());
-}
-
-function getTabMenuPosition() {
-    const edgeGap = 8;
-    const estimatedWidth = 220;
-    const estimatedHeight = 92;
-    const left = openTabMenuPosition?.left ?? edgeGap;
-    const top = openTabMenuPosition?.top ?? edgeGap;
-    return {
-        left: Math.max(edgeGap, Math.min(left, window.innerWidth - estimatedWidth - edgeGap)),
-        top: Math.max(edgeGap, Math.min(top, window.innerHeight - estimatedHeight - edgeGap))
-    };
-}
-
-function closeTabMenu() {
-    if (!openTabMenuKey) return;
-    openTabMenuKey = null;
-    openTabMenuPosition = null;
-    renderTabs();
-}
-
-function openTabContextMenu(projectKey, event) {
-    openWorkspaceMenuKey = null;
-    openRunMenuKey = null;
-    openTabMenuKey = projectKey;
-    openTabMenuPosition = { left: event.clientX, top: event.clientY };
-    renderTabs();
 }
 
 async function openProjectInDefaultBrowser(project) {
@@ -2670,10 +2617,6 @@ async function init() {
             closeRunMenu();
             closeWorkspaceMenu();
         }
-        if (!event.target.closest(".tab-context-menu")) closeTabMenu();
-    });
-    window.addEventListener("blur", () => {
-        if (document.activeElement?.tagName === "IFRAME") closeTabMenu();
     });
     document.getElementById("workspace-list")?.addEventListener("scroll", positionWorkspaceMenus);
     document.getElementById("workspace-search")?.addEventListener("input", filterWorkspaceList);

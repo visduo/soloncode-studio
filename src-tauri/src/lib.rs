@@ -25,6 +25,159 @@ const PORT_END: u16 = 60999;
 const VERSION_URL: &str = "https://soloncode.studio/version.php";
 const TRAY_MENU_OPEN: &str = "open";
 const TRAY_MENU_QUIT: &str = "quit";
+const DISABLE_CONTEXT_MENU_SCRIPT: &str = r##"
+(() => {
+    if (window.__solonCodeContextMenuInstalled) return;
+    window.__solonCodeContextMenuInstalled = true;
+
+    const menuId = "soloncode-frame-context-menu";
+    const actionMessageType = "soloncode-frame-context-action";
+    const contextRequestType = "soloncode-frame-context-request";
+    const contextResponseType = "soloncode-frame-context-response";
+    const pendingContextRequests = new Map();
+    const iconMarkup = {
+        copy: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+        paste: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-paste-icon lucide-clipboard-paste"><path d="M11 14h10"/><path d="m17 10 4 4-4 4"/><path d="M16 4h2a2 2 0 0 1 2 2v1.5"/><path d="M4 13.5V6a2 2 0 0 1 2-2h2"/><path d="M13.5 20H6a2 2 0 0 1-2-2v-2"/><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/></svg>',
+        refresh: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw-icon lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>',
+        external: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-arrow-out-up-right-icon lucide-square-arrow-out-up-right"><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><path d="m21 3-9 9"/><path d="M15 3h6v6"/></svg>',
+        folder: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-open-icon lucide-folder-open"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>'
+    };
+    const removeMenu = () => document.getElementById(menuId)?.remove();
+    const sendAction = (action) => window.parent.postMessage({ type: actionMessageType, action }, "*");
+    const requestContext = () => new Promise((resolve) => {
+        const requestId = `${Date.now()}-${Math.random()}`;
+        const timeout = window.setTimeout(() => {
+            pendingContextRequests.delete(requestId);
+            resolve({ localWorkspace: false });
+        }, 300);
+        pendingContextRequests.set(requestId, (context) => {
+            window.clearTimeout(timeout);
+            resolve(context);
+        });
+        window.parent.postMessage({ type: contextRequestType, requestId }, "*");
+    });
+    const getEditable = (target) => {
+        const editable = target?.closest?.("input, textarea, [contenteditable='true'], [contenteditable='plaintext-only']");
+        if (!editable || editable.disabled || editable.readOnly) return null;
+        return editable;
+    };
+    const getSelectedText = (target) => {
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+            return target.value.slice(target.selectionStart ?? 0, target.selectionEnd ?? 0);
+        }
+        return window.getSelection()?.toString() || "";
+    };
+    const writeClipboard = async (text) => {
+        if (!text) return;
+        await navigator.clipboard.writeText(text);
+    };
+    const pasteClipboard = async (target) => {
+        const text = await navigator.clipboard.readText();
+        target.focus();
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+            target.setRangeText(text, target.selectionStart ?? 0, target.selectionEnd ?? 0, "end");
+            target.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
+            return;
+        }
+        document.execCommand("insertText", false, text);
+    };
+    const createIcon = (name) => {
+        const template = document.createElement("template");
+        template.innerHTML = iconMarkup[name];
+        const icon = template.content.firstElementChild;
+        Object.assign(icon.style, { width: "16px", height: "16px", flex: "0 0 16px" });
+        return icon;
+    };
+    const createItem = (iconName, label, enabled, action) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.disabled = !enabled;
+        item.appendChild(createIcon(iconName));
+        item.appendChild(document.createTextNode(label));
+        Object.assign(item.style, {
+            display: "flex",
+            alignItems: "center",
+            gap: "9px",
+            width: "100%",
+            padding: "7px 28px 7px 10px",
+            border: "0",
+            background: "transparent",
+            color: enabled ? "#1f2328" : "#8c959f",
+            font: "13px sans-serif",
+            textAlign: "left"
+        });
+        item.addEventListener("mouseenter", () => {
+            if (enabled) item.style.background = "#e9eef5";
+        });
+        item.addEventListener("mouseleave", () => item.style.background = "transparent");
+        item.addEventListener("mousedown", (event) => event.preventDefault());
+        item.addEventListener("click", async () => {
+            removeMenu();
+            try {
+                await action();
+            } catch (_) {}
+        });
+        return item;
+    };
+
+    window.addEventListener("contextmenu", async (event) => {
+        event.preventDefault();
+        if (window.top === window) return;
+        removeMenu();
+
+        const editable = getEditable(event.target);
+        const selectedText = getSelectedText(editable || event.target);
+        const context = await requestContext();
+        const menu = document.createElement("div");
+        menu.id = menuId;
+        Object.assign(menu.style, {
+            position: "fixed",
+            zIndex: "2147483647",
+            minWidth: "132px",
+            padding: "4px",
+            border: "1px solid #c8d0da",
+            borderRadius: "6px",
+            background: "#ffffff",
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.18)"
+        });
+        menu.appendChild(createItem("copy", "复制", Boolean(selectedText), () => writeClipboard(selectedText)));
+        menu.appendChild(createItem("paste", "粘贴", Boolean(editable), () => pasteClipboard(editable)));
+        menu.appendChild(createItem("refresh", "刷新", true, () => sendAction("refresh")));
+        menu.appendChild(createItem("external", "使用系统浏览器打开", true, () => sendAction("open-external")));
+        if (context.localWorkspace) {
+            menu.appendChild(createItem("folder", "打开工作区文件夹", true, () => sendAction("open-workspace")));
+        }
+        document.body.appendChild(menu);
+        const bounds = menu.getBoundingClientRect();
+        menu.style.left = `${Math.max(4, Math.min(event.clientX, window.innerWidth - bounds.width - 4))}px`;
+        menu.style.top = `${Math.max(4, Math.min(event.clientY, window.innerHeight - bounds.height - 4))}px`;
+    }, true);
+    window.addEventListener("pointerdown", (event) => {
+        if (!event.target?.closest?.(`#${menuId}`)) removeMenu();
+    }, true);
+    window.addEventListener("blur", removeMenu);
+    window.addEventListener("scroll", removeMenu, true);
+    window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") removeMenu();
+    });
+    window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (window.top !== window && [actionMessageType, contextRequestType].includes(data?.type)) {
+            window.parent.postMessage(event.data, "*");
+        }
+        if (data?.type === contextResponseType) {
+            const resolve = pendingContextRequests.get(data.requestId);
+            if (resolve) {
+                pendingContextRequests.delete(data.requestId);
+                resolve(data.context);
+            }
+            for (let index = 0; index < window.frames.length; index += 1) {
+                window.frames[index].postMessage(data, "*");
+            }
+        }
+    });
+})();
+"##;
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -206,7 +359,7 @@ fn soloncode_command(soloncode_path: &str) -> Command {
 fn is_java_available() -> bool {
     let mut command = Command::new("java");
     command
-        .arg("-version2")
+        .arg("-version")
         .stdout(Stdio::null())
         .stderr(Stdio::null());
     #[cfg(windows)]
@@ -1707,6 +1860,11 @@ pub fn run() {
     configure_linux_webkit_gpu_fallback();
 
     tauri::Builder::default()
+        .plugin(
+            tauri::plugin::Builder::<_, ()>::new("disable-context-menu")
+                .js_init_script_on_all_frames(DISABLE_CONTEXT_MENU_SCRIPT)
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .manage(SolonState {
