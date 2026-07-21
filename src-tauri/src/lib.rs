@@ -40,7 +40,8 @@ const DISABLE_CONTEXT_MENU_SCRIPT: &str = r##"
         paste: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-paste-icon lucide-clipboard-paste"><path d="M11 14h10"/><path d="m17 10 4 4-4 4"/><path d="M16 4h2a2 2 0 0 1 2 2v1.5"/><path d="M4 13.5V6a2 2 0 0 1 2-2h2"/><path d="M13.5 20H6a2 2 0 0 1-2-2v-2"/><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/></svg>',
         refresh: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw-icon lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>',
         external: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-arrow-out-up-right-icon lucide-square-arrow-out-up-right"><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><path d="m21 3-9 9"/><path d="M15 3h6v6"/></svg>',
-        folder: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-open-icon lucide-folder-open"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>'
+        folder: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-open-icon lucide-folder-open"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>',
+        devtools: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>'
     };
     const removeMenu = () => document.getElementById(menuId)?.remove();
     const sendAction = (action) => window.parent.postMessage({ type: actionMessageType, action }, "*");
@@ -158,6 +159,9 @@ const DISABLE_CONTEXT_MENU_SCRIPT: &str = r##"
         menu.appendChild(createItem("paste", "粘贴", Boolean(editable), () => pasteClipboard(editable)));
         menu.appendChild(createItem("refresh", "刷新", true, () => sendAction("refresh")));
         menu.appendChild(createItem("external", "使用系统浏览器打开", true, () => sendAction("open-external")));
+        if (context.developmentMode) {
+            menu.appendChild(createItem("devtools", "打开开发者调试模式", true, () => sendAction("open-devtools")));
+        }
         if (context.localWorkspace) {
             menu.appendChild(createItem("folder", "打开工作区文件夹", true, () => sendAction("open-workspace")));
         }
@@ -413,6 +417,13 @@ fn show_main_window(app: &tauri::AppHandle) {
 fn minimize_main_window_to_tray(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
+    }
+}
+
+#[tauri::command]
+fn open_devtools(app: tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        window.open_devtools();
     }
 }
 
@@ -1908,6 +1919,7 @@ pub fn run() {
             send_cli_input,
             go_home,
             minimize_to_tray,
+            open_devtools,
             quit_studio,
             show_task_finished_notification,
         ])

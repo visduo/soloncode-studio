@@ -3,6 +3,8 @@ const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 const appWindow = window.__TAURI__.window.getCurrentWindow();
 
+const IS_DEVELOPMENT_MODE = true;
+
 let isInstalled = false;
 let isBusy = false;
 let selectedWorkspace = null;
@@ -1335,6 +1337,7 @@ function initIframeMessageListener() {
             if (!project) return;
             if (data.action === "refresh") refreshProjectTab(project);
             if (data.action === "open-external") await openProjectInDefaultBrowser(project);
+            if (data.action === "open-devtools" && IS_DEVELOPMENT_MODE) await invoke("open_devtools");
             if (data.action === "open-workspace" && project.type !== PROJECT_TYPES.webPage) {
                 await openWorkspaceInExplorer(project.workspace);
             }
@@ -1348,7 +1351,10 @@ function initIframeMessageListener() {
                 {
                     type: "soloncode-frame-context-response",
                     requestId: data.requestId,
-                    context: { localWorkspace: project.type !== PROJECT_TYPES.webPage }
+                    context: {
+                        localWorkspace: project.type !== PROJECT_TYPES.webPage,
+                        developmentMode: IS_DEVELOPMENT_MODE
+                    }
                 },
                 "*"
             );
@@ -2036,7 +2042,6 @@ function createWorkspaceItem({ path, name, detail, active, running, removable, r
     item.dataset.searchText = `${name} ${detail}`.toLowerCase();
     const activate = () => {
         setSelectedWorkspace(path);
-        if (remoteUrl) openWebPageTab(remoteUrl);
     };
     item.addEventListener("click", activate);
 
@@ -2059,7 +2064,12 @@ function createWorkspaceItem({ path, name, detail, active, running, removable, r
     const currentProject = remoteUrl ? null : getRunningProjectByWorkspace(path);
     const workspaceStarting = remoteUrl ? false : isWorkspaceStarting(path);
     if (remoteUrl) {
-        actions.appendChild(createWorkspaceButton("open", "打开远程工作区", "run", activate));
+        actions.appendChild(
+            createWorkspaceButton("open", "打开远程工作区", "run", () => {
+                activate();
+                openWebPageTab(remoteUrl);
+            })
+        );
     } else if (currentProject) {
         actions.appendChild(
             createWorkspaceButton("open", `打开${getModeLabel(currentProject.mode)}`, "run", () => {

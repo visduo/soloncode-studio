@@ -849,11 +849,11 @@ body.project-mode .project-view {
 }
 
 .learning-steps strong {
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .learning-resource-copy strong {
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .learning-steps span {
@@ -880,7 +880,7 @@ body.project-mode .project-view {
 }
 
 .learning-possibility strong {
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .learning-possibility span {
