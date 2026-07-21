@@ -85,7 +85,11 @@ const DISABLE_CONTEXT_MENU_SCRIPT: &str = r##"
         const template = document.createElement("template");
         template.innerHTML = iconMarkup[name];
         const icon = template.content.firstElementChild;
-        Object.assign(icon.style, { width: "16px", height: "16px", flex: "0 0 16px" });
+        Object.assign(icon.style, {
+            width: "16px",
+            height: "16px",
+            color: "#526174"
+        });
         return icon;
     };
     const createItem = (iconName, label, enabled, action) => {
@@ -95,19 +99,27 @@ const DISABLE_CONTEXT_MENU_SCRIPT: &str = r##"
         item.appendChild(createIcon(iconName));
         item.appendChild(document.createTextNode(label));
         Object.assign(item.style, {
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "16px max-content",
             alignItems: "center",
-            gap: "9px",
+            gap: "10px",
             width: "100%",
-            padding: "7px 28px 7px 10px",
+            minHeight: "34px",
+            padding: "0 10px",
             border: "0",
+            borderRadius: "8px",
             background: "transparent",
-            color: enabled ? "#1f2328" : "#8c959f",
-            font: "13px sans-serif",
-            textAlign: "left"
+            color: "#142033",
+            cursor: enabled ? "pointer" : "not-allowed",
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+            fontSize: "0.86rem",
+            fontWeight: "750",
+            opacity: enabled ? "1" : "0.45",
+            textAlign: "left",
+            whiteSpace: "nowrap"
         });
         item.addEventListener("mouseenter", () => {
-            if (enabled) item.style.background = "#e9eef5";
+            if (enabled) item.style.background = "#f3f7fb";
         });
         item.addEventListener("mouseleave", () => item.style.background = "transparent");
         item.addEventListener("mousedown", (event) => event.preventDefault());
@@ -133,12 +145,14 @@ const DISABLE_CONTEXT_MENU_SCRIPT: &str = r##"
         Object.assign(menu.style, {
             position: "fixed",
             zIndex: "2147483647",
-            minWidth: "132px",
-            padding: "4px",
-            border: "1px solid #c8d0da",
-            borderRadius: "6px",
+            display: "grid",
+            gap: "4px",
+            minWidth: "156px",
+            padding: "6px",
+            border: "1px solid #dbe4ef",
+            borderRadius: "14px",
             background: "#ffffff",
-            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.18)"
+            boxShadow: "0 12px 28px rgba(31, 50, 79, 0.1)"
         });
         menu.appendChild(createItem("copy", "复制", Boolean(selectedText), () => writeClipboard(selectedText)));
         menu.appendChild(createItem("paste", "粘贴", Boolean(editable), () => pasteClipboard(editable)));
