@@ -158,12 +158,12 @@ const DISABLE_CONTEXT_MENU_SCRIPT: &str = r##"
         menu.appendChild(createItem("copy", "复制", Boolean(selectedText), () => writeClipboard(selectedText)));
         menu.appendChild(createItem("paste", "粘贴", Boolean(editable), () => pasteClipboard(editable)));
         menu.appendChild(createItem("refresh", "刷新", true, () => sendAction("refresh")));
-        menu.appendChild(createItem("external", "使用系统浏览器打开", true, () => sendAction("open-external")));
-        if (context.developmentMode) {
-            menu.appendChild(createItem("devtools", "打开开发者调试模式", true, () => sendAction("open-devtools")));
-        }
+        menu.appendChild(createItem("external", "使用系统浏览器打开", true, () => sendAction("open-external")))
         if (context.localWorkspace) {
             menu.appendChild(createItem("folder", "打开工作区文件夹", true, () => sendAction("open-workspace")));
+        }
+        if (context.developmentMode) {
+            menu.appendChild(createItem("devtools", "打开开发者调试模式", true, () => sendAction("open-devtools")));
         }
         document.body.appendChild(menu);
         const bounds = menu.getBoundingClientRect();
