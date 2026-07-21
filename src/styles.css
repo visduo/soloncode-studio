@@ -330,44 +330,135 @@ button {
     margin: 0;
 }
 
-.tab-bar {
+.title-bar {
     position: relative;
     z-index: 20;
     grid-column: 1 / -1;
     display: flex;
+    align-items: stretch;
+    min-width: 0;
+    min-height: 44px;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.72);
+    background: #f8fafc;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.72);
+    user-select: none;
+}
+
+.macos-traffic-light-space {
+    display: none;
+    flex: 0 0 70px;
+}
+
+.title-bar-drag-region {
+    flex: 1 1 72px;
+    min-width: 36px;
+}
+
+.tab-scroll-control {
+    display: grid;
+    align-self: flex-end;
+    flex: 0 0 28px;
+    width: 28px;
+    min-width: 28px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #64748b;
+    place-items: center;
+    cursor: pointer;
+}
+
+.tab-scroll-control[hidden] {
+    display: none;
+}
+
+.tab-scroll-control:hover:not(:disabled) {
+    color: var(--text-primary);
+}
+
+.tab-scroll-control:disabled {
+    color: rgba(100, 116, 139, 0.28);
+    cursor: default;
+}
+
+.tab-scroll-control svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.tab-bar {
+    position: relative;
+    display: flex;
+    flex: 0 1 auto;
     align-items: flex-end;
     gap: 2px;
+    min-width: 118px;
     min-height: 44px;
     padding: 7px 12px 0;
     overflow-x: auto;
     overflow-y: hidden;
     border: 0;
-    border-bottom: 1px solid rgba(203, 213, 225, 0.72);
     border-radius: 0;
-    background: #f8fafc;
-    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.72);
-    scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.7) transparent;
+    background: transparent;
+    scrollbar-width: none;
+}
+
+.platform-macos .macos-traffic-light-space {
+    display: block;
+}
+
+.platform-macos .window-controls {
+    display: none;
+}
+
+.window-controls {
+    display: flex;
+    flex: 0 0 auto;
+    align-self: stretch;
+}
+
+.window-control {
+    display: grid;
+    width: 46px;
+    min-width: 46px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #465568;
+    place-items: center;
+    cursor: default;
+}
+
+.window-control:hover {
+    background: rgba(15, 23, 42, 0.08);
+    color: #142033;
+}
+
+.window-control-close:hover {
+    background: #c42b1c;
+    color: #ffffff;
+}
+
+.window-control svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.2;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
 }
 
 .tab-bar::-webkit-scrollbar {
-    height: 8px;
-}
-
-.tab-bar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.tab-bar::-webkit-scrollbar-thumb {
-    border: 2px solid transparent;
-    border-radius: 999px;
-    background: rgba(148, 163, 184, 0.7);
-    background-clip: content-box;
-}
-
-.tab-bar::-webkit-scrollbar-thumb:hover {
-    background: rgba(100, 116, 139, 0.88);
-    background-clip: content-box;
+    display: none;
 }
 
 .tab-item {

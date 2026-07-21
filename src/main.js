@@ -1,6 +1,7 @@
 // SolonCode Studio - 主控逻辑
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
+const appWindow = window.__TAURI__.window.getCurrentWindow();
 
 let isInstalled = false;
 let isBusy = false;
@@ -1710,6 +1711,20 @@ function clearTabDragState() {
     });
 }
 
+function updateTabScrollControls() {
+    const tabBar = document.getElementById("tab-bar");
+    const previous = document.getElementById("tab-scroll-previous");
+    const next = document.getElementById("tab-scroll-next");
+    if (!tabBar || !previous || !next) return;
+
+    const controlWidth = previous.hidden ? 0 : previous.offsetWidth + next.offsetWidth;
+    const hasOverflow = tabBar.scrollWidth > tabBar.clientWidth + controlWidth + 1;
+    previous.hidden = !hasOverflow;
+    next.hidden = !hasOverflow;
+    previous.disabled = !hasOverflow || tabBar.scrollLeft <= 1;
+    next.disabled = !hasOverflow || tabBar.scrollLeft + tabBar.clientWidth >= tabBar.scrollWidth - 1;
+}
+
 function renderTabs() {
     const tabBar = document.getElementById("tab-bar");
     if (!tabBar) return;
@@ -1719,6 +1734,7 @@ function renderTabs() {
     const homeTab = document.createElement("button");
     homeTab.className = "tab-item" + (activeTabKey === HOME_TAB_KEY ? " active" : "");
     homeTab.type = "button";
+    homeTab.dataset.tabKey = HOME_TAB_KEY;
     homeTab.innerHTML = `<span class="tab-main"><span class="tab-mode">${iconSvg("tabHome")}</span><span class="tab-label">首页</span></span>`;
     homeTab.addEventListener("click", activateHomeTab);
     tabBar.appendChild(homeTab);
@@ -1759,6 +1775,14 @@ function renderTabs() {
         tabBar.appendChild(tab);
     }
     renderTabContextMenuPortal();
+    requestAnimationFrame(() => {
+        tabBar.querySelector(`[data-tab-key="${CSS.escape(activeTabKey)}"]`)?.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+            inline: "nearest"
+        });
+        updateTabScrollControls();
+    });
 }
 
 function rememberWorkspace(path) {
@@ -1776,7 +1800,6 @@ function rememberRemoteWorkspace(urlValue) {
     workspaces.push({ path: url, type: "remote", url, pinned: false, lastOpenedAt: Date.now() });
     saveWorkspaces(workspaces);
     setSelectedWorkspace(url);
-    openWebPageTab(url);
 }
 
 function updateRemoteWorkspaceUrl(path, urlValue) {
@@ -2546,7 +2569,48 @@ listen("soloncode-close-requested", () => {
 
 // ─── 初始化 ────────────────────────────────────────────────
 
+function bindWindowTitleBar() {
+    const platform = /Mac|iPhone|iPad/.test(navigator.platform)
+        ? "macos"
+        : /Win/.test(navigator.platform)
+          ? "windows"
+          : "linux";
+    document.documentElement.classList.add(`platform-${platform}`);
+
+    document.querySelectorAll("[data-window-action]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const action = button.dataset.windowAction;
+            if (action === "minimize") await appWindow.minimize();
+            else if (action === "maximize") await appWindow.toggleMaximize();
+            else if (action === "close") await appWindow.close();
+        });
+    });
+
+    document.getElementById("tab-bar")?.addEventListener(
+        "wheel",
+        (event) => {
+            const tabBar = event.currentTarget;
+            if (tabBar.scrollWidth <= tabBar.clientWidth || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+            event.preventDefault();
+            tabBar.scrollLeft += event.deltaY;
+        },
+        { passive: false }
+    );
+
+    const tabBar = document.getElementById("tab-bar");
+    document.getElementById("tab-scroll-previous")?.addEventListener("click", () => {
+        tabBar?.scrollBy({ left: -Math.max(160, tabBar.clientWidth * 0.7), behavior: "smooth" });
+    });
+    document.getElementById("tab-scroll-next")?.addEventListener("click", () => {
+        tabBar?.scrollBy({ left: Math.max(160, tabBar.clientWidth * 0.7), behavior: "smooth" });
+    });
+    tabBar?.addEventListener("scroll", updateTabScrollControls, { passive: true });
+    const titleBar = document.getElementById("title-bar");
+    if (titleBar) new ResizeObserver(updateTabScrollControls).observe(titleBar);
+}
+
 async function init() {
+    bindWindowTitleBar();
     hydrateStaticIcons();
     await renderLocalStudioVersion();
     bindLogToolbar();

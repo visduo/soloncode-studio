@@ -12,31 +12,30 @@
         <!-- 启动器页面 -->
         <div id="launcher" class="launcher-container">
             <main class="app-shell">
-                <nav class="tab-bar" id="tab-bar">
-                    <button class="tab-item active" type="button" data-tab-key="home" onclick="activateHomeTab()">
-                        <span class="tab-main">
-                            <span class="tab-mode">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="app-icon app-icon-tabHome"
-                                    aria-hidden="true">
-                                    <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
-                                    <path
-                                        d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                                </svg>
-                            </span>
-                            <span class="tab-label">首页</span>
-                        </span>
+                <header class="title-bar" id="title-bar">
+                    <div class="macos-traffic-light-space" aria-hidden="true"></div>
+                    <button class="tab-scroll-control" id="tab-scroll-previous" type="button" hidden>
+                        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m10 3-5 5 5 5" /></svg>
                     </button>
-                </nav>
+                    <nav class="tab-bar" id="tab-bar"></nav>
+                    <button class="tab-scroll-control" id="tab-scroll-next" type="button" hidden>
+                        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" /></svg>
+                    </button>
+                    <div class="title-bar-drag-region" data-tauri-drag-region></div>
+                    <div class="window-controls">
+                        <button class="window-control" type="button" data-window-action="minimize">
+                            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8" /></svg>
+                        </button>
+                        <button class="window-control" type="button" data-window-action="maximize">
+                            <svg viewBox="0 0 12 12" aria-hidden="true">
+                                <rect x="2.25" y="2.25" width="7.5" height="7.5" rx="0.5" />
+                            </svg>
+                        </button>
+                        <button class="window-control window-control-close" type="button" data-window-action="close">
+                            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="m2.5 2.5 7 7m0-7-7 7" /></svg>
+                        </button>
+                    </div>
+                </header>
 
                 <div class="home-view" id="home-view">
                     <section class="sidebar">
@@ -73,8 +72,6 @@
                                     class="sidebar-cli-settings"
                                     id="cli-actions-trigger"
                                     type="button"
-                                    title="设置"
-                                    aria-label="设置"
                                     aria-haspopup="menu"
                                     aria-expanded="false">
                                     <span data-icon="settings" aria-hidden="true"></span>
