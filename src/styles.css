@@ -356,7 +356,7 @@ button {
 
 .tab-scroll-control {
     display: grid;
-    align-self: flex-end;
+    align-self: center;
     flex: 0 0 28px;
     width: 28px;
     min-width: 28px;
@@ -397,11 +397,11 @@ button {
     position: relative;
     display: flex;
     flex: 0 1 auto;
-    align-items: flex-end;
+    align-items: center;
     gap: 2px;
     min-width: 118px;
     min-height: 44px;
-    padding: 7px 12px 0;
+    padding: 0 12px;
     overflow-x: auto;
     overflow-y: hidden;
     border: 0;
@@ -471,8 +471,7 @@ button {
     height: 34px;
     padding: 0 12px;
     border: 1px solid transparent;
-    border-bottom: 0;
-    border-radius: 9px 9px 0 0;
+    border-radius: 10px;
     background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
@@ -485,7 +484,6 @@ button {
         background 0.15s ease,
         border-color 0.15s ease,
         color 0.15s ease,
-        transform 0.15s ease,
         box-shadow 0.15s ease;
 }
 
@@ -542,18 +540,14 @@ button {
 
 .tab-item.active {
     z-index: 1;
-    border-color: rgba(203, 213, 225, 0.78);
+    border-color: rgba(203, 213, 225, 0.68);
     background: #ffffff;
     color: var(--text-primary);
-    transform: translateY(1px);
-    box-shadow:
-        0 1px 0 #ffffff,
-        0 -1px 0 rgba(255, 255, 255, 0.95) inset,
-        0 -1px 7px rgba(31, 50, 79, 0.08);
+    box-shadow: 0 2px 8px rgba(31, 50, 79, 0.08);
 }
 
 .tab-item.active:hover {
-    border-color: rgba(203, 213, 225, 0.86);
+    border-color: rgba(203, 213, 225, 0.76);
     background: #ffffff;
     color: var(--text-primary);
 }
@@ -923,7 +917,6 @@ body.project-mode .project-view {
     display: grid;
     align-content: start;
     gap: 7px;
-    min-height: 118px;
     padding: 16px;
     border-right: 1px solid #e8edf3;
     border-bottom: 1px solid #e8edf3;
@@ -942,7 +935,6 @@ body.project-mode .project-view {
 
 .learning-possibility-more {
     grid-column: 1 / -1;
-    min-height: 0;
     background: rgba(234, 243, 255, 0.62);
 }
 
