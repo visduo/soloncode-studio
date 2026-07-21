@@ -309,6 +309,12 @@ button {
     user-select: none;
 }
 
+.platform-windows .title-bar {
+    box-shadow:
+        inset 0 1px 0 #000000,
+        inset 0 -1px 0 rgba(255, 255, 255, 0.72);
+}
+
 .macos-traffic-light-space {
     display: none;
     flex: 0 0 70px;
