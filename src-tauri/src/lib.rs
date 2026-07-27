@@ -1,18 +1,13 @@
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
-use std::net::{TcpListener, TcpStream};
-#[cfg(target_os = "macos")]
-use std::os::unix::fs::PermissionsExt;
+use std::net::TcpStream;
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
-use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::{mpsc, Arc, Mutex};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
@@ -20,273 +15,35 @@ use tauri::{
 };
 use tauri_plugin_notification::NotificationExt;
 
-const PORT_START: u16 = 49152;
-const PORT_END: u16 = 60999;
-const VERSION_URL: &str = "https://soloncode.studio/version.php";
+mod context_menu;
+mod installer;
+mod models;
+mod platform;
+mod state;
+mod version;
+mod workspace;
+
+use context_menu::context_menu_script;
+use installer::{install_soloncode, uninstall_soloncode};
+use models::{project_key, CliOutput, FailedResult, LaunchMode, StartResult, WorkspaceLog};
+#[cfg(target_os = "linux")]
+use platform::configure_linux_webkit_gpu_fallback;
+use platform::{
+    open_external_url, open_soloncode_system_terminal, open_studio_github_release_page,
+};
+use state::{SolonProcess, SolonState};
+use version::{
+    check_java, check_soloncode, check_versions, find_soloncode_path, is_java_available,
+    studio_version,
+};
+use workspace::{
+    home_workspace_path, normalize_workspace, pick_available_port, pick_workspace, reveal_workspace,
+};
+
 const TRAY_MENU_OPEN: &str = "open";
 const TRAY_MENU_QUIT: &str = "quit";
-const DISABLE_CONTEXT_MENU_SCRIPT: &str = r##"
-(() => {
-    if (window.__solonCodeContextMenuInstalled) return;
-    window.__solonCodeContextMenuInstalled = true;
-
-    const menuId = "soloncode-frame-context-menu";
-    const actionMessageType = "soloncode-frame-context-action";
-    const contextRequestType = "soloncode-frame-context-request";
-    const contextResponseType = "soloncode-frame-context-response";
-    const pendingContextRequests = new Map();
-    const iconMarkup = {
-        copy: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
-        paste: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-paste-icon lucide-clipboard-paste"><path d="M11 14h10"/><path d="m17 10 4 4-4 4"/><path d="M16 4h2a2 2 0 0 1 2 2v1.5"/><path d="M4 13.5V6a2 2 0 0 1 2-2h2"/><path d="M13.5 20H6a2 2 0 0 1-2-2v-2"/><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/></svg>',
-        refresh: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw-icon lucide-refresh-ccw"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>',
-        external: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-arrow-out-up-right-icon lucide-square-arrow-out-up-right"><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><path d="m21 3-9 9"/><path d="M15 3h6v6"/></svg>',
-        folder: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-open-icon lucide-folder-open"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>',
-        devtools: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>'
-    };
-    const removeMenu = () => document.getElementById(menuId)?.remove();
-    const sendAction = (action) => window.parent.postMessage({ type: actionMessageType, action }, "*");
-    const requestContext = () => new Promise((resolve) => {
-        const requestId = `${Date.now()}-${Math.random()}`;
-        const timeout = window.setTimeout(() => {
-            pendingContextRequests.delete(requestId);
-            resolve({ localWorkspace: false });
-        }, 300);
-        pendingContextRequests.set(requestId, (context) => {
-            window.clearTimeout(timeout);
-            resolve(context);
-        });
-        window.parent.postMessage({ type: contextRequestType, requestId }, "*");
-    });
-    const getEditable = (target) => {
-        const editable = target?.closest?.("input, textarea, [contenteditable='true'], [contenteditable='plaintext-only']");
-        if (!editable || editable.disabled || editable.readOnly) return null;
-        return editable;
-    };
-    const getSelectedText = (target) => {
-        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-            return target.value.slice(target.selectionStart ?? 0, target.selectionEnd ?? 0);
-        }
-        return window.getSelection()?.toString() || "";
-    };
-    const writeClipboard = async (text) => {
-        if (!text) return;
-        await navigator.clipboard.writeText(text);
-    };
-    const pasteClipboard = async (target) => {
-        const text = await navigator.clipboard.readText();
-        target.focus();
-        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-            target.setRangeText(text, target.selectionStart ?? 0, target.selectionEnd ?? 0, "end");
-            target.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
-            return;
-        }
-        document.execCommand("insertText", false, text);
-    };
-    const createIcon = (name) => {
-        const template = document.createElement("template");
-        template.innerHTML = iconMarkup[name];
-        const icon = template.content.firstElementChild;
-        Object.assign(icon.style, {
-            width: "16px",
-            height: "16px",
-            color: "#526174"
-        });
-        return icon;
-    };
-    const createItem = (iconName, label, enabled, action) => {
-        const item = document.createElement("button");
-        item.type = "button";
-        item.disabled = !enabled;
-        item.appendChild(createIcon(iconName));
-        item.appendChild(document.createTextNode(label));
-        Object.assign(item.style, {
-            display: "grid",
-            gridTemplateColumns: "16px max-content",
-            alignItems: "center",
-            gap: "10px",
-            width: "100%",
-            minHeight: "34px",
-            padding: "0 10px",
-            border: "0",
-            borderRadius: "8px",
-            background: "transparent",
-            color: "#142033",
-            cursor: enabled ? "pointer" : "not-allowed",
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
-            fontSize: "0.86rem",
-            fontWeight: "750",
-            opacity: enabled ? "1" : "0.45",
-            textAlign: "left",
-            whiteSpace: "nowrap"
-        });
-        item.addEventListener("mouseenter", () => {
-            if (enabled) item.style.background = "#f3f7fb";
-        });
-        item.addEventListener("mouseleave", () => item.style.background = "transparent");
-        item.addEventListener("mousedown", (event) => event.preventDefault());
-        item.addEventListener("click", async () => {
-            removeMenu();
-            try {
-                await action();
-            } catch (_) {}
-        });
-        return item;
-    };
-
-    window.addEventListener("contextmenu", async (event) => {
-        event.preventDefault();
-        if (window.top === window) return;
-        removeMenu();
-
-        const editable = getEditable(event.target);
-        const selectedText = getSelectedText(editable || event.target);
-        const context = await requestContext();
-        const menu = document.createElement("div");
-        menu.id = menuId;
-        Object.assign(menu.style, {
-            position: "fixed",
-            zIndex: "2147483647",
-            display: "grid",
-            gap: "4px",
-            minWidth: "156px",
-            padding: "6px",
-            border: "1px solid #dbe4ef",
-            borderRadius: "14px",
-            background: "#ffffff",
-            boxShadow: "0 12px 28px rgba(31, 50, 79, 0.1)"
-        });
-        menu.appendChild(createItem("copy", "复制", Boolean(selectedText), () => writeClipboard(selectedText)));
-        menu.appendChild(createItem("paste", "粘贴", Boolean(editable), () => pasteClipboard(editable)));
-        menu.appendChild(createItem("refresh", "刷新", true, () => sendAction("refresh")));
-        menu.appendChild(createItem("external", "使用系统浏览器打开", true, () => sendAction("open-external")))
-        if (context.localWorkspace) {
-            menu.appendChild(createItem("folder", "打开工作区文件夹", true, () => sendAction("open-workspace")));
-        }
-        if (context.developmentMode) {
-            menu.appendChild(createItem("devtools", "打开开发者调试模式", true, () => sendAction("open-devtools")));
-        }
-        document.body.appendChild(menu);
-        const bounds = menu.getBoundingClientRect();
-        menu.style.left = `${Math.max(4, Math.min(event.clientX, window.innerWidth - bounds.width - 4))}px`;
-        menu.style.top = `${Math.max(4, Math.min(event.clientY, window.innerHeight - bounds.height - 4))}px`;
-    }, true);
-    window.addEventListener("pointerdown", (event) => {
-        if (!event.target?.closest?.(`#${menuId}`)) removeMenu();
-    }, true);
-    window.addEventListener("blur", removeMenu);
-    window.addEventListener("scroll", removeMenu, true);
-    window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") removeMenu();
-    });
-    window.addEventListener("message", (event) => {
-        const data = event.data;
-        if (window.top !== window && [actionMessageType, contextRequestType].includes(data?.type)) {
-            window.parent.postMessage(event.data, "*");
-        }
-        if (data?.type === contextResponseType) {
-            const resolve = pendingContextRequests.get(data.requestId);
-            if (resolve) {
-                pendingContextRequests.delete(data.requestId);
-                resolve(data.context);
-            }
-            for (let index = 0; index < window.frames.length; index += 1) {
-                window.frames[index].postMessage(data, "*");
-            }
-        }
-    });
-})();
-"##;
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
-
-// ─── 状态管理 ───────────────────────────────────────────────
-
-struct SolonState {
-    processes: Mutex<HashMap<String, SolonProcess>>,
-    cli_outputs: Arc<Mutex<HashMap<String, String>>>,
-    should_exit: Mutex<bool>,
-}
-
-struct SolonProcess {
-    child: Child,
-    process_group_id: u32,
-    port: u16,
-    url: String,
-    ready: bool,
-}
-
-#[derive(Serialize, Clone)]
-struct StartResult {
-    project_key: String,
-    workspace_key: String,
-    workspace: Option<String>,
-    name: String,
-    port: u16,
-    url: String,
-    already_running: bool,
-    mode: String,
-    command_preview: Option<String>,
-}
-
-#[derive(Serialize, Clone)]
-struct CliOutput {
-    workspace_key: String,
-    output: String,
-}
-
-#[derive(Deserialize, Clone, Copy, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-enum LaunchMode {
-    Web,
-    Cli,
-}
-
-impl LaunchMode {
-    fn as_str(self) -> &'static str {
-        match self {
-            LaunchMode::Web => "web",
-            LaunchMode::Cli => "cli",
-        }
-    }
-}
-
-fn project_key(workspace_key: &str, mode: LaunchMode) -> String {
-    format!("{}::{}", workspace_key, mode.as_str())
-}
-
-#[derive(Serialize, Clone)]
-struct WorkspaceLog {
-    workspace_key: String,
-    name: String,
-    port: Option<u16>,
-    message: String,
-}
-
-#[derive(Serialize, Clone)]
-struct FailedResult {
-    workspace_key: String,
-    name: String,
-    port: Option<u16>,
-    message: String,
-}
-
-#[derive(Deserialize)]
-struct RemoteVersionInfo {
-    cli: Option<String>,
-    studio: Option<String>,
-}
-
-#[derive(Serialize)]
-struct VersionStatus {
-    installed: bool,
-    cli_current: Option<String>,
-    cli_latest: Option<String>,
-    cli_update_available: bool,
-    studio_current: String,
-    studio_latest: Option<String>,
-    studio_update_available: bool,
-    error: Option<String>,
-}
 
 fn parse_server_port(line: &str) -> Option<u16> {
     let (_, value) = line.split_once("Server port:")?;
@@ -314,78 +71,7 @@ fn is_web_service_ready(port: u16) -> bool {
     .any(|url| client.get(url).send().is_ok())
 }
 
-impl Drop for SolonState {
-    fn drop(&mut self) {
-        cleanup_soloncode_process(self);
-    }
-}
-
-// ─── 辅助函数 ───────────────────────────────────────────────
-
-/// 获取 soloncode 的完整路径（优先检测 ~/.soloncode/bin/，再 fallback 到 PATH）
-fn find_soloncode_path() -> Option<String> {
-    // 方法1：检查 ~/.soloncode/bin/soloncode
-    if let Some(home) = dirs::home_dir() {
-        #[cfg(target_os = "windows")]
-        let local_path = home.join(".soloncode/bin/soloncode.ps1");
-        #[cfg(not(target_os = "windows"))]
-        let local_path = home.join(".soloncode/bin/soloncode");
-        if local_path.exists() {
-            return Some(local_path.to_string_lossy().to_string());
-        }
-    }
-    // 方法2：检查 PATH 中的 soloncode
-    #[cfg(target_os = "windows")]
-    let mut path_command = Command::new("where");
-    #[cfg(not(target_os = "windows"))]
-    let mut path_command = Command::new("which");
-    #[cfg(windows)]
-    path_command.creation_flags(CREATE_NO_WINDOW);
-
-    if let Ok(output) = path_command.arg("soloncode").output() {
-        if output.status.success() {
-            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            if !path.is_empty() {
-                return path.lines().next().map(|line| line.trim().to_string());
-            }
-        }
-    }
-    None
-}
-
-fn soloncode_command(soloncode_path: &str) -> Command {
-    #[cfg(target_os = "windows")]
-    {
-        let mut command = Command::new("powershell");
-        command.args([
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            soloncode_path,
-        ]);
-        command.creation_flags(CREATE_NO_WINDOW);
-        command
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        Command::new(soloncode_path)
-    }
-}
-
-fn is_java_available() -> bool {
-    let mut command = Command::new("java");
-    command
-        .arg("-version")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
-    #[cfg(windows)]
-    command.creation_flags(CREATE_NO_WINDOW);
-    command.status().is_ok_and(|status| status.success())
-}
-
-fn cleanup_soloncode_process(state: &SolonState) {
+pub(crate) fn cleanup_soloncode_process(state: &SolonState) {
     if let Ok(mut guard) = state.processes.lock() {
         for (_, process) in guard.drain() {
             kill_child_tree(process.child, process.process_group_id, Some(process.port));
@@ -442,35 +128,35 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let mut tray = TrayIconBuilder::new()
         .show_menu_on_left_click(false)
         .tooltip("SolonCode Studio")
-        .on_tray_icon_event(move |tray, event| {
-            match event {
-                tauri::tray::TrayIconEvent::Click {
-                    button: tauri::tray::MouseButton::Left,
-                    button_state: tauri::tray::MouseButtonState::Up,
-                    ..
-                }
-                | tauri::tray::TrayIconEvent::DoubleClick {
-                    button: tauri::tray::MouseButton::Left,
-                    ..
-                } => show_main_window(tray.app_handle()),
-                #[cfg(target_os = "macos")]
-                tauri::tray::TrayIconEvent::Click {
-                    button: tauri::tray::MouseButton::Right,
-                    button_state: tauri::tray::MouseButtonState::Up,
-                    ..
-                } => {
-                    if let Some(window) = tray.app_handle().get_webview_window("main") {
-                        let _ = window.popup_menu(&tray_menu);
-                    }
-                }
-                _ => {}
+        .on_tray_icon_event(move |tray, event| match event {
+            tauri::tray::TrayIconEvent::Click {
+                button: tauri::tray::MouseButton::Left,
+                button_state: tauri::tray::MouseButtonState::Up,
+                ..
             }
-        })
-        .on_menu_event(|app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
-            TRAY_MENU_OPEN => show_main_window(app),
-            TRAY_MENU_QUIT => exit_app(app),
+            | tauri::tray::TrayIconEvent::DoubleClick {
+                button: tauri::tray::MouseButton::Left,
+                ..
+            } => show_main_window(tray.app_handle()),
+            #[cfg(target_os = "macos")]
+            tauri::tray::TrayIconEvent::Click {
+                button: tauri::tray::MouseButton::Right,
+                button_state: tauri::tray::MouseButtonState::Up,
+                ..
+            } => {
+                if let Some(window) = tray.app_handle().get_webview_window("main") {
+                    let _ = window.popup_menu(&tray_menu);
+                }
+            }
             _ => {}
-        });
+        })
+        .on_menu_event(
+            |app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
+                TRAY_MENU_OPEN => show_main_window(app),
+                TRAY_MENU_QUIT => exit_app(app),
+                _ => {}
+            },
+        );
     #[cfg(not(target_os = "macos"))]
     {
         tray = tray.menu(&menu);
@@ -480,68 +166,6 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     }
     tray.build(app)?;
     Ok(())
-}
-
-fn workspace_name(path: Option<&str>) -> String {
-    path.and_then(|item| {
-        PathBuf::from(item)
-            .file_name()
-            .map(|name| name.to_string_lossy().to_string())
-    })
-    .filter(|name| !name.is_empty())
-    .unwrap_or_else(|| "用户目录".to_string())
-}
-
-fn normalize_workspace(
-    workspace: Option<String>,
-) -> Result<(String, Option<String>, PathBuf, String), String> {
-    let workspace_input = workspace
-        .as_ref()
-        .map(|path| path.trim().to_string())
-        .filter(|path| !path.is_empty());
-    let workspace_path = workspace
-        .filter(|path| !path.trim().is_empty())
-        .map(PathBuf::from)
-        .unwrap_or_else(|| dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")));
-
-    if !workspace_path.is_dir() {
-        return Err(format!(
-            "工作区不存在或不是目录: {}",
-            workspace_path.display()
-        ));
-    }
-
-    let normalized = workspace_path
-        .canonicalize()
-        .unwrap_or_else(|_| workspace_path.clone());
-    let workspace_value = workspace_input;
-    let workspace_key = workspace_value
-        .clone()
-        .unwrap_or_else(|| "__home__".to_string());
-    let name = workspace_name(workspace_value.as_deref());
-
-    Ok((workspace_key, workspace_value, normalized, name))
-}
-
-fn pick_available_port(used_ports: &HashSet<u16>) -> Result<u16, String> {
-    let range = u32::from(PORT_END - PORT_START + 1);
-    let seed = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.subsec_nanos())
-        .unwrap_or(0);
-    let offset = seed % range;
-
-    for step in 0..range {
-        let port = PORT_START + ((offset + step) % range) as u16;
-        if used_ports.contains(&port) {
-            continue;
-        }
-        if TcpListener::bind(("127.0.0.1", port)).is_ok() {
-            return Ok(port);
-        }
-    }
-
-    Err("没有可用端口，请稍后重试".to_string())
 }
 
 fn child_pids(pid: u32) -> Vec<u32> {
@@ -722,520 +346,6 @@ fn decode_utf8_chunk(pending: &mut Vec<u8>, bytes: &[u8]) -> String {
     }
 }
 
-fn parse_soloncode_version(output: &str) -> Option<String> {
-    output
-        .split_whitespace()
-        .find(|part| {
-            part.trim_start_matches('v')
-                .chars()
-                .next()
-                .is_some_and(|ch| ch.is_ascii_digit())
-        })
-        .map(|part| part.trim().to_string())
-}
-
-fn normalize_version(version: &str) -> String {
-    version.trim().trim_start_matches('v').to_string()
-}
-
-fn is_version_different(current: &str, latest: &str) -> bool {
-    normalize_version(current) != normalize_version(latest)
-}
-
-fn current_cli_version(soloncode_path: &str) -> Result<String, String> {
-    let mut command = soloncode_command(soloncode_path);
-    command
-        .arg("version")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    #[cfg(unix)]
-    unsafe {
-        command.pre_exec(|| {
-            if libc::setpgid(0, 0) == 0 {
-                Ok(())
-            } else {
-                Err(std::io::Error::last_os_error())
-            }
-        });
-    }
-    let mut child = command
-        .spawn()
-        .map_err(|e| format!("获取 SolonCode CLI 版本失败: {}", e))?;
-    let process_group_id = child.id();
-
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or_else(|| "无法读取 SolonCode CLI 版本输出".to_string())?;
-    let (sender, receiver) = mpsc::channel();
-    std::thread::spawn(move || {
-        if let Some(line) = BufReader::new(stdout).lines().map_while(Result::ok).next() {
-            let _ = sender.send(line);
-        }
-    });
-
-    match receiver.recv_timeout(Duration::from_secs(12)) {
-        Ok(line) => {
-            kill_child_tree(child, process_group_id, None);
-            parse_soloncode_version(&line).ok_or_else(|| "无法解析 SolonCode CLI 版本".to_string())
-        }
-        Err(_) => {
-            kill_child_tree(child, process_group_id, None);
-            Err("获取 SolonCode CLI 版本超时".to_string())
-        }
-    }
-}
-
-fn latest_versions() -> Result<RemoteVersionInfo, String> {
-    let response = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(8))
-        .build()
-        .map_err(|e| format!("创建版本检测请求失败: {}", e))?
-        .get(VERSION_URL)
-        .send()
-        .map_err(|e| format!("获取最新版本失败: {}", e))?
-        .error_for_status()
-        .map_err(|e| format!("获取最新版本失败: {}", e))?;
-
-    response
-        .json::<RemoteVersionInfo>()
-        .map_err(|e| format!("解析最新版本失败: {}", e))
-}
-
-// ─── Tauri 命令 ─────────────────────────────────────────────
-
-/// 检测 soloncode 是否已安装
-#[tauri::command]
-async fn check_soloncode() -> bool {
-    tauri::async_runtime::spawn_blocking(|| find_soloncode_path().is_some())
-        .await
-        .unwrap_or(false)
-}
-
-/// 检测 Java 运行环境是否可用
-#[tauri::command]
-async fn check_java() -> bool {
-    tauri::async_runtime::spawn_blocking(is_java_available)
-        .await
-        .unwrap_or(false)
-}
-
-#[tauri::command]
-fn studio_version() -> String {
-    format!("v{}", env!("CARGO_PKG_VERSION"))
-}
-
-/// 获取 CLI 和 Studio 版本状态
-#[tauri::command]
-async fn check_versions() -> VersionStatus {
-    tauri::async_runtime::spawn_blocking(check_versions_blocking)
-        .await
-        .unwrap_or_else(|error| VersionStatus {
-            installed: false,
-            cli_current: None,
-            cli_latest: None,
-            cli_update_available: false,
-            studio_current: format!("v{}", env!("CARGO_PKG_VERSION")),
-            studio_latest: None,
-            studio_update_available: false,
-            error: Some(format!("版本检测任务失败: {}", error)),
-        })
-}
-
-fn check_versions_blocking() -> VersionStatus {
-    let studio_current = format!("v{}", env!("CARGO_PKG_VERSION"));
-    let soloncode_path = find_soloncode_path();
-    let installed = soloncode_path.is_some();
-    let cli_current = soloncode_path
-        .as_deref()
-        .and_then(|path| current_cli_version(path).ok());
-
-    match latest_versions() {
-        Ok(remote) => {
-            let cli_update_available = cli_current
-                .as_deref()
-                .zip(remote.cli.as_deref())
-                .is_some_and(|(current, latest)| is_version_different(current, latest));
-            let studio_update_available = remote
-                .studio
-                .as_deref()
-                .is_some_and(|latest| is_version_different(&studio_current, latest));
-
-            VersionStatus {
-                installed,
-                cli_current,
-                cli_latest: remote.cli,
-                cli_update_available,
-                studio_current,
-                studio_latest: remote.studio,
-                studio_update_available,
-                error: None,
-            }
-        }
-        Err(error) => VersionStatus {
-            installed,
-            cli_current,
-            cli_latest: None,
-            cli_update_available: false,
-            studio_current,
-            studio_latest: None,
-            studio_update_available: false,
-            error: Some(error),
-        },
-    }
-}
-
-/// 选择一个工作区目录
-#[tauri::command]
-fn pick_workspace() -> Option<String> {
-    rfd::FileDialog::new()
-        .set_title("选择 SolonCode 工作区")
-        .pick_folder()
-        .map(|path| path.to_string_lossy().to_string())
-}
-
-/// 获取用户目录对应的默认工作区路径
-#[tauri::command]
-fn home_workspace_path() -> String {
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .to_string_lossy()
-        .to_string()
-}
-
-/// 在系统文件管理器中新增工作区目录
-#[tauri::command]
-fn reveal_workspace(workspace: Option<String>) -> Result<(), String> {
-    let (_, _, workspace_path, _) = normalize_workspace(workspace)?;
-    let target = workspace_path.to_string_lossy().to_string();
-
-    #[cfg(target_os = "macos")]
-    let mut command = {
-        let mut command = Command::new("open");
-        command.arg(&target);
-        command
-    };
-
-    #[cfg(target_os = "windows")]
-    let mut command = {
-        let mut command = Command::new("explorer");
-        command.arg(&target);
-        command
-    };
-
-    #[cfg(target_os = "linux")]
-    let mut command = {
-        let mut command = Command::new("xdg-open");
-        command.arg(&target);
-        command
-    };
-
-    command
-        .spawn()
-        .map_err(|e| format!("新增工作区失败: {}", e))?;
-    Ok(())
-}
-
-/// 打开 Studio GitHub 下载页面
-#[tauri::command]
-fn open_studio_github_release_page() -> Result<(), String> {
-    open_url("https://github.com/visduo/soloncode-studio/releases")
-}
-
-#[tauri::command]
-fn open_external_url(url: String) -> Result<(), String> {
-    open_url(&url)
-}
-
-#[tauri::command]
-fn open_soloncode_system_terminal(workspace: Option<String>) -> Result<(), String> {
-    let (_, _, workspace_path, _) = normalize_workspace(workspace)?;
-    let soloncode_path = find_soloncode_path().ok_or("SolonCode CLI 未安装，请先点击「安装 CLI」")?;
-
-    #[cfg(not(target_os = "windows"))]
-    let script = format!(
-        "cd {} && {} cli",
-        shell_quote(&workspace_path.to_string_lossy()),
-        shell_quote(&soloncode_path)
-    );
-
-    #[cfg(target_os = "windows")]
-    let script = format!(
-        "pushd {} && {} cli",
-        cmd_quote(&workspace_path.to_string_lossy()),
-        cmd_quote(&soloncode_path)
-    );
-
-    #[cfg(target_os = "macos")]
-    let mut command = {
-        let launcher_path = std::env::temp_dir().join(format!(
-            "soloncode-cli-{}.command",
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .map(|duration| duration.as_millis())
-                .unwrap_or(0)
-        ));
-        fs::write(&launcher_path, format!("#!/bin/sh\nrm -- \"$0\"\n{}\n", script))
-            .map_err(|e| format!("创建系统终端启动脚本失败: {}", e))?;
-        let mut permissions = fs::metadata(&launcher_path)
-            .map_err(|e| format!("读取系统终端启动脚本权限失败: {}", e))?
-            .permissions();
-        permissions.set_mode(0o700);
-        fs::set_permissions(&launcher_path, permissions)
-            .map_err(|e| format!("设置系统终端启动脚本权限失败: {}", e))?;
-
-        let mut command = Command::new("open");
-        command.args(["-a", "Terminal"]);
-        command.arg(&launcher_path);
-        command
-    };
-
-    #[cfg(target_os = "windows")]
-    let mut command = {
-        let mut command = Command::new("cmd");
-        command.args(["/C", "start", "SolonCode CLI", "cmd", "/K", &script]);
-        command.creation_flags(CREATE_NO_WINDOW);
-        command
-    };
-
-    #[cfg(target_os = "linux")]
-    {
-        let candidates: [(&str, Vec<&str>); 5] = [
-            ("x-terminal-emulator", vec!["-e", "bash", "-lc", &script]),
-            ("gnome-terminal", vec!["--", "bash", "-lc", &script]),
-            ("konsole", vec!["-e", "bash", "-lc", &script]),
-            ("xfce4-terminal", vec!["-e", "bash", "-lc", &script]),
-            ("xterm", vec!["-e", "bash", "-lc", &script]),
-        ];
-        let mut last_error = None;
-        for (program, args) in candidates {
-            match Command::new(program)
-                .args(args)
-                .env_remove("LD_LIBRARY_PATH")
-                .spawn()
-            {
-                Ok(_) => return Ok(()),
-                Err(e) => last_error = Some(format!("{}: {}", program, e)),
-            }
-        }
-        return Err(format!(
-            "打开系统终端失败: {}",
-            last_error.unwrap_or_else(|| "未找到可用终端".to_string())
-        ));
-    }
-
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
-    {
-        command
-            .spawn()
-            .map_err(|e| format!("打开系统终端失败: {}", e))?;
-        Ok(())
-    }
-}
-
-fn shell_quote(value: &str) -> String {
-    format!("'{}'", value.replace('\'', "'\\''"))
-}
-
-#[cfg(target_os = "windows")]
-fn cmd_quote(value: &str) -> String {
-    format!("\"{}\"", value.replace('"', "\"\""))
-}
-
-fn open_url(url: &str) -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    let mut command = {
-        let mut command = Command::new("open");
-        command.arg(url);
-        command
-    };
-
-    #[cfg(target_os = "windows")]
-    let mut command = {
-        let mut command = Command::new("cmd");
-        command.args(["/C", "start", "", url]);
-        command.creation_flags(CREATE_NO_WINDOW);
-        command
-    };
-
-    #[cfg(target_os = "linux")]
-    let mut command = {
-        let mut command = Command::new("xdg-open");
-        command.arg(url);
-        command
-    };
-
-    command
-        .spawn()
-        .map_err(|e| format!("打开浏览器失败: {}", e))?;
-    Ok(())
-}
-
-fn run_shell_with_live_output(
-    app: tauri::AppHandle,
-    start_message: &'static str,
-    script: &'static str,
-    stdin_input: Option<&'static str>,
-    success_message: &'static str,
-    failure_label: &'static str,
-) -> Result<String, String> {
-    let _ = app.emit("soloncode-output", start_message);
-
-    #[cfg(target_os = "windows")]
-    let mut command = {
-        let mut command = Command::new("powershell");
-        command.args([
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            script,
-        ]);
-        command.creation_flags(CREATE_NO_WINDOW);
-        command
-    };
-    #[cfg(not(target_os = "windows"))]
-    let mut command = {
-        let mut command = Command::new("bash");
-        command.args(["-c", script]);
-        // AppImage 运行时 LD_LIBRARY_PATH 指向其内部打包的库（如旧版 libnghttp2），
-        // 子进程继承后会导致系统 libcurl 等动态库加载 AppImage 内的不兼容版本，
-        // 出现 undefined symbol 错误。清除后子进程使用系统库。
-        command.env_remove("LD_LIBRARY_PATH");
-        command
-    };
-
-    if stdin_input.is_some() {
-        command.stdin(Stdio::piped());
-    }
-
-    let mut child = command
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("执行命令失败: {}", e))?;
-
-    if let Some(input) = stdin_input {
-        if let Some(mut stdin) = child.stdin.take() {
-            stdin
-                .write_all(input.as_bytes())
-                .map_err(|e| format!("写入命令确认失败: {}", e))?;
-        }
-    }
-
-    let stdout = child.stdout.take();
-    let stderr = child.stderr.take();
-
-    let stdout_handle = stdout.map(|stdout| {
-        let app = app.clone();
-        std::thread::spawn(move || {
-            for line in BufReader::new(stdout).lines().map_while(Result::ok) {
-                let _ = app.emit("soloncode-output", line);
-            }
-        })
-    });
-
-    let stderr_handle = stderr.map(|stderr| {
-        let app = app.clone();
-        std::thread::spawn(move || {
-            for line in BufReader::new(stderr).lines().map_while(Result::ok) {
-                let _ = app.emit("soloncode-output", format!("[stderr] {}", line));
-            }
-        })
-    });
-
-    let status = child
-        .wait()
-        .map_err(|e| format!("等待命令结束失败: {}", e))?;
-    if let Some(handle) = stdout_handle {
-        let _ = handle.join();
-    }
-    if let Some(handle) = stderr_handle {
-        let _ = handle.join();
-    }
-
-    if status.success() {
-        let _ = app.emit("soloncode-output", success_message);
-        Ok(success_message.to_string())
-    } else {
-        let msg = format!("{} (exit code: {:?})", failure_label, status.code());
-        let _ = app.emit("soloncode-output", msg.clone());
-        Err(msg)
-    }
-}
-
-/// 安装 soloncode（通过官方脚本）
-#[tauri::command]
-async fn install_soloncode(app: tauri::AppHandle) -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        run_shell_with_live_output(
-            app,
-            "📦 开始安装 SolonCode CLI...",
-            install_soloncode_script(),
-            None,
-            "✅ SolonCode 安装成功!",
-            "❌ 安装失败",
-        )
-    })
-    .await
-    .map_err(|e| format!("安装任务执行失败: {}", e))?
-}
-
-#[cfg(target_os = "windows")]
-fn install_soloncode_script() -> &'static str {
-    "irm https://solon.noear.org/soloncode/setup.ps1 | iex"
-}
-
-#[cfg(not(target_os = "windows"))]
-fn install_soloncode_script() -> &'static str {
-    "curl -fsSL https://solon.noear.org/soloncode/setup.sh | bash"
-}
-
-/// 卸载 soloncode
-#[tauri::command]
-async fn uninstall_soloncode(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, SolonState>,
-) -> Result<String, String> {
-    // 清掉 Rust 侧的子进程状态
-    cleanup_soloncode_process(&state);
-
-    tauri::async_runtime::spawn_blocking(move || {
-        std::thread::sleep(Duration::from_millis(500));
-        run_shell_with_live_output(
-            app,
-            "🗑️ 正在卸载 SolonCode CLI...",
-            uninstall_soloncode_script(),
-            uninstall_soloncode_confirmation(),
-            "✅ SolonCode 已卸载",
-            "❌ 卸载失败",
-        )
-    })
-    .await
-    .map_err(|e| format!("卸载任务执行失败: {}", e))?
-}
-
-#[cfg(target_os = "windows")]
-fn uninstall_soloncode_script() -> &'static str {
-    "$script = Join-Path $HOME '.soloncode/bin/uninstall.ps1'; if (Test-Path $script) { & $script } else { throw \"卸载脚本不存在: $script\" }"
-}
-
-#[cfg(target_os = "windows")]
-fn uninstall_soloncode_confirmation() -> Option<&'static str> {
-    Some("Y\n")
-}
-
-#[cfg(not(target_os = "windows"))]
-fn uninstall_soloncode_script() -> &'static str {
-    "sh ~/.soloncode/bin/uninstall.sh"
-}
-
-#[cfg(not(target_os = "windows"))]
-fn uninstall_soloncode_confirmation() -> Option<&'static str> {
-    Some("Y\nY\n")
-}
-
-/// 启动 soloncode 服务
 #[tauri::command]
 fn start_soloncode(
     app: tauri::AppHandle,
@@ -1246,7 +356,6 @@ fn start_soloncode(
     let (workspace_key, workspace_value, workspace_path, name) = normalize_workspace(workspace)?;
     let process_key = project_key(&workspace_key, mode);
 
-    // 检查该工作区是否已有旧进程；活着也直接清理，后续重新启动。
     {
         let mut guard = state
             .processes
@@ -1259,7 +368,11 @@ fn start_soloncode(
                 }
                 Ok(None) => {
                     if let Some(old_process) = guard.remove(&process_key) {
-                        kill_child_tree(old_process.child, old_process.process_group_id, Some(old_process.port));
+                        kill_child_tree(
+                            old_process.child,
+                            old_process.process_group_id,
+                            Some(old_process.port),
+                        );
                     }
                 }
             }
@@ -1272,11 +385,12 @@ fn start_soloncode(
         }
     }
 
-    // 检查是否已安装，获取完整路径
     let soloncode_path =
         find_soloncode_path().ok_or("SolonCode CLI 未安装，请先点击「安装 CLI」")?;
     if !is_java_available() {
-        return Err("未检测到 Java 运行环境，请先安装 Java 运行环境后再安装/启动 SolonCode".to_string());
+        return Err(
+            "未检测到 Java 运行环境，请先安装 Java 运行环境后再安装/启动 SolonCode".to_string(),
+        );
     }
 
     let used_ports: HashSet<u16> = state
@@ -1309,7 +423,6 @@ fn start_soloncode(
         },
     );
 
-    // 构建 shell 环境 PATH
     let mut path_env = std::env::var("PATH").unwrap_or_default();
     if let Some(home) = dirs::home_dir() {
         let bin_dir = home.join(".soloncode/bin").to_string_lossy().to_string();
@@ -1327,7 +440,9 @@ fn start_soloncode(
 
     #[cfg(not(target_os = "windows"))]
     let start_script = match mode {
-        LaunchMode::Web => "cd \"$SOLONCODE_WORKSPACE\" && exec \"$SOLONCODE_BIN\" serve \"$SOLONCODE_PORT\"",
+        LaunchMode::Web => {
+            "cd \"$SOLONCODE_WORKSPACE\" && exec \"$SOLONCODE_BIN\" serve \"$SOLONCODE_PORT\""
+        }
         LaunchMode::Cli => "cd \"$SOLONCODE_WORKSPACE\" && exec \"$SOLONCODE_BIN\" cli",
     };
 
@@ -1393,7 +508,6 @@ fn start_soloncode(
         },
     );
 
-    // 转发 stdout 日志
     let stdout = child
         .stdout
         .take()
@@ -1415,7 +529,12 @@ fn start_soloncode(
                     Ok(0) => {
                         let chunk = String::from_utf8_lossy(&pending_utf8).into_owned();
                         if !chunk.is_empty() {
-                            append_cli_output(&app_out, &stdout_outputs, &stdout_workspace_key, &chunk);
+                            append_cli_output(
+                                &app_out,
+                                &stdout_outputs,
+                                &stdout_workspace_key,
+                                &chunk,
+                            );
                         }
                         break;
                     }
@@ -1448,7 +567,6 @@ fn start_soloncode(
         }
     });
 
-    // 转发 stderr 日志
     let stderr = child
         .stderr
         .take()
@@ -1468,7 +586,12 @@ fn start_soloncode(
                     Ok(0) => {
                         let chunk = String::from_utf8_lossy(&pending_utf8).into_owned();
                         if !chunk.is_empty() {
-                            append_cli_output(&app_err, &stderr_outputs, &stderr_workspace_key, &chunk);
+                            append_cli_output(
+                                &app_err,
+                                &stderr_outputs,
+                                &stderr_workspace_key,
+                                &chunk,
+                            );
                         }
                         break;
                     }
@@ -1501,7 +624,6 @@ fn start_soloncode(
         }
     });
 
-    // 存储子进程
     {
         let mut guard = state
             .processes
@@ -1540,7 +662,6 @@ fn start_soloncode(
         return Ok(ready_payload);
     }
 
-    // 后台等待端口就绪后通知前端打开项目 tab
     let app_nav = app.clone();
     let failed_workspace_key = workspace_key.clone();
     let ready_payload = StartResult {
@@ -1570,7 +691,9 @@ fn start_soloncode(
                     ready_payload.url = format!("http://localhost:{}/", server_port);
                     let state = app_nav.state::<SolonState>();
                     if let Ok(mut guard) = state.processes.lock() {
-                        if let Some(process) = guard.get_mut(&project_key(&failed_workspace_key, mode)) {
+                        if let Some(process) =
+                            guard.get_mut(&project_key(&failed_workspace_key, mode))
+                        {
                             process.port = server_port;
                             process.url = ready_payload.url.clone();
                         }
@@ -1702,7 +825,6 @@ fn start_soloncode(
     })
 }
 
-/// 停止 soloncode 服务
 #[tauri::command]
 fn stop_soloncode(
     app: tauri::AppHandle,
@@ -1783,12 +905,16 @@ fn send_cli_input(
     let Some(stdin) = process.child.stdin.as_mut() else {
         return Err("CLI 会话不可写入".to_string());
     };
-    let is_raw_control = input.chars().any(|ch| ch.is_control() && ch != '\n' && ch != '\r');
+    let is_raw_control = input
+        .chars()
+        .any(|ch| ch.is_control() && ch != '\n' && ch != '\r');
     if is_raw_control {
         stdin
             .write_all(input.as_bytes())
             .map_err(|e| format!("发送到 CLI 失败: {}", e))?;
-        stdin.flush().map_err(|e| format!("发送到 CLI 失败: {}", e))?;
+        stdin
+            .flush()
+            .map_err(|e| format!("发送到 CLI 失败: {}", e))?;
         let output = state
             .cli_outputs
             .lock()
@@ -1815,7 +941,6 @@ fn send_cli_input(
     Ok(payload)
 }
 
-/// 导航回启动器首页
 #[tauri::command]
 fn go_home(app: tauri::AppHandle) -> Result<(), String> {
     app.emit("soloncode-go-home", ()).map_err(|e| e.to_string())
@@ -1834,7 +959,11 @@ fn quit_studio(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn show_task_finished_notification(app: tauri::AppHandle, title: String, body: String) -> Result<(), String> {
+fn show_task_finished_notification(
+    app: tauri::AppHandle,
+    title: String,
+    body: String,
+) -> Result<(), String> {
     app.notification()
         .builder()
         .title(title)
@@ -1844,41 +973,6 @@ fn show_task_finished_notification(app: tauri::AppHandle, title: String, body: S
         .map_err(|e| e.to_string())
 }
 
-#[cfg(target_os = "linux")]
-fn configure_linux_webkit_gpu_fallback() {
-    if !should_disable_webkit_gpu() {
-        return;
-    }
-
-    std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
-    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-    std::env::set_var("LIBGL_ALWAYS_SOFTWARE", "1");
-}
-
-#[cfg(target_os = "linux")]
-fn should_disable_webkit_gpu() -> bool {
-    match std::env::var("SOLONCODE_STUDIO_DISABLE_GPU") {
-        Ok(value) if matches!(value.as_str(), "0" | "false" | "FALSE" | "off" | "OFF") => return false,
-        Ok(_) => return true,
-        Err(_) => {}
-    }
-
-    match fs::read_dir("/dev/dri") {
-        Ok(entries) => entries
-            .filter_map(Result::ok)
-            .map(|entry| entry.path())
-            .filter(|path| {
-                path.file_name()
-                    .and_then(|name| name.to_str())
-                    .is_some_and(|name| name == "renderD128" || name.starts_with("card"))
-            })
-            .any(|path| fs::OpenOptions::new().read(true).write(true).open(path).is_err()),
-        Err(_) => true,
-    }
-}
-
-// ─── 入口 ───────────────────────────────────────────────────
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(target_os = "linux")]
@@ -1887,7 +981,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(
             tauri::plugin::Builder::<_, ()>::new("disable-context-menu")
-                .js_init_script_on_all_frames(DISABLE_CONTEXT_MENU_SCRIPT)
+                .js_init_script_on_all_frames(context_menu_script())
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())

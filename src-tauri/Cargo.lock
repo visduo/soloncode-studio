@@ -3601,6 +3601,7 @@ dependencies = [
 name = "soloncode-studio"
 version = "26.721.2"
 dependencies = [
+ "base64 0.22.1",
  "dirs",
  "libc",
  "reqwest 0.12.28",

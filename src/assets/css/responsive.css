@@ -1,0 +1,147 @@
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+@media (forced-colors: active) {
+    .workspace-item.active::before,
+    .workspace-status-label::before {
+        forced-color-adjust: none;
+    }
+}
+
+@media (max-width: 860px) {
+    .launcher-container {
+        padding: 0;
+        overflow: auto;
+    }
+
+    .app-shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        height: 100%;
+        min-height: 100%;
+    }
+
+    .log-header {
+        grid-template-columns: 1fr;
+    }
+
+    .log-toolbar {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .log-search {
+        width: min(100%, 240px);
+        flex: 1 1 150px;
+    }
+
+    .sidebar {
+        grid-column: 1;
+        grid-row: auto;
+        min-height: 260px;
+    }
+
+    .home-view {
+        grid-template-columns: 190px minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
+        min-height: 0;
+        overflow: hidden;
+        padding: 0;
+    }
+
+    .main-panel {
+        grid-column: 2;
+        grid-row: auto;
+        min-height: 0;
+        padding: 18px 20px 16px;
+    }
+
+    .learning-panel {
+        grid-column: 2;
+        grid-row: auto;
+        padding: 28px 22px;
+    }
+
+    .learning-section {
+        grid-template-columns: 1fr;
+        gap: 22px;
+    }
+
+    .learning-possibilities {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .workspace-search {
+        flex-basis: auto;
+    }
+    .welcome-actions {
+        flex-wrap: wrap;
+    }
+    .project-list-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .project-view {
+        min-height: 70vh;
+    }
+
+    body.project-mode .app-shell {
+        height: 100vh;
+        min-height: 100vh;
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    body.project-mode .project-view {
+        min-height: 0;
+    }
+
+    .workspace-status-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .workspace-status-actions {
+        justify-content: space-between;
+    }
+
+    .mode-switch {
+        width: 100%;
+    }
+
+    .mode-switch-btn {
+        flex: 1;
+    }
+
+    .log-area {
+        min-height: 0;
+    }
+}

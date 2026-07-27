@@ -1,0 +1,292 @@
+.log-area {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--panel-soft);
+    overflow: hidden;
+}
+
+.log-dialog-panel {
+    grid-template-rows: 52px minmax(0, 1fr);
+    width: min(920px, calc(100vw - 64px));
+    height: min(600px, calc(100vh - 80px));
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--log-border);
+    border-radius: var(--radius-lg);
+    background: var(--log-bg);
+    box-shadow: none;
+}
+.log-dialog-panel .log-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 0 10px 0 15px;
+    border-bottom: 1px solid var(--log-border);
+    background: var(--log-surface);
+}
+.log-dialog-panel .log-header h2 {
+    color: var(--log-text);
+    font-size: 0.84rem;
+    font-weight: var(--font-medium);
+}
+.dialog-close {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.dialog-close .app-icon {
+    width: 16px;
+    height: 16px;
+}
+.dialog-close:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+.log-dialog-panel .log-clear {
+    height: 30px;
+    border-color: transparent;
+    border-radius: 5px;
+    background: transparent;
+    color: #91a0af;
+    font-size: 0.7rem;
+    font-weight: var(--font-regular);
+}
+.log-dialog-panel .log-clear:hover {
+    border-color: transparent;
+    background: #26333f;
+    color: #ffffff;
+}
+.log-dialog-panel .dialog-close {
+    color: #91a0af;
+}
+.log-dialog-panel .dialog-close:hover {
+    background: #26333f;
+    color: #ffffff;
+}
+.log-dialog-panel .log-content {
+    padding: 18px 20px 28px;
+    background: var(--log-bg);
+    color: var(--log-text);
+    font-size: 0.78rem;
+    line-height: 1.72;
+    scrollbar-color: #465767 transparent;
+}
+.log-dialog-panel .log-line {
+    margin: 0;
+    padding: 2px 0 2px 12px;
+    border-left-width: 2px;
+}
+.log-dialog-panel .log-group {
+    border-bottom-color: var(--log-border);
+}
+.log-dialog-panel .log-empty {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: #697684;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-size: 0.78rem;
+}
+.log-dialog-panel .log-info,
+.log-dialog-panel .log-key-info {
+    color: #79b8ff;
+}
+.log-dialog-panel .log-success {
+    color: #78d39a;
+}
+.log-dialog-panel .log-wait,
+.log-dialog-panel .log-time {
+    color: #7f8b98;
+}
+.log-dialog-panel .log-stop {
+    color: #e8bd72;
+}
+.log-dialog-panel .log-error {
+    color: #ff8e8e;
+}
+.log-dialog-panel .log-content::-webkit-scrollbar-thumb {
+    background: #465767;
+}
+
+.log-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 11px 13px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-soft);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: var(--font-medium);
+}
+
+.log-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.log-search,
+.log-filter {
+    height: 30px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--panel);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.74rem;
+    outline: none;
+}
+
+.log-search {
+    width: min(210px, 34vw);
+    padding: 0 10px;
+}
+
+.log-search::placeholder {
+    color: var(--text-muted);
+}
+
+.log-filter {
+    padding: 0 8px;
+    cursor: pointer;
+}
+
+.log-search:focus,
+.log-filter:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.log-autoscroll {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: var(--font-regular);
+    white-space: nowrap;
+}
+
+.log-autoscroll input {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    accent-color: var(--accent);
+}
+
+.log-clear {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--panel);
+    color: var(--text-secondary);
+    cursor: pointer;
+    height: 30px;
+    padding: 0 10px;
+    font-size: 0.74rem;
+    font-weight: var(--font-regular);
+}
+
+.log-clear:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+.log-content {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 15px;
+    color: var(--text-secondary);
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 0.82rem;
+    line-height: 1.78;
+}
+
+.log-line {
+    margin: 0 0 5px;
+    padding: 3px 0 3px 10px;
+    border-left: 2px solid transparent;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.log-info {
+    border-left-color: var(--accent);
+    color: var(--accent-strong);
+}
+
+.log-stop {
+    border-left-color: var(--state-loading);
+    color: var(--state-loading);
+}
+
+.log-success {
+    border-left-color: var(--state-running);
+    color: var(--state-running);
+}
+
+.log-wait {
+    border-left-color: var(--state-idle);
+    color: var(--state-idle);
+}
+
+.log-error {
+    border-left-color: var(--state-error);
+    color: var(--state-error);
+}
+
+.log-key-info {
+    color: var(--accent-strong);
+    font-weight: var(--font-medium);
+}
+
+.log-time {
+    color: var(--text-muted);
+}
+
+.log-group {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.log-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.log-empty {
+    color: var(--text-muted);
+}
+
+.workspace-list::-webkit-scrollbar,
+.log-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.workspace-list::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+}
+
+.log-content::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+}
+
