@@ -11,18 +11,6 @@
     },
     "app": {
         "withGlobalTauri": true,
-        "windows": [
-            {
-                "title": "SolonCode Studio",
-                "theme": "Light",
-                "width": 1200,
-                "height": 780,
-                "minWidth": 1000,
-                "minHeight": 700,
-                "center": true,
-                "resizable": true
-            }
-        ],
         "security": {
             "csp": null
         }

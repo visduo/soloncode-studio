@@ -1,7 +1,14 @@
 <script setup>
-import AppIcon from "./AppIcon.vue";
 import { useStudioStore } from "../stores/studio.js";
+import AppIcon from "./AppIcon.vue";
 const studio = useStudioStore();
+
+function releaseMenuFocus(event) {
+    event.target.closest("button")?.blur();
+    queueMicrotask(() => {
+        studio.state.openMenu = null;
+    });
+}
 </script>
 
 <template>
@@ -40,11 +47,13 @@ const studio = useStudioStore();
                 <button
                     class="sidebar-cli-settings"
                     type="button"
-                    title="CLI 设置"
                     @click="studio.state.openMenu = studio.state.openMenu === 'cli' ? null : 'cli'">
                     <AppIcon name="settings" />
                 </button>
-                <div v-if="studio.state.openMenu === 'cli'" class="app-menu cli-actions-menu">
+                <div
+                    v-if="studio.state.openMenu === 'cli'"
+                    class="app-menu cli-actions-menu"
+                    @click.capture="releaseMenuFocus">
                     <button
                         v-if="!studio.state.javaAvailable"
                         class="app-menu-item"

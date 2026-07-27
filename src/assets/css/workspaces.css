@@ -24,6 +24,7 @@ h1 {
 }
 
 .sidebar-cli-menu-wrap {
+    position: relative;
     display: flex;
     justify-content: flex-start;
 }
@@ -51,7 +52,11 @@ h1 {
     height: 16px;
 }
 
-.cli-actions-menu {
+.app-menu.cli-actions-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    top: auto;
     min-width: 170px;
 }
 
@@ -648,7 +653,11 @@ h1 {
     display: grid;
     gap: 4px;
     min-width: 156px;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
     padding: 6px;
+    overflow-y: auto;
+    overflow-x: hidden;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     border-color: var(--border-strong);
@@ -808,4 +817,3 @@ h1 {
     background: var(--state-loading-soft);
     color: var(--state-loading);
 }
-

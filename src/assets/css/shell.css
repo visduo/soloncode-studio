@@ -87,7 +87,7 @@
     flex: 0 1 auto;
     align-items: center;
     gap: 2px;
-    min-width: 118px;
+    min-width: 0;
     min-height: 40px;
     padding: 0 12px;
     overflow-x: auto;
@@ -96,6 +96,13 @@
     border-radius: 0;
     background: transparent;
     scrollbar-width: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.tab-bar * {
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .platform-macos .macos-traffic-light-space {
@@ -267,4 +274,3 @@
     background: var(--surface-hover);
     color: var(--state-error);
 }
-

@@ -83,7 +83,6 @@ onBeforeUnmount(() => window.removeEventListener("message", message));
                 class="project-frame"
                 :class="{ 'web-page-frame': project.type === studio.constants.PROJECT_TYPES.webPage }"
                 :src="withStudioParam(project.url)"
-                :title="project.name"
                 :referrerpolicy="project.type === studio.constants.PROJECT_TYPES.webPage ? 'no-referrer' : undefined"
                 :allow="
                     project.type === studio.constants.PROJECT_TYPES.webPage

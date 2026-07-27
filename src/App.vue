@@ -59,10 +59,3 @@ onBeforeUnmount(() => {
         <StudioDialogs />
     </div>
 </template>
-
-<style>
-.vue-project-host {
-    width: 100%;
-    height: 100%;
-}
-</style>

@@ -147,7 +147,6 @@ onBeforeUnmount(() => {
         <button
             class="terminal-settings-button"
             type="button"
-            title="终端设置"
             @click="studio.dialogs.terminalSettings = true">
             <AppIcon name="settings" />
         </button>

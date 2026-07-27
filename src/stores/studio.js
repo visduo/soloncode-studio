@@ -84,7 +84,6 @@ function refreshWorkspaces() {
 
 function selectWorkspace(path) {
     state.selectedWorkspace = path || null;
-    touchWorkspaceEntry(state.selectedWorkspace);
     localStorage.setItem("soloncode.selectedWorkspace", state.selectedWorkspace || "");
     state.openMenu = null;
 }
@@ -113,6 +112,7 @@ function closePrompt() {
 function queuePrompt(prompt) {
     if (prompt.key && queuedPromptKeys.has(prompt.key)) return;
     if (prompt.key) queuedPromptKeys.add(prompt.key);
+    state.openMenu = null;
     promptQueue.value.push(prompt);
 }
 
@@ -178,6 +178,8 @@ function reorderTab(sourceKey, targetKey) {
 function openWebPage(urlValue) {
     const url = normalizeWebPageUrl(urlValue);
     if (!url) return;
+    touchWorkspaceEntry(url);
+    refreshWorkspaces();
     const key = `web::${url}`;
     upsertProject({
         project_key: key,
@@ -235,6 +237,7 @@ async function pickWorkspace() {
 }
 
 function showAliasDialog(path) {
+    state.openMenu = null;
     dialogForms.editingWorkspace = path;
     dialogForms.alias = getWorkspaceDisplayName(path);
     dialogs.alias = true;
@@ -249,10 +252,17 @@ function saveAlias() {
 }
 
 function showRemoteDialog(path = null) {
+    state.openMenu = null;
     const entry = path ? getWorkspaceEntry(path) : null;
     dialogForms.editingRemote = entry?.type === "remote" ? path : null;
     dialogForms.remote = dialogForms.editingRemote ? entry.url || entry.path : "";
     dialogs.remote = true;
+}
+
+function showLogsDialog(path = state.selectedWorkspace) {
+    selectWorkspace(path);
+    state.openMenu = null;
+    dialogs.logs = true;
 }
 
 function saveRemote() {
@@ -464,6 +474,8 @@ async function runWorkspace(path = state.selectedWorkspace, target = RUN_TARGETS
     if (state.busy || projectForWorkspace(targetWorkspace) || startingWorkspaceKeys.has(key)) return;
     if (!state.installed) return showInstallPrompt();
     if (!state.javaAvailable) return showJavaPrompt();
+    touchWorkspaceEntry(targetWorkspace);
+    refreshWorkspaces();
     state.busy = true;
     startingWorkspaceKeys.add(key);
     setStatus("正在启动...", "detecting");
@@ -674,28 +686,29 @@ const orderedProjects = computed(() =>
 );
 const visibleWorkspaces = computed(() => {
     const query = state.workspaceSearch.trim().toLowerCase();
-    return [
-        {
-            path: null,
-            name: "用户目录",
-            detail: state.homeWorkspacePath || "用户目录",
-            removable: false,
-            type: "local"
-        },
-        ...workspaces.value.map((entry) => ({
+    const homeWorkspace = {
+        path: null,
+        name: "用户目录",
+        detail: state.homeWorkspacePath || "用户目录",
+        removable: false,
+        type: "local"
+    };
+    const otherWorkspaces = workspaces.value
+        .map((entry) => ({
             ...entry,
             name: getWorkspaceDisplayName(entry.path, entry.type === "remote" ? entry.url || entry.path : undefined),
             detail: entry.type === "remote" ? entry.url || entry.path : entry.path,
             removable: true
         }))
-    ]
         .filter((entry) => !query || `${entry.name} ${entry.detail}`.toLowerCase().includes(query))
         .sort((left, right) => {
             if (left.pinned !== right.pinned) return left.pinned ? -1 : 1;
             const leftActive = projectForWorkspace(left.path) || startingWorkspaceKeys.has(workspaceKey(left.path));
             const rightActive = projectForWorkspace(right.path) || startingWorkspaceKeys.has(workspaceKey(right.path));
-            return Number(Boolean(rightActive)) - Number(Boolean(leftActive));
+            if (Boolean(leftActive) !== Boolean(rightActive)) return leftActive ? -1 : 1;
+            return (right.lastOpenedAt || 0) - (left.lastOpenedAt || 0);
         });
+    return [homeWorkspace, ...otherWorkspaces];
 });
 const activePrompt = computed(() => promptQueue.value[0] || null);
 const selectedLogs = computed(() => logs.get(workspaceKey(state.selectedWorkspace))?.lines.slice(-160) || []);
@@ -727,6 +740,7 @@ export function useStudioStore() {
         saveAlias,
         showRemoteDialog,
         saveRemote,
+        showLogsDialog,
         removeWorkspace,
         togglePinned,
         openWebPage,

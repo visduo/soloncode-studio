@@ -3,6 +3,7 @@ import { normalizeWebPageUrl } from "./url.js";
 
 export function getWorkspaceName(path) {
     if (!path) return "用户目录";
+    if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(path)) return path;
     return path.split(/[\\/]/).filter(Boolean).pop() || path;
 }
 

@@ -110,7 +110,6 @@ function resetTerminal() {
                     <button
                         class="dialog-close"
                         type="button"
-                        title="关闭运行日志"
                         @click="studio.dialogs.logs = false">
                         <AppIcon name="close" />
                     </button>
