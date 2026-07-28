@@ -145,7 +145,9 @@ async function toggle(event, type, entry) {
                             class="workspace-item"
                             :class="{
                                 active: studio.state.selectedWorkspace === entry.path,
-                                running: studio.projectForWorkspace(entry.path)
+                                running:
+                                    studio.projectForWorkspace(entry.path) &&
+                                    !studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
                             }"
                             @click="studio.selectWorkspace(entry.path)">
                             <button class="workspace-copy" type="button">
@@ -170,7 +172,11 @@ async function toggle(event, type, entry) {
                                     ">
                                     <AppIcon name="open-project" />
                                 </button>
-                                <template v-else-if="studio.projectForWorkspace(entry.path)">
+                                <template
+                                    v-else-if="
+                                        studio.projectForWorkspace(entry.path) &&
+                                        !studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
+                                    ">
                                     <button
                                         class="workspace-icon-btn open"
                                         type="button"
@@ -191,29 +197,19 @@ async function toggle(event, type, entry) {
                                 </template>
                                 <div v-else class="app-menu-wrap">
                                     <button
-                                        class="workspace-icon-btn run"
-                                        :class="{
-                                            loading: studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
-                                        }"
+                                        v-if="studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))"
+                                        class="workspace-icon-btn is-loading"
                                         type="button"
-                                        :disabled="
-                                            studio.state.busy ||
-                                            studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
-                                        "
+                                        disabled>
+                                        <AppIcon name="loading" />
+                                    </button>
+                                    <button
+                                        v-else
+                                        class="workspace-icon-btn run"
+                                        type="button"
+                                        :disabled="studio.state.busy"
                                         @click="toggle($event, 'run', entry)">
-                                        <Transition name="icon-swap" mode="out-in">
-                                            <AppIcon
-                                                :key="
-                                                    studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
-                                                        ? 'loading'
-                                                        : 'start-workspace'
-                                                "
-                                                :name="
-                                                    studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
-                                                        ? 'loading'
-                                                        : 'start-workspace'
-                                                " />
-                                        </Transition>
+                                        <AppIcon name="start-workspace" />
                                     </button>
                                     <Teleport to="body">
                                         <Transition name="menu">

@@ -528,7 +528,7 @@ async function refreshEnvironment(options = {}) {
 }
 
 async function performInstall() {
-    if (state.busy) return;
+    if (state.busy || state.environmentChecking) return;
     selectWorkspace(null);
     dialogs.logs = true;
     appendLog("正在安装 SolonCode CLI...");
@@ -547,6 +547,7 @@ async function performInstall() {
 }
 
 function handleInstall() {
+    if (state.busy || state.environmentChecking) return;
     confirmAction({
         key: "confirm-install-cli",
         title: "安装 CLI",
@@ -557,12 +558,12 @@ function handleInstall() {
 }
 
 async function performUpdate() {
-    if (state.busy || !state.installed || projects.size > 0) return;
+    if (state.busy || state.environmentChecking || !state.installed || projects.size > 0) return;
     await performInstall();
 }
 
 function handleUpdate() {
-    if (!state.cliUpdateAvailable) return;
+    if (state.environmentChecking || !state.cliUpdateAvailable) return;
     confirmAction({
         key: "confirm-update-cli",
         title: "更新 CLI",
@@ -577,7 +578,7 @@ function handleCliPrimaryAction() {
 }
 
 async function performUninstall() {
-    if (state.busy) return;
+    if (state.busy || state.environmentChecking) return;
     selectWorkspace(null);
     dialogs.logs = true;
     appendLog("正在卸载 SolonCode CLI...");
@@ -600,6 +601,7 @@ async function performUninstall() {
 }
 
 function handleUninstall() {
+    if (state.busy || state.environmentChecking) return;
     confirmAction({
         key: "confirm-uninstall-cli",
         title: "卸载 CLI",
@@ -636,7 +638,6 @@ async function runWorkspace(path = state.selectedWorkspace, target = RUN_TARGETS
         project.launch_target = target;
         project.external = option.external;
         if (target === RUN_TARGETS.cliInternal) {
-            startingWorkspaceKeys.delete(project.workspace_key);
             upsertProject(project);
             activateProject(project.project_key);
         }

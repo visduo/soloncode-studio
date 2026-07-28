@@ -63,7 +63,7 @@ const studio = useStudioStore();
                         <button
                             class="environment-action primary"
                             type="button"
-                            :disabled="!studio.state.studioUpdateAvailable"
+                            :disabled="studio.state.environmentChecking || !studio.state.studioUpdateAvailable"
                             @click="studio.openExternalUrl('https://soloncode.studio/')">
                             <AppIcon name="update-studio" />
                             <span>更新</span>
@@ -111,7 +111,9 @@ const studio = useStudioStore();
                             class="environment-action primary"
                             type="button"
                             :disabled="
-                                studio.state.busy || (studio.state.installed && !studio.state.cliUpdateAvailable)
+                                studio.state.busy ||
+                                studio.state.environmentChecking ||
+                                (studio.state.installed && !studio.state.cliUpdateAvailable)
                             "
                             @click="studio.handleCliPrimaryAction">
                             <AppIcon :name="studio.state.installed ? 'update-cli' : 'install-cli'" />
@@ -120,7 +122,12 @@ const studio = useStudioStore();
                         <button
                             class="environment-action danger"
                             type="button"
-                            :disabled="studio.state.busy || !studio.state.installed || studio.projects.size > 0"
+                            :disabled="
+                                studio.state.busy ||
+                                studio.state.environmentChecking ||
+                                !studio.state.installed ||
+                                studio.projects.size > 0
+                            "
                             @click="studio.handleUninstall">
                             <AppIcon name="uninstall-cli" />
                             <span>卸载</span>
@@ -159,7 +166,7 @@ const studio = useStudioStore();
                         <button
                             class="environment-action primary"
                             type="button"
-                            :disabled="studio.state.javaAvailable"
+                            :disabled="studio.state.environmentChecking || studio.state.javaAvailable"
                             @click="studio.openExternalUrl('https://www.flyenv.com/zh/download.html')">
                             <AppIcon name="install-java" />
                             <span>安装</span>

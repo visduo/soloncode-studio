@@ -530,14 +530,14 @@
     color: var(--state-running);
 }
 
-.workspace-icon-btn.loading {
+.workspace-icon-btn.is-loading {
     color: var(--state-loading);
     background: var(--state-loading-soft);
     border-color: var(--state-loading-border);
     cursor: wait;
 }
 
-.workspace-icon-btn.loading .app-icon {
+.workspace-icon-btn.is-loading .app-icon {
     animation: spin 0.9s linear infinite;
 }
 
