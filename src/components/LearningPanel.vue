@@ -71,13 +71,25 @@ function open(resource) {
                     </div>
                 </div>
                 <div class="learning-possibilities">
-                    <article
-                        v-for="item in ['学习与理解', '内容与创作', '分析与整理', '研发与工程', '更多，等你发现']"
-                        :key="item"
-                        class="learning-possibility"
-                        :class="{ 'learning-possibility-more': item === '更多，等你发现' }">
-                        <strong>{{ item }}</strong>
-                        <span>围绕资料、想法和真实项目持续思考、整理并完成任务。</span>
+                    <article class="learning-possibility">
+                        <strong>学习与理解</strong>
+                        <span>梳理概念、阅读资料、拆解问题，形成自己的知识脉络。</span>
+                    </article>
+                    <article class="learning-possibility">
+                        <strong>内容与创作</strong>
+                        <span>推演想法、组织结构、打磨表达，让零散灵感逐渐成形。</span>
+                    </article>
+                    <article class="learning-possibility">
+                        <strong>分析与整理</strong>
+                        <span>归纳本地内容、提取重点、比较方案，并沉淀可复用的结果。</span>
+                    </article>
+                    <article class="learning-possibility">
+                        <strong>研发与工程</strong>
+                        <span>理解需求、规划改动、执行任务，将想法落实到真实项目中。</span>
+                    </article>
+                    <article class="learning-possibility learning-possibility-more">
+                        <strong>更多，等你发现</strong>
+                        <span>任务没有固定边界，带着你的想法与目标，探索“数字员工”更多适合你的工作方式。</span>
                     </article>
                 </div>
             </section>
