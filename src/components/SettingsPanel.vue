@@ -1,6 +1,11 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
-import { DEFAULT_TERMINAL_SETTINGS, INTERFACE_STYLE_OPTIONS, LOCALE_OPTIONS } from "../assets/js/constants.js";
+import {
+    DEFAULT_TERMINAL_SETTINGS,
+    INTERFACE_STYLE_OPTIONS,
+    LOCALE_OPTIONS,
+    THEME_MODE_OPTIONS
+} from "../assets/js/constants.js";
 import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 
@@ -28,6 +33,7 @@ const selectedRunTarget = computed(() =>
 const selectedInterfaceStyle = computed(() =>
     INTERFACE_STYLE_OPTIONS.find((style) => style.key === preferencesForm.interfaceStyle)
 );
+const selectedThemeMode = computed(() => THEME_MODE_OPTIONS.find((mode) => mode.key === preferencesForm.themeMode));
 const selectedLocale = computed(() => LOCALE_OPTIONS.find((locale) => locale.key === preferencesForm.locale));
 
 function closePreferencesDropdown(event) {
@@ -41,6 +47,11 @@ function selectRunTarget(target) {
 
 function selectInterfaceStyle(style) {
     preferencesForm.interfaceStyle = style;
+    openPreferencesDropdown.value = null;
+}
+
+function selectThemeMode(mode) {
+    preferencesForm.themeMode = mode;
     openPreferencesDropdown.value = null;
 }
 
@@ -103,7 +114,7 @@ function reset() {
         <section v-if="activeSection === 'preferences'" class="settings-content preferences-settings-section">
             <div ref="preferencesSettingsForm" class="preferences-settings-form">
                 <div class="terminal-settings-field required-field">
-                    <span>{{ t("settings.theme") }}</span>
+                    <span>{{ t("settings.themeStyle") }}</span>
                     <div
                         class="settings-select"
                         :class="{ open: openPreferencesDropdown === 'interface-style' }"
@@ -137,6 +148,45 @@ function reset() {
                                     @click="selectInterfaceStyle(style.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
                                     <span>{{ t(style.labelKey) }}</span>
+                                </button>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+                <div class="terminal-settings-field required-field">
+                    <span>{{ t("settings.themeMode") }}</span>
+                    <div
+                        class="settings-select"
+                        :class="{ open: openPreferencesDropdown === 'theme-mode' }"
+                        @keydown.esc="openPreferencesDropdown = null">
+                        <button
+                            class="settings-select-trigger"
+                            type="button"
+                            aria-haspopup="listbox"
+                            :aria-expanded="openPreferencesDropdown === 'theme-mode'"
+                            @click="
+                                openPreferencesDropdown = openPreferencesDropdown === 'theme-mode' ? null : 'theme-mode'
+                            "
+                            @keydown.down.prevent="openPreferencesDropdown = 'theme-mode'">
+                            <span>{{ selectedThemeMode ? t(selectedThemeMode.labelKey) : "" }}</span>
+                            <span class="settings-select-chevron" aria-hidden="true"></span>
+                        </button>
+                        <Transition name="settings-select-menu">
+                            <div
+                                v-if="openPreferencesDropdown === 'theme-mode'"
+                                class="settings-select-menu"
+                                role="listbox">
+                                <button
+                                    v-for="mode in THEME_MODE_OPTIONS"
+                                    :key="mode.key"
+                                    class="settings-select-option"
+                                    :class="{ selected: mode.key === preferencesForm.themeMode }"
+                                    type="button"
+                                    role="option"
+                                    :aria-selected="mode.key === preferencesForm.themeMode"
+                                    @click="selectThemeMode(mode.key)">
+                                    <span class="settings-select-check" aria-hidden="true"></span>
+                                    <span>{{ t(mode.labelKey) }}</span>
                                 </button>
                             </div>
                         </Transition>

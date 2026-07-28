@@ -79,6 +79,18 @@ export const INTERFACE_STYLE_OPTIONS = [
     { key: INTERFACE_STYLES.studio, labelKey: "theme.studio" }
 ];
 
+export const THEME_MODES = {
+    light: "light",
+    dark: "dark",
+    system: "system"
+};
+
+export const THEME_MODE_OPTIONS = [
+    { key: THEME_MODES.light, labelKey: "themeMode.light" },
+    { key: THEME_MODES.dark, labelKey: "themeMode.dark" },
+    { key: THEME_MODES.system, labelKey: "themeMode.system" }
+];
+
 export const LOCALES = {
     simplifiedChinese: "zh-CN",
     traditionalChinese: "zh-TW",
@@ -94,5 +106,6 @@ export const LOCALE_OPTIONS = [
 export const DEFAULT_APP_PREFERENCES = {
     defaultRunTarget: RUN_TARGETS.webInternal,
     interfaceStyle: INTERFACE_STYLES.idea,
+    themeMode: THEME_MODES.system,
     locale: LOCALES.simplifiedChinese
 };

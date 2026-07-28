@@ -99,7 +99,6 @@ const dialogForms = reactive({
     editingWorkspaceGroup: null,
     movingWorkspace: null
 });
-let cliUpdatePromptShown = false;
 let installCliPromptShown = false;
 let javaPromptShown = false;
 let nextMessageId = 0;
@@ -539,8 +538,7 @@ async function refreshVersions(options = {}) {
                 : t("status.cliMissing"),
             state.installed ? (state.cliUpdateAvailable ? "update-available" : "installed") : "not-installed"
         );
-        if (info.cli_update_available && !cliUpdatePromptShown) {
-            cliUpdatePromptShown = true;
+        if (info.cli_update_available) {
             queuePrompt({
                 key: "cli-update",
                 title: t("prompt.cliUpdateTitle"),

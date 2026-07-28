@@ -451,8 +451,8 @@
     width: 32px;
     height: 32px;
     border-radius: var(--radius-md);
-    background: linear-gradient(135deg, #f0f1f5, #ffffff);
-    color: #6b7280;
+    background: var(--workspace-badge-bg);
+    color: var(--workspace-badge-text);
     font-size: 0.86rem;
     font-weight: var(--font-semibold);
     line-height: 1;

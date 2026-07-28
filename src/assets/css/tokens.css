@@ -10,8 +10,11 @@
     --sidebar-hover: var(--surface-hover);
     --sidebar-active: var(--accent-soft);
     --tree-hover: var(--surface-hover);
+    --workspace-badge-bg: linear-gradient(135deg, #f0f1f5, #ffffff);
+    --workspace-badge-text: #6b7280;
     --border: #d8dee7;
     --border-strong: #bcc7d5;
+    --window-border: rgba(188, 199, 213, 0.5);
     --text-primary: #182230;
     --text-secondary: #526071;
     --text-muted: #6f7d8e;
@@ -48,4 +51,48 @@
     --shadow: none;
     --shadow-soft: none;
     --shadow-float: none;
+}
+:root.theme-mode-dark,
+.theme-studio.theme-mode-dark {
+    --bg-primary: #0f0f1a;
+    --panel: #1a1a2e;
+    --panel-soft: #16162a;
+    --surface-hover: #22223a;
+    --control-hover: #272741;
+    --menu-hover: #22223a;
+    --surface-active: #1e2240;
+    --sidebar-bg: #16162a;
+    --sidebar-hover: #22223a;
+    --sidebar-active: #1e2240;
+    --tree-hover: #22223a;
+    --workspace-badge-bg: linear-gradient(135deg, #22223a, #1a1a2e);
+    --workspace-badge-text: #a6a6b8;
+    --border: #25253a;
+    --border-strong: #303047;
+    --window-border: rgba(118, 118, 151, 0.24);
+    --text-primary: #e4e4ed;
+    --text-secondary: #a6a6b8;
+    --text-muted: #7f7f96;
+    --accent: #6b8aff;
+    --accent-strong: #8da4ff;
+    --accent-hover: #7d98ff;
+    --accent-soft: #1e2240;
+    --focus-ring: rgba(107, 138, 255, 0.38);
+    --state-running: #4ade80;
+    --state-running-soft: #172a22;
+    --state-running-border: #315f46;
+    --state-idle: #8b8ba0;
+    --state-error: #f87171;
+    --state-error-hover: #fb8585;
+    --state-error-soft: #2a1a24;
+    --state-error-border: #673b49;
+    --state-loading: #fbbf24;
+    --state-loading-soft: #2b2517;
+    --state-loading-border: #675629;
+    --terminal-bg: #0a0a12;
+    --terminal-fg: #e4e4ed;
+    --log-bg: #0a0a12;
+    --log-surface: #161622;
+    --log-border: #2a2a44;
+    --log-text: #d4d4df;
 }

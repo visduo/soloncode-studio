@@ -8,6 +8,7 @@ import {
     LOCALE_OPTIONS,
     RUN_TARGET_OPTIONS,
     TERMINAL_SETTINGS_KEY,
+    THEME_MODE_OPTIONS,
     WORKSPACE_ALIASES_KEY,
     WORKSPACE_GROUPS_KEY,
     WORKSPACES_KEY
@@ -20,10 +21,13 @@ export function normalizeAppPreferences(preferences) {
     const interfaceStyle = INTERFACE_STYLE_OPTIONS.some((option) => option.key === preferences?.interfaceStyle)
         ? preferences.interfaceStyle
         : DEFAULT_APP_PREFERENCES.interfaceStyle;
+    const themeMode = THEME_MODE_OPTIONS.some((option) => option.key === preferences?.themeMode)
+        ? preferences.themeMode
+        : DEFAULT_APP_PREFERENCES.themeMode;
     const locale = LOCALE_OPTIONS.some((option) => option.key === preferences?.locale)
         ? preferences.locale
         : DEFAULT_APP_PREFERENCES.locale;
-    return { defaultRunTarget, interfaceStyle, locale };
+    return { defaultRunTarget, interfaceStyle, themeMode, locale };
 }
 
 export function loadAppPreferences() {

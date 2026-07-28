@@ -47,7 +47,7 @@
 .sidebar,
 .home-content-panel {
     min-height: 0;
-    border: 1px solid rgba(188, 199, 213, 0.5);
+    border: 1px solid var(--window-border);
     border-radius: var(--radius-window);
     box-shadow: none;
 }

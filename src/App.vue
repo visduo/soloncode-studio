@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import EnvironmentPanel from "./components/EnvironmentPanel.vue";
 import HomeSidebar from "./components/HomeSidebar.vue";
 import LearningPanel from "./components/LearningPanel.vue";
@@ -12,7 +12,32 @@ import WorkspacePanel from "./components/WorkspacePanel.vue";
 import { useStudioStore } from "./stores/studio.js";
 
 const studio = useStudioStore();
+const appWindow = window.__TAURI__.window.getCurrentWindow();
+const systemPrefersDark = ref(false);
+const resolvedThemeMode = computed(() =>
+    studio.state.preferences.themeMode === "system"
+        ? systemPrefersDark.value
+            ? "dark"
+            : "light"
+        : studio.state.preferences.themeMode
+);
 let cleanupEvents;
+let unlistenThemeChanged;
+
+function applyThemeMode(mode) {
+    document.documentElement.classList.remove("theme-mode-light", "theme-mode-dark");
+    document.documentElement.classList.add(`theme-mode-${mode}`);
+    document.documentElement.style.colorScheme = mode;
+}
+
+async function refreshSystemTheme() {
+    const theme = await appWindow.theme();
+    if (theme === "dark" || theme === "light") systemPrefersDark.value = theme === "dark";
+}
+
+function handleSystemThemeChange(event) {
+    if (event.payload === "dark" || event.payload === "light") systemPrefersDark.value = event.payload === "dark";
+}
 
 function dismissMenu() {
     if (!studio.state.openMenu) return;
@@ -35,6 +60,14 @@ watch(
     { immediate: true }
 );
 watch(
+    () => studio.state.preferences.themeMode,
+    (mode) => {
+        if (mode === "system") refreshSystemTheme();
+    },
+    { flush: "sync", immediate: true }
+);
+watch(resolvedThemeMode, applyThemeMode, { immediate: true });
+watch(
     () => [
         studio.activePrompt.value,
         studio.dialogs.alias,
@@ -55,12 +88,15 @@ onMounted(async () => {
           ? "windows"
           : "linux";
     document.documentElement.classList.add(`platform-${platform}`);
+    unlistenThemeChanged = await appWindow.onThemeChanged(handleSystemThemeChange);
+    await refreshSystemTheme();
     document.addEventListener("pointerdown", handleDocumentPointerDown, true);
     document.addEventListener("keydown", handleDocumentKeydown);
     cleanupEvents = studio.registerEvents();
     await studio.initialize();
 });
 onBeforeUnmount(() => {
+    unlistenThemeChanged?.();
     document.removeEventListener("pointerdown", handleDocumentPointerDown, true);
     document.removeEventListener("keydown", handleDocumentKeydown);
     cleanupEvents?.();
@@ -68,7 +104,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="launcher-container" :class="`theme-${studio.state.preferences.interfaceStyle}`">
+    <div
+        class="launcher-container"
+        :class="[`theme-${studio.state.preferences.interfaceStyle}`, `theme-mode-${resolvedThemeMode}`]">
         <main class="app-shell">
             <TitleTabs />
             <div v-show="studio.state.activeTabKey === studio.constants.HOME_TAB_KEY" class="home-view">
