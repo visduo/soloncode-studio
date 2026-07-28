@@ -13,6 +13,13 @@ const invalid = computed(
 const selectedGroup = computed(() =>
     studio.workspaceGroups.value.find((group) => group.id === studio.dialogForms.workspaceMoveGroupId)
 );
+const orderedGroups = computed(() =>
+    [...studio.workspaceGroups.value].sort((left, right) => {
+        if (left.id === studio.constants.DEFAULT_WORKSPACE_GROUP_ID) return -1;
+        if (right.id === studio.constants.DEFAULT_WORKSPACE_GROUP_ID) return 1;
+        return left.name.localeCompare(right.name, "zh-CN", { numeric: true, sensitivity: "base" });
+    })
+);
 
 function selectGroup(groupId) {
     if (groupId === studio.dialogForms.workspaceMoveSourceGroupId) return;
@@ -56,7 +63,7 @@ watch(
                         <Transition name="group-select-menu">
                             <div v-if="open" class="group-select-menu" role="listbox">
                                 <button
-                                    v-for="group in studio.workspaceGroups.value"
+                                    v-for="group in orderedGroups"
                                     :key="group.id"
                                     class="group-select-option"
                                     :class="{ selected: group.id === studio.dialogForms.workspaceMoveGroupId }"
