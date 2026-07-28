@@ -19,7 +19,7 @@ const { t } = useI18n();
                 type="button"
                 :disabled="studio.state.busy || studio.state.environmentChecking"
                 @click="studio.refreshEnvironment()">
-                <AppIcon name="refresh" :class="{ spinning: studio.state.environmentChecking }" />
+                <AppIcon :name="studio.state.environmentChecking ? 'loading' : 'refresh'" />
                 <span>{{ t(studio.state.environmentChecking ? "environment.checking" : "environment.recheck") }}</span>
             </button>
         </header>
