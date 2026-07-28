@@ -23,7 +23,7 @@
     border: 1px solid;
     border-radius: var(--radius-lg);
     background: var(--panel);
-    box-shadow: 0 8px 24px rgba(24, 34, 48, 0.14);
+    box-shadow: var(--shadow-message);
     font-size: 0.82rem;
     font-weight: var(--font-medium);
     line-height: 1.45;
@@ -68,7 +68,7 @@
 }
 
 .studio-message-close:hover {
-    background: rgba(24, 34, 48, 0.05);
+    background: var(--message-control-hover);
     opacity: 1;
 }
 

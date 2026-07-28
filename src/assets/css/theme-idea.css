@@ -1,75 +1,3 @@
-.theme-idea {
-    --bg-primary: #f4f7fb;
-    --panel: #ffffff;
-    --panel-soft: #f8fafc;
-    --surface-hover: #e3e7ed;
-    --surface-active: #eaf3ff;
-    --sidebar-bg: #f5f6f8;
-    --sidebar-hover: #e3e7ed;
-    --sidebar-active: #dce6f3;
-    --tree-hover: #f0f2f5;
-    --workspace-badge-bg: linear-gradient(135deg, #eef1f5, #ffffff);
-    --workspace-badge-text: #6b7280;
-    --border: #dbe4ef;
-    --border-strong: #c8d5e4;
-    --text-primary: #142033;
-    --text-secondary: #526174;
-    --text-muted: #8895a7;
-    --accent: #246bfe;
-    --accent-strong: #1d4ed8;
-    --accent-hover: #3b7cff;
-    --accent-soft: #eaf3ff;
-    --focus-ring: rgba(36, 107, 254, 0.32);
-    --state-running: #16a34a;
-    --state-running-soft: #edf9f0;
-    --state-running-border: #b9e3c4;
-    --state-idle: #94a3b8;
-    --state-error: #dc2626;
-    --state-error-hover: #e23d3d;
-    --state-error-soft: #fff1f1;
-    --state-error-border: #f2b8b8;
-    --state-loading: #f59e0b;
-    --state-loading-soft: #fff7e8;
-    --state-loading-border: #f1cf91;
-}
-
-.theme-idea.theme-mode-dark {
-    --bg-primary: #0f0f1a;
-    --panel: #1a1a2e;
-    --panel-soft: #16162a;
-    --surface-hover: #22223a;
-    --control-hover: #272741;
-    --menu-hover: #22223a;
-    --surface-active: #1e2240;
-    --sidebar-bg: #16162a;
-    --sidebar-hover: #22223a;
-    --sidebar-active: #1e2240;
-    --tree-hover: #22223a;
-    --workspace-badge-bg: linear-gradient(135deg, #22223a, #1a1a2e);
-    --workspace-badge-text: #a6a6b8;
-    --border: #2a2a44;
-    --border-strong: #3a3a58;
-    --text-primary: #e4e4ed;
-    --text-secondary: #a6a6b8;
-    --text-muted: #7f7f96;
-    --accent: #6b8aff;
-    --accent-strong: #8da4ff;
-    --accent-hover: #7d98ff;
-    --accent-soft: #1e2240;
-    --focus-ring: rgba(107, 138, 255, 0.38);
-    --state-running: #4ade80;
-    --state-running-soft: #172a22;
-    --state-running-border: #315f46;
-    --state-idle: #8b8ba0;
-    --state-error: #f87171;
-    --state-error-hover: #fb8585;
-    --state-error-soft: #2a1a24;
-    --state-error-border: #673b49;
-    --state-loading: #fbbf24;
-    --state-loading-soft: #2b2517;
-    --state-loading-border: #675629;
-}
-
 .theme-idea .app-shell {
     padding: 0;
 }
@@ -110,7 +38,7 @@
 .theme-idea .tab-item.active {
     border-color: var(--border);
     background: var(--panel);
-    box-shadow: 0 1px 3px rgba(24, 34, 48, 0.1);
+    box-shadow: var(--shadow-soft);
 }
 
 .theme-idea .tab-item.active:hover {

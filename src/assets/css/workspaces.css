@@ -171,7 +171,7 @@
 .welcome-action.primary {
     border-color: var(--accent);
     background: var(--accent);
-    color: #fff;
+    color: var(--text-on-accent);
 }
 
 .welcome-action:hover {
@@ -250,7 +250,7 @@
     border: 1px solid var(--accent);
     border-radius: var(--radius-md);
     background: var(--accent);
-    color: #ffffff;
+    color: var(--text-on-accent);
     cursor: pointer;
     font-size: 0.82rem;
     font-weight: var(--font-medium);
@@ -630,7 +630,8 @@
 }
 
 .app-menu-item:focus-visible {
-    background: var(--accent-soft);
+    outline: none;
+    background: var(--menu-hover);
 }
 
 .app-menu-item:hover:not(:disabled) {
@@ -698,7 +699,7 @@
 
 .mode-switch-btn.active {
     background: var(--accent);
-    color: #ffffff;
+    color: var(--text-on-accent);
 }
 
 .workspace-status-bar h2 {

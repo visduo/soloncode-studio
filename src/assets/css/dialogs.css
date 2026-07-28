@@ -6,7 +6,7 @@
     place-items: center;
     padding: 24px;
     overflow-y: auto;
-    background: rgba(24, 34, 48, 0.42);
+    background: var(--dialog-backdrop);
 }
 
 .dialog-backdrop[hidden] {
@@ -170,10 +170,7 @@
     font-size: 0.94rem;
     text-align: left;
     cursor: pointer;
-    transition:
-        border-color 0.15s ease,
-        box-shadow 0.15s ease,
-        background 0.15s ease;
+    transition: var(--transition-control);
 }
 
 .group-select-trigger:hover {
@@ -364,17 +361,13 @@
     font-weight: var(--font-medium);
     text-align: center;
     cursor: pointer;
-    transition:
-        background 0.15s ease,
-        border-color 0.15s ease,
-        color 0.15s ease,
-        box-shadow 0.15s ease;
+    transition: var(--transition-control);
 }
 
 .dialog-btn.primary {
     border-color: var(--accent);
     background: var(--accent);
-    color: #ffffff;
+    color: var(--text-on-accent);
 }
 
 .dialog-btn:hover:not(:disabled) {
@@ -389,7 +382,7 @@
 .dialog-btn.danger {
     border-color: var(--state-error);
     background: var(--state-error);
-    color: #ffffff;
+    color: var(--text-on-accent);
 }
 
 .dialog-btn.danger:hover:not(:disabled) {

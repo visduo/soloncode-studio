@@ -45,6 +45,7 @@
     cursor: pointer;
     font-size: 0.82rem;
     font-weight: var(--font-medium);
+    transition: var(--transition-control);
 }
 
 .environment-refresh {
@@ -77,7 +78,7 @@
 .environment-action.primary:not(:disabled) {
     border-color: var(--accent);
     background: var(--accent);
-    color: #ffffff;
+    color: var(--text-on-accent);
 }
 
 .environment-action.primary:hover:not(:disabled) {

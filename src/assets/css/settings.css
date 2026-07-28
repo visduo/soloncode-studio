@@ -101,6 +101,7 @@
     font-size: 0.94rem;
     text-align: left;
     cursor: pointer;
+    transition: var(--transition-control);
 }
 
 .settings-select-trigger:hover {
@@ -272,9 +273,7 @@
     cursor: pointer;
     font-size: 0.84rem;
     font-weight: var(--font-medium);
-    transition:
-        background 0.15s ease,
-        border-color 0.15s ease;
+    transition: var(--transition-control);
 }
 
 .settings-button:hover:not(:disabled) {
@@ -284,7 +283,7 @@
 .settings-button.primary:not(:disabled) {
     border-color: var(--accent);
     background: var(--accent);
-    color: #ffffff;
+    color: var(--text-on-accent);
 }
 
 .settings-button.primary:hover:not(:disabled) {
