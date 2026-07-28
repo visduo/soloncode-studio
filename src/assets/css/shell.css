@@ -231,7 +231,7 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--icon-text-gap);
     min-width: 0;
     height: 100%;
 }
@@ -258,10 +258,6 @@
     width: 15px;
     height: 15px;
     stroke-width: 2.2;
-}
-
-.tab-item.task-running .tab-mode .app-icon {
-    animation: spin 0.9s linear infinite;
 }
 
 .tab-item:not(.active):hover {

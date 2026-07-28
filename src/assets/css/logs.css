@@ -168,7 +168,7 @@
 .log-autoscroll {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--icon-text-gap);
     min-height: 30px;
     color: var(--text-muted);
     font-size: 0.72rem;

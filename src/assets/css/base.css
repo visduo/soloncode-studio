@@ -67,6 +67,12 @@ strong {
     line-height: 1;
 }
 
+.app-icon-loading-spinner {
+    animation: spin 0.9s linear infinite;
+    transform-box: view-box;
+    transform-origin: 12px 12px;
+}
+
 :is(
     .tab-scroll-control,
     .window-control,
