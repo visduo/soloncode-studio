@@ -1,7 +1,9 @@
 <script setup>
+import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 import AppIcon from "./AppIcon.vue";
 const studio = useStudioStore();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -26,7 +28,7 @@ const studio = useStudioStore();
                 type="button"
                 @click="studio.activateHomeSection('workspace')">
                 <span class="welcome-nav-icon"><AppIcon name="workspaces" /></span>
-                <span>工作区</span>
+                <span>{{ t("nav.workspaces") }}</span>
             </button>
             <button
                 class="welcome-nav-item"
@@ -34,7 +36,7 @@ const studio = useStudioStore();
                 type="button"
                 @click="studio.activateHomeSection('learning')">
                 <span class="welcome-nav-icon"><AppIcon name="learning" /></span>
-                <span>学习</span>
+                <span>{{ t("nav.learning") }}</span>
             </button>
             <button
                 class="welcome-nav-item"
@@ -42,7 +44,7 @@ const studio = useStudioStore();
                 type="button"
                 @click="studio.activateHomeSection('environment')">
                 <span class="welcome-nav-icon"><AppIcon name="environment" /></span>
-                <span>环境</span>
+                <span>{{ t("nav.environment") }}</span>
             </button>
             <button
                 class="welcome-nav-item"
@@ -50,7 +52,7 @@ const studio = useStudioStore();
                 type="button"
                 @click="studio.activateHomeSection('settings')">
                 <span class="welcome-nav-icon"><AppIcon name="settings" /></span>
-                <span>设置</span>
+                <span>{{ t("nav.settings") }}</span>
             </button>
         </div>
     </section>

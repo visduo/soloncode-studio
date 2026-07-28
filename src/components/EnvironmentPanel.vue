@@ -1,16 +1,18 @@
 <script setup>
+import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 import AppIcon from "./AppIcon.vue";
 
 const studio = useStudioStore();
+const { t } = useI18n();
 </script>
 
 <template>
     <div class="environment-panel">
         <header class="environment-header">
             <div>
-                <h1>环境管理</h1>
-                <p>查看并管理 SolonCode Studio/CLI 版本信息及 SolonCode 运行时所需的依赖。</p>
+                <h1>{{ t("environment.title") }}</h1>
+                <p>{{ t("environment.description") }}</p>
             </div>
             <button
                 class="environment-refresh"
@@ -18,7 +20,7 @@ const studio = useStudioStore();
                 :disabled="studio.state.busy || studio.state.environmentChecking"
                 @click="studio.refreshEnvironment()">
                 <AppIcon name="refresh" :class="{ spinning: studio.state.environmentChecking }" />
-                <span>{{ studio.state.environmentChecking ? "检测中" : "重新检测" }}</span>
+                <span>{{ t(studio.state.environmentChecking ? "environment.checking" : "environment.recheck") }}</span>
             </button>
         </header>
 
@@ -27,31 +29,31 @@ const studio = useStudioStore();
                 <div class="environment-item-main">
                     <div>
                         <h2>SolonCode Studio</h2>
-                        <p>桌面工作台，你的“数字员工”</p>
+                        <p>{{ t("environment.studioDescription") }}</p>
                     </div>
                 </div>
                 <dl class="environment-versions">
                     <div>
-                        <dt>当前版本</dt>
+                        <dt>{{ t("environment.currentVersion") }}</dt>
                         <dd>{{ studio.state.studioVersion }}</dd>
                     </div>
                     <div>
-                        <dt>最新版本</dt>
-                        <dd>{{ studio.state.studioLatestVersion || "未知" }}</dd>
+                        <dt>{{ t("environment.latestVersion") }}</dt>
+                        <dd>{{ studio.state.studioLatestVersion || t("common.unknown") }}</dd>
                     </div>
                 </dl>
                 <div class="environment-controls">
                     <div class="environment-status">
-                        <span class="environment-detail-label">状态</span>
+                        <span class="environment-detail-label">{{ t("environment.status") }}</span>
                         <span
                             class="environment-detail-value"
                             :class="{ 'environment-update': studio.state.studioUpdateAvailable }">
                             {{
                                 !studio.state.studioLatestVersion
-                                    ? "未知"
+                                    ? t("common.unknown")
                                     : studio.state.studioUpdateAvailable
-                                      ? "有可用更新"
-                                      : "已是最新版本"
+                                      ? t("common.updateAvailable")
+                                      : t("environment.latest")
                             }}
                         </span>
                     </div>
@@ -62,7 +64,7 @@ const studio = useStudioStore();
                             :disabled="studio.state.environmentChecking || !studio.state.studioUpdateAvailable"
                             @click="studio.openExternalUrl('https://soloncode.studio/')">
                             <AppIcon name="update-studio" />
-                            <span>更新</span>
+                            <span>{{ t("common.update") }}</span>
                         </button>
                     </div>
                 </div>
@@ -72,33 +74,38 @@ const studio = useStudioStore();
                 <div class="environment-item-main">
                     <div>
                         <h2>SolonCode CLI</h2>
-                        <p>负责启动工作区与执行任务</p>
+                        <p>{{ t("environment.cliDescription") }}</p>
                     </div>
                 </div>
                 <dl class="environment-versions">
                     <div>
-                        <dt>当前版本</dt>
-                        <dd>{{ studio.state.cliVersion || (studio.state.installed ? "未知" : "未安装") }}</dd>
+                        <dt>{{ t("environment.currentVersion") }}</dt>
+                        <dd>
+                            {{
+                                studio.state.cliVersion ||
+                                t(studio.state.installed ? "common.unknown" : "common.notInstalled")
+                            }}
+                        </dd>
                     </div>
                     <div>
-                        <dt>最新版本</dt>
-                        <dd>{{ studio.state.cliLatestVersion || "未知" }}</dd>
+                        <dt>{{ t("environment.latestVersion") }}</dt>
+                        <dd>{{ studio.state.cliLatestVersion || t("common.unknown") }}</dd>
                     </div>
                 </dl>
                 <div class="environment-controls">
                     <div class="environment-status">
-                        <span class="environment-detail-label">状态</span>
+                        <span class="environment-detail-label">{{ t("environment.status") }}</span>
                         <span
                             class="environment-detail-value"
                             :class="{ 'environment-update': studio.state.cliUpdateAvailable }">
                             {{
                                 !studio.state.installed
-                                    ? "未安装"
+                                    ? t("common.notInstalled")
                                     : !studio.state.cliLatestVersion
-                                      ? "未知"
+                                      ? t("common.unknown")
                                       : studio.state.cliUpdateAvailable
-                                        ? "有可用更新"
-                                        : "已安装"
+                                        ? t("common.updateAvailable")
+                                        : t("common.installed")
                             }}
                         </span>
                     </div>
@@ -113,7 +120,7 @@ const studio = useStudioStore();
                             "
                             @click="studio.handleCliPrimaryAction">
                             <AppIcon :name="studio.state.installed ? 'update-cli' : 'install-cli'" />
-                            <span>{{ studio.state.installed ? "更新" : "安装" }}</span>
+                            <span>{{ t(studio.state.installed ? "common.update" : "common.install") }}</span>
                         </button>
                         <button
                             class="environment-action danger"
@@ -126,7 +133,7 @@ const studio = useStudioStore();
                             "
                             @click="studio.handleUninstall">
                             <AppIcon name="uninstall-cli" />
-                            <span>卸载</span>
+                            <span>{{ t("common.uninstall") }}</span>
                         </button>
                     </div>
                 </div>
@@ -135,27 +142,27 @@ const studio = useStudioStore();
             <section class="environment-item environment-item-java">
                 <div class="environment-item-main">
                     <div>
-                        <h2>Java 运行环境</h2>
-                        <p>SolonCode 安装和运行所需的基础环境</p>
+                        <h2>{{ t("environment.java") }}</h2>
+                        <p>{{ t("environment.javaDescription") }}</p>
                     </div>
                 </div>
                 <dl class="environment-versions">
                     <div>
-                        <dt>当前版本</dt>
-                        <dd>{{ studio.state.javaVersion || "未知" }}</dd>
+                        <dt>{{ t("environment.currentVersion") }}</dt>
+                        <dd>{{ studio.state.javaVersion || t("common.unknown") }}</dd>
                     </div>
                     <div>
-                        <dt>推荐版本</dt>
+                        <dt>{{ t("environment.recommendedVersion") }}</dt>
                         <dd>1.8～26</dd>
                     </div>
                 </dl>
                 <div class="environment-controls">
                     <div class="environment-status">
-                        <span class="environment-detail-label">状态</span>
+                        <span class="environment-detail-label">{{ t("environment.status") }}</span>
                         <span
                             class="environment-detail-value"
                             :class="{ 'environment-missing': !studio.state.javaAvailable }">
-                            {{ studio.state.javaAvailable ? "可用" : "未知" }}
+                            {{ t(studio.state.javaAvailable ? "environment.available" : "common.unknown") }}
                         </span>
                     </div>
                     <div class="environment-actions">
@@ -165,7 +172,7 @@ const studio = useStudioStore();
                             :disabled="studio.state.environmentChecking || studio.state.javaAvailable"
                             @click="studio.openExternalUrl('https://www.flyenv.com/zh/download.html')">
                             <AppIcon name="install-java" />
-                            <span>安装</span>
+                            <span>{{ t("common.install") }}</span>
                         </button>
                     </div>
                 </div>

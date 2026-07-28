@@ -39,10 +39,34 @@ export const RUN_TARGETS = {
 };
 
 export const RUN_TARGET_OPTIONS = [
-    { key: RUN_TARGETS.webInternal, mode: LAUNCH_MODES.web, label: "启动 Web 模式（内置窗口）", external: false },
-    { key: RUN_TARGETS.webSystem, mode: LAUNCH_MODES.web, label: "启动 Web 模式（系统浏览器）", external: true },
-    { key: RUN_TARGETS.cliInternal, mode: LAUNCH_MODES.cli, label: "启动 CLI 模式（内置终端）", external: false },
-    { key: RUN_TARGETS.cliSystem, mode: LAUNCH_MODES.cli, label: "启动 CLI 模式（系统终端）", external: true }
+    {
+        key: RUN_TARGETS.webInternal,
+        mode: LAUNCH_MODES.web,
+        labelKey: "run.webInternal",
+        shortLabelKey: "run.webInternalShort",
+        external: false
+    },
+    {
+        key: RUN_TARGETS.webSystem,
+        mode: LAUNCH_MODES.web,
+        labelKey: "run.webSystem",
+        shortLabelKey: "run.webSystemShort",
+        external: true
+    },
+    {
+        key: RUN_TARGETS.cliInternal,
+        mode: LAUNCH_MODES.cli,
+        labelKey: "run.cliInternal",
+        shortLabelKey: "run.cliInternalShort",
+        external: false
+    },
+    {
+        key: RUN_TARGETS.cliSystem,
+        mode: LAUNCH_MODES.cli,
+        labelKey: "run.cliSystem",
+        shortLabelKey: "run.cliSystemShort",
+        external: true
+    }
 ];
 
 export const INTERFACE_STYLES = {
@@ -51,11 +75,24 @@ export const INTERFACE_STYLES = {
 };
 
 export const INTERFACE_STYLE_OPTIONS = [
-    { key: INTERFACE_STYLES.idea, label: "IDEA 风格" },
-    { key: INTERFACE_STYLES.studio, label: "Studio 风格" }
+    { key: INTERFACE_STYLES.idea, labelKey: "theme.idea" },
+    { key: INTERFACE_STYLES.studio, labelKey: "theme.studio" }
+];
+
+export const LOCALES = {
+    simplifiedChinese: "zh-CN",
+    traditionalChinese: "zh-TW",
+    english: "en-US"
+};
+
+export const LOCALE_OPTIONS = [
+    { key: LOCALES.simplifiedChinese, labelKey: "locale.zhCN" },
+    { key: LOCALES.traditionalChinese, labelKey: "locale.zhTW" },
+    { key: LOCALES.english, labelKey: "locale.enUS" }
 ];
 
 export const DEFAULT_APP_PREFERENCES = {
     defaultRunTarget: RUN_TARGETS.webInternal,
-    interfaceStyle: INTERFACE_STYLES.idea
+    interfaceStyle: INTERFACE_STYLES.idea,
+    locale: LOCALES.simplifiedChinese
 };

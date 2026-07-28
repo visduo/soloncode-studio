@@ -74,9 +74,9 @@ pub(crate) fn pick_available_port(used_ports: &HashSet<u16>) -> Result<u16, Stri
 }
 
 #[tauri::command]
-pub(crate) fn pick_workspace() -> Option<String> {
+pub(crate) fn pick_workspace(title: Option<String>) -> Option<String> {
     rfd::FileDialog::new()
-        .set_title("选择 SolonCode 工作区")
+        .set_title(title.as_deref().unwrap_or("SolonCode Studio"))
         .pick_folder()
         .map(|path| path.to_string_lossy().to_string())
 }

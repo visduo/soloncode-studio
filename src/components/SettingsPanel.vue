@@ -1,9 +1,11 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
-import { DEFAULT_TERMINAL_SETTINGS, INTERFACE_STYLE_OPTIONS } from "../assets/js/constants.js";
+import { DEFAULT_TERMINAL_SETTINGS, INTERFACE_STYLE_OPTIONS, LOCALE_OPTIONS } from "../assets/js/constants.js";
+import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 
 const studio = useStudioStore();
+const { t } = useI18n();
 const activeSection = ref("preferences");
 const preferencesSettingsForm = ref(null);
 const openPreferencesDropdown = ref(null);
@@ -11,10 +13,13 @@ const preferencesForm = reactive({ ...studio.state.preferences });
 const form = reactive({ ...studio.state.terminalSettings });
 const touched = reactive({ fontFamily: false, fontSize: false, lineHeight: false });
 const errors = computed(() => ({
-    fontFamily: form.fontFamily.trim() ? "" : "请输入字体名称",
-    fontSize: Number.isFinite(form.fontSize) && form.fontSize >= 10 && form.fontSize <= 24 ? "" : "字号应为 10 至 24",
+    fontFamily: form.fontFamily.trim() ? "" : t("settings.fontRequired"),
+    fontSize:
+        Number.isFinite(form.fontSize) && form.fontSize >= 10 && form.fontSize <= 24 ? "" : t("settings.fontSizeRange"),
     lineHeight:
-        Number.isFinite(form.lineHeight) && form.lineHeight >= 1 && form.lineHeight <= 2 ? "" : "行高应为 1 至 2"
+        Number.isFinite(form.lineHeight) && form.lineHeight >= 1 && form.lineHeight <= 2
+            ? ""
+            : t("settings.lineHeightRange")
 }));
 const invalid = computed(() => Object.values(errors.value).some(Boolean));
 const selectedRunTarget = computed(() =>
@@ -23,6 +28,7 @@ const selectedRunTarget = computed(() =>
 const selectedInterfaceStyle = computed(() =>
     INTERFACE_STYLE_OPTIONS.find((style) => style.key === preferencesForm.interfaceStyle)
 );
+const selectedLocale = computed(() => LOCALE_OPTIONS.find((locale) => locale.key === preferencesForm.locale));
 
 function closePreferencesDropdown(event) {
     if (!preferencesSettingsForm.value?.contains(event.target)) openPreferencesDropdown.value = null;
@@ -35,6 +41,11 @@ function selectRunTarget(target) {
 
 function selectInterfaceStyle(style) {
     preferencesForm.interfaceStyle = style;
+    openPreferencesDropdown.value = null;
+}
+
+function selectLocale(locale) {
+    preferencesForm.locale = locale;
     openPreferencesDropdown.value = null;
 }
 
@@ -68,8 +79,8 @@ function reset() {
 <template>
     <div class="settings-panel">
         <header class="settings-header">
-            <h1>设置</h1>
-            <p>管理 SolonCode Studio 的使用偏好。</p>
+            <h1>{{ t("settings.title") }}</h1>
+            <p>{{ t("settings.description") }}</p>
         </header>
 
         <nav class="settings-tabs">
@@ -78,21 +89,21 @@ function reset() {
                 :class="{ active: activeSection === 'preferences' }"
                 type="button"
                 @click="selectSection('preferences')">
-                偏好设置
+                {{ t("settings.preferences") }}
             </button>
             <button
                 class="settings-tab"
                 :class="{ active: activeSection === 'terminal' }"
                 type="button"
                 @click="selectSection('terminal')">
-                内置终端设置
+                {{ t("settings.terminal") }}
             </button>
         </nav>
 
         <section v-if="activeSection === 'preferences'" class="settings-content preferences-settings-section">
             <div ref="preferencesSettingsForm" class="preferences-settings-form">
                 <div class="terminal-settings-field required-field">
-                    <span>主题</span>
+                    <span>{{ t("settings.theme") }}</span>
                     <div
                         class="settings-select"
                         :class="{ open: openPreferencesDropdown === 'interface-style' }"
@@ -107,7 +118,7 @@ function reset() {
                                     openPreferencesDropdown === 'interface-style' ? null : 'interface-style'
                             "
                             @keydown.down.prevent="openPreferencesDropdown = 'interface-style'">
-                            <span>{{ selectedInterfaceStyle?.label }}</span>
+                            <span>{{ selectedInterfaceStyle ? t(selectedInterfaceStyle.labelKey) : "" }}</span>
                             <span class="settings-select-chevron" aria-hidden="true"></span>
                         </button>
                         <Transition name="settings-select-menu">
@@ -125,14 +136,14 @@ function reset() {
                                     :aria-selected="style.key === preferencesForm.interfaceStyle"
                                     @click="selectInterfaceStyle(style.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
-                                    <span>{{ style.label }}</span>
+                                    <span>{{ t(style.labelKey) }}</span>
                                 </button>
                             </div>
                         </Transition>
                     </div>
                 </div>
                 <div class="terminal-settings-field required-field">
-                    <span>双击工作区默认启动方式</span>
+                    <span>{{ t("settings.defaultRunTarget") }}</span>
                     <div
                         class="settings-select"
                         :class="{ open: openPreferencesDropdown === 'run-target' }"
@@ -146,7 +157,7 @@ function reset() {
                                 openPreferencesDropdown = openPreferencesDropdown === 'run-target' ? null : 'run-target'
                             "
                             @keydown.down.prevent="openPreferencesDropdown = 'run-target'">
-                            <span>{{ selectedRunTarget?.label.replace(/^启动 /, "") }}</span>
+                            <span>{{ selectedRunTarget ? t(selectedRunTarget.shortLabelKey) : "" }}</span>
                             <span class="settings-select-chevron" aria-hidden="true"></span>
                         </button>
                         <Transition name="settings-select-menu">
@@ -164,7 +175,44 @@ function reset() {
                                     :aria-selected="target.key === preferencesForm.defaultRunTarget"
                                     @click="selectRunTarget(target.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
-                                    <span>{{ target.label.replace(/^启动 /, "") }}</span>
+                                    <span>{{ t(target.shortLabelKey) }}</span>
+                                </button>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+                <div class="terminal-settings-field required-field">
+                    <span>{{ t("settings.language") }}</span>
+                    <div
+                        class="settings-select"
+                        :class="{ open: openPreferencesDropdown === 'locale' }"
+                        @keydown.esc="openPreferencesDropdown = null">
+                        <button
+                            class="settings-select-trigger"
+                            type="button"
+                            aria-haspopup="listbox"
+                            :aria-expanded="openPreferencesDropdown === 'locale'"
+                            @click="openPreferencesDropdown = openPreferencesDropdown === 'locale' ? null : 'locale'"
+                            @keydown.down.prevent="openPreferencesDropdown = 'locale'">
+                            <span>{{ selectedLocale ? t(selectedLocale.labelKey) : "" }}</span>
+                            <span class="settings-select-chevron" aria-hidden="true"></span>
+                        </button>
+                        <Transition name="settings-select-menu">
+                            <div
+                                v-if="openPreferencesDropdown === 'locale'"
+                                class="settings-select-menu"
+                                role="listbox">
+                                <button
+                                    v-for="localeOption in LOCALE_OPTIONS"
+                                    :key="localeOption.key"
+                                    class="settings-select-option"
+                                    :class="{ selected: localeOption.key === preferencesForm.locale }"
+                                    type="button"
+                                    role="option"
+                                    :aria-selected="localeOption.key === preferencesForm.locale"
+                                    @click="selectLocale(localeOption.key)">
+                                    <span class="settings-select-check" aria-hidden="true"></span>
+                                    <span>{{ t(localeOption.labelKey) }}</span>
                                 </button>
                             </div>
                         </Transition>
@@ -172,13 +220,15 @@ function reset() {
                 </div>
             </div>
             <div class="settings-actions">
-                <button class="settings-button primary" type="button" @click="savePreferences">保存</button>
+                <button class="settings-button primary" type="button" @click="savePreferences">
+                    {{ t("common.save") }}
+                </button>
             </div>
         </section>
         <section v-else class="settings-content terminal-settings-section">
             <form class="terminal-settings-form" @submit.prevent>
                 <label class="terminal-settings-field terminal-settings-field-wide required-field">
-                    <span>字体</span>
+                    <span>{{ t("settings.font") }}</span>
                     <input
                         v-model="form.fontFamily"
                         required
@@ -189,7 +239,7 @@ function reset() {
                     </small>
                 </label>
                 <label class="terminal-settings-field required-field">
-                    <span>字号</span>
+                    <span>{{ t("settings.fontSize") }}</span>
                     <input
                         v-model.number="form.fontSize"
                         type="number"
@@ -203,7 +253,7 @@ function reset() {
                     </small>
                 </label>
                 <label class="terminal-settings-field required-field">
-                    <span>行高</span>
+                    <span>{{ t("settings.lineHeight") }}</span>
                     <input
                         v-model.number="form.lineHeight"
                         type="number"
@@ -221,13 +271,17 @@ function reset() {
                     v-for="field in ['background', 'foreground', 'cursor']"
                     :key="field"
                     class="terminal-settings-field color-field">
-                    <span>{{ { background: "背景色", foreground: "文字色", cursor: "光标色" }[field] }}</span>
+                    <span>{{ t(`settings.${field}`) }}</span>
                     <input v-model="form[field]" type="color" />
                 </label>
             </form>
             <div class="settings-actions">
-                <button class="settings-button primary" type="button" :disabled="invalid" @click="save">保存</button>
-                <button class="settings-button" type="button" @click="reset">恢复默认</button>
+                <button class="settings-button primary" type="button" :disabled="invalid" @click="save">
+                    {{ t("common.save") }}
+                </button>
+                <button class="settings-button" type="button" @click="reset">
+                    {{ t("settings.restoreDefaults") }}
+                </button>
             </div>
         </section>
     </div>

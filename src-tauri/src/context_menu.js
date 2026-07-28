@@ -141,15 +141,30 @@
                 background: "#ffffff",
                 boxShadow: "0 12px 28px rgba(31, 50, 79, 0.1)"
             });
-            menu.appendChild(createItem("copy", "复制", Boolean(selectedText), () => writeClipboard(selectedText)));
-            menu.appendChild(createItem("paste", "粘贴", Boolean(editable), () => pasteClipboard(editable)));
-            menu.appendChild(createItem("refresh", "刷新", true, () => sendAction("refresh")));
-            menu.appendChild(createItem("external", "使用系统浏览器打开", true, () => sendAction("open-external")));
+            const labels = context.labels || {};
+            menu.appendChild(
+                createItem("copy", labels.copy || "Copy", Boolean(selectedText), () => writeClipboard(selectedText))
+            );
+            menu.appendChild(
+                createItem("paste", labels.paste || "Paste", Boolean(editable), () => pasteClipboard(editable))
+            );
+            menu.appendChild(createItem("refresh", labels.refresh || "Refresh", true, () => sendAction("refresh")));
+            menu.appendChild(
+                createItem("external", labels.external || "Open in browser", true, () => sendAction("open-external"))
+            );
             if (context.localWorkspace) {
-                menu.appendChild(createItem("folder", "打开工作区文件夹", true, () => sendAction("open-workspace")));
+                menu.appendChild(
+                    createItem("folder", labels.folder || "Open workspace folder", true, () =>
+                        sendAction("open-workspace")
+                    )
+                );
             }
             if (context.developmentMode) {
-                menu.appendChild(createItem("devtools", "打开开发者调试工具", true, () => sendAction("open-devtools")));
+                menu.appendChild(
+                    createItem("devtools", labels.devtools || "Open developer tools", true, () =>
+                        sendAction("open-devtools")
+                    )
+                );
             }
             document.body.appendChild(menu);
             const bounds = menu.getBoundingClientRect();

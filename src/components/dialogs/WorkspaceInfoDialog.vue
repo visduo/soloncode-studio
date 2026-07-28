@@ -1,10 +1,12 @@
 <script setup>
 import { computed, ref, watch } from "vue";
+import { useI18n } from "../../i18n/index.js";
 import { useStudioStore } from "../../stores/studio.js";
 
 const studio = useStudioStore();
+const { t } = useI18n();
 const touched = ref(false);
-const nameError = computed(() => (studio.dialogForms.alias.trim() ? "" : "请输入工作区名称"));
+const nameError = computed(() => (studio.dialogForms.alias.trim() ? "" : t("dialog.nameRequired")));
 
 watch(
     () => studio.dialogs.alias,
@@ -18,10 +20,10 @@ watch(
     <Transition name="dialog">
         <div v-if="studio.dialogs.alias" class="dialog-backdrop">
             <section class="dialog-panel" role="dialog" aria-modal="true">
-                <h2>修改工作区信息</h2>
+                <h2>{{ t("dialog.workspaceEdit") }}</h2>
                 <div class="workspace-alias-form">
                     <label class="remote-workspace-field required-field">
-                        <span>工作区名称</span>
+                        <span>{{ t("dialog.workspaceName") }}</span>
                         <input
                             v-model="studio.dialogForms.alias"
                             class="workspace-alias-input"
@@ -30,20 +32,22 @@ watch(
                             :aria-invalid="touched && Boolean(nameError)"
                             aria-describedby="workspace-name-error"
                             @blur="touched = true"
-                            placeholder="例如：开发工程项目" />
+                            :placeholder="t('dialog.aliasExample')" />
                         <small v-if="touched && nameError" id="workspace-name-error" class="dialog-field-error">
                             {{ nameError }}
                         </small>
                     </label>
                 </div>
                 <div class="dialog-actions">
-                    <button class="dialog-btn" type="button" @click="studio.dialogs.alias = false">取消</button>
+                    <button class="dialog-btn" type="button" @click="studio.dialogs.alias = false">
+                        {{ t("common.cancel") }}
+                    </button>
                     <button
                         class="dialog-btn primary"
                         type="button"
                         :disabled="Boolean(nameError)"
                         @click="studio.saveAlias">
-                        保存
+                        {{ t("common.save") }}
                     </button>
                 </div>
             </section>

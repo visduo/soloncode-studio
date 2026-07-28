@@ -1,9 +1,11 @@
 <script setup>
 import { onBeforeUnmount, onMounted } from "vue";
 import { withStudioParam } from "../assets/js/url.js";
+import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 import TerminalView from "./TerminalView.vue";
 const studio = useStudioStore();
+const { t } = useI18n();
 
 function projectFrameBySource(source) {
     for (const project of studio.orderedProjects.value) {
@@ -36,7 +38,15 @@ async function message(event) {
                 requestId: data.requestId,
                 context: {
                     localWorkspace: project.type !== studio.constants.PROJECT_TYPES.webPage,
-                    developmentMode: studio.constants.IS_DEVELOPMENT_MODE
+                    developmentMode: studio.constants.IS_DEVELOPMENT_MODE,
+                    labels: {
+                        copy: t("context.copy"),
+                        paste: t("context.paste"),
+                        refresh: t("context.refresh"),
+                        external: t("context.openExternal"),
+                        folder: t("context.openWorkspace"),
+                        devtools: t("context.openDevtools")
+                    }
                 }
             },
             "*"
@@ -54,8 +64,8 @@ async function message(event) {
                     !document.hasFocus())
             )
                 await studio.invoke("show_task_finished_notification", {
-                    title: "任务完成",
-                    body: `${project.name} - ${data.payload.taskName || previous.taskName || "任务"}`
+                    title: t("notification.taskFinished"),
+                    body: `${project.name} - ${data.payload.taskName || previous.taskName || t("notification.task")}`
                 });
         }
         if (sessions.size) studio.taskSessions.set(project.project_key, sessions);

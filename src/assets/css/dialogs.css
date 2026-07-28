@@ -212,29 +212,29 @@
     right: 0;
     left: 0;
     display: grid;
-    gap: 3px;
+    gap: 4px;
     max-height: 220px;
-    padding: 5px;
+    padding: 6px;
     overflow-y: auto;
     border: 1px solid var(--border-strong);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background: var(--panel);
     box-shadow: var(--shadow-float);
 }
 
 .group-select-option {
     display: grid;
-    grid-template-columns: 18px minmax(0, 1fr) auto;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 8px;
-    min-height: 32px;
-    padding: 0 8px;
+    gap: var(--icon-text-gap);
+    min-height: 34px;
+    padding: 0 10px;
     border: 0;
-    border-radius: calc(var(--radius-md) - 2px);
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--text-primary);
     font: inherit;
-    font-size: 0.9rem;
+    font-size: 0.86rem;
     text-align: left;
     cursor: pointer;
 }
@@ -242,7 +242,7 @@
 .group-select-option:hover:not(:disabled),
 .group-select-option:focus-visible {
     outline: none;
-    background: var(--control-hover);
+    background: var(--menu-hover);
 }
 
 .group-select-option.selected {
@@ -264,7 +264,8 @@
 .group-select-check {
     width: 6px;
     height: 11px;
-    margin: -2px 0 0 4px;
+    justify-self: center;
+    margin-top: -2px;
     border-right: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
     opacity: 0;

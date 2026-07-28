@@ -1,8 +1,10 @@
 <script setup>
 import { nextTick, onBeforeUnmount, reactive } from "vue";
+import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 import AppIcon from "./AppIcon.vue";
 const studio = useStudioStore();
+const { t } = useI18n();
 const menuPosition = reactive({ left: "0px", top: "0px" });
 let draggedWorkspace = null;
 let draggedWorkspaceElement = null;
@@ -137,7 +139,7 @@ onBeforeUnmount(() => {
             <div class="welcome-toolbar">
                 <label class="workspace-search">
                     <span class="workspace-search-icon"><i class="ri-search-line"></i></span>
-                    <input v-model="studio.state.workspaceSearch" type="search" placeholder="搜索工作区" />
+                    <input v-model="studio.state.workspaceSearch" type="search" :placeholder="t('workspace.search')" />
                 </label>
                 <div class="welcome-actions">
                     <button
@@ -145,7 +147,7 @@ onBeforeUnmount(() => {
                         type="button"
                         @click="studio.showWorkspaceGroupDialog">
                         <span class="welcome-action-icon"><AppIcon name="add-group" /></span>
-                        <span>创建分组</span>
+                        <span>{{ t("workspace.createGroup") }}</span>
                     </button>
                     <div class="app-menu-wrap workspace-add-menu-wrap">
                         <button
@@ -153,7 +155,7 @@ onBeforeUnmount(() => {
                             type="button"
                             @click="toggleAddMenu">
                             <span class="welcome-action-icon"><AppIcon name="add-workspace" /></span>
-                            <span>添加工作区</span>
+                            <span>{{ t("workspace.add") }}</span>
                         </button>
                         <Transition name="menu">
                             <div
@@ -162,11 +164,11 @@ onBeforeUnmount(() => {
                                 @click.capture="studio.dismissMenu">
                                 <button class="app-menu-item" type="button" @click="studio.pickWorkspace">
                                     <span class="app-menu-icon"><AppIcon name="add-local-workspace" /></span>
-                                    <span>本地工作区</span>
+                                    <span>{{ t("workspace.local") }}</span>
                                 </button>
                                 <button class="app-menu-item" type="button" @click="studio.showRemoteDialog()">
                                     <span class="app-menu-icon"><AppIcon name="add-remote-workspace" /></span>
-                                    <span>远程工作区</span>
+                                    <span>{{ t("workspace.remote") }}</span>
                                 </button>
                             </div>
                         </Transition>
@@ -186,8 +188,12 @@ onBeforeUnmount(() => {
                             @click="studio.toggleWorkspaceGroup(group)">
                             <AppIcon :name="group.collapsed ? 'group-collapsed' : 'group-expanded'" />
                             <span>
-                                {{ group.name }}
-                                <small>（共 {{ group.entries.length }} 个项目）</small>
+                                {{
+                                    group.id === studio.constants.DEFAULT_WORKSPACE_GROUP_ID
+                                        ? t("workspace.defaultGroup")
+                                        : group.name
+                                }}
+                                <small>（{{ t("workspace.count", { count: group.entries.length }) }}）</small>
                             </span>
                         </button>
                         <div v-if="group.id !== studio.constants.DEFAULT_WORKSPACE_GROUP_ID" class="app-menu-wrap">
@@ -211,14 +217,14 @@ onBeforeUnmount(() => {
                                             type="button"
                                             @click="studio.showWorkspaceGroupDialog(group)">
                                             <span class="app-menu-icon"><AppIcon name="rename-workspace" /></span>
-                                            <span>修改分组</span>
+                                            <span>{{ t("workspace.editGroup") }}</span>
                                         </button>
                                         <button
                                             class="app-menu-item"
                                             type="button"
                                             @click="studio.requestDeleteWorkspaceGroup(group)">
                                             <span class="app-menu-icon"><AppIcon name="remove-workspace" /></span>
-                                            <span>删除分组</span>
+                                            <span>{{ t("workspace.deleteGroup") }}</span>
                                         </button>
                                     </div>
                                 </Transition>
@@ -320,7 +326,7 @@ onBeforeUnmount(() => {
                                                     class="app-menu-item run-target-menu-item"
                                                     type="button"
                                                     @click="studio.runWorkspace(entry.path, target.key)">
-                                                    {{ target.label }}
+                                                    {{ t(target.labelKey) }}
                                                 </button>
                                             </div>
                                         </Transition>
@@ -360,7 +366,9 @@ onBeforeUnmount(() => {
                                                                 entry.pinned ? 'unpin-workspace' : 'pin-workspace'
                                                             " />
                                                     </span>
-                                                    <span>{{ entry.pinned ? "取消置顶" : "置顶" }}</span>
+                                                    <span>
+                                                        {{ t(entry.pinned ? "workspace.unpin" : "workspace.pin") }}
+                                                    </span>
                                                 </button>
                                                 <button
                                                     v-if="entry.removable && entry.type !== 'remote'"
@@ -370,7 +378,7 @@ onBeforeUnmount(() => {
                                                     <span class="app-menu-icon">
                                                         <AppIcon name="rename-workspace" />
                                                     </span>
-                                                    <span>修改工作区信息</span>
+                                                    <span>{{ t("workspace.edit") }}</span>
                                                 </button>
                                                 <button
                                                     v-if="entry.type === 'remote'"
@@ -380,7 +388,7 @@ onBeforeUnmount(() => {
                                                     <span class="app-menu-icon">
                                                         <AppIcon name="edit-remote-workspace" />
                                                     </span>
-                                                    <span>修改工作区信息</span>
+                                                    <span>{{ t("workspace.edit") }}</span>
                                                 </button>
                                                 <button
                                                     v-if="entry.type === 'remote'"
@@ -393,7 +401,7 @@ onBeforeUnmount(() => {
                                                         })
                                                     ">
                                                     <span class="app-menu-icon"><AppIcon name="open-external" /></span>
-                                                    <span>使用系统浏览器打开</span>
+                                                    <span>{{ t("workspace.openExternal") }}</span>
                                                 </button>
                                                 <button
                                                     v-if="entry.type !== 'remote'"
@@ -401,7 +409,7 @@ onBeforeUnmount(() => {
                                                     type="button"
                                                     @click="studio.showLogsDialog(entry.path)">
                                                     <span class="app-menu-icon"><AppIcon name="view-logs" /></span>
-                                                    <span>运行日志</span>
+                                                    <span>{{ t("workspace.logs") }}</span>
                                                 </button>
                                                 <button
                                                     v-if="entry.removable"
@@ -409,7 +417,7 @@ onBeforeUnmount(() => {
                                                     type="button"
                                                     @click="studio.showWorkspaceMoveDialog(entry)">
                                                     <span class="app-menu-icon"><AppIcon name="move-group" /></span>
-                                                    <span>移动分组</span>
+                                                    <span>{{ t("workspace.move") }}</span>
                                                 </button>
                                                 <button
                                                     v-if="entry.removable"
@@ -419,7 +427,7 @@ onBeforeUnmount(() => {
                                                     <span class="app-menu-icon">
                                                         <AppIcon name="remove-workspace" />
                                                     </span>
-                                                    <span>移除工作区</span>
+                                                    <span>{{ t("workspace.remove") }}</span>
                                                 </button>
                                             </div>
                                         </Transition>

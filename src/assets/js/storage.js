@@ -1,9 +1,11 @@
+import { t } from "../../i18n/index.js";
 import {
     APP_PREFERENCES_KEY,
     DEFAULT_APP_PREFERENCES,
     DEFAULT_TERMINAL_SETTINGS,
     DEFAULT_WORKSPACE_GROUP_ID,
     INTERFACE_STYLE_OPTIONS,
+    LOCALE_OPTIONS,
     RUN_TARGET_OPTIONS,
     TERMINAL_SETTINGS_KEY,
     WORKSPACE_ALIASES_KEY,
@@ -18,7 +20,10 @@ export function normalizeAppPreferences(preferences) {
     const interfaceStyle = INTERFACE_STYLE_OPTIONS.some((option) => option.key === preferences?.interfaceStyle)
         ? preferences.interfaceStyle
         : DEFAULT_APP_PREFERENCES.interfaceStyle;
-    return { defaultRunTarget, interfaceStyle };
+    const locale = LOCALE_OPTIONS.some((option) => option.key === preferences?.locale)
+        ? preferences.locale
+        : DEFAULT_APP_PREFERENCES.locale;
+    return { defaultRunTarget, interfaceStyle, locale };
 }
 
 export function loadAppPreferences() {
@@ -92,19 +97,19 @@ export function loadWorkspaceGroups() {
                   .filter((group) => group && typeof group.id === "string" && typeof group.name === "string")
                   .map((group) => ({
                       id: group.id,
-                      name: group.name.trim() || "未命名分组",
+                      name: group.name.trim() || t("workspace.unnamedGroup"),
                       collapsed: Boolean(group.collapsed)
                   }))
             : [];
         const storedDefault = groups.find((group) => group.id === DEFAULT_WORKSPACE_GROUP_ID);
         const defaultGroup = {
             id: DEFAULT_WORKSPACE_GROUP_ID,
-            name: "默认分组",
+            name: t("workspace.defaultGroup"),
             collapsed: Boolean(storedDefault?.collapsed)
         };
         return [defaultGroup, ...groups.filter((group) => group.id !== DEFAULT_WORKSPACE_GROUP_ID)];
     } catch (_) {
-        return [{ id: DEFAULT_WORKSPACE_GROUP_ID, name: "默认分组", collapsed: false }];
+        return [{ id: DEFAULT_WORKSPACE_GROUP_ID, name: t("workspace.defaultGroup"), collapsed: false }];
     }
 }
 

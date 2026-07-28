@@ -1,23 +1,25 @@
 <script setup>
+import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 import AppIcon from "./AppIcon.vue";
 const studio = useStudioStore();
+const { t } = useI18n();
 const resources = [
     {
-        title: "CLI 文档",
-        description: "命令、配置与操作指南",
+        titleKey: "learning.cliDocs",
+        descriptionKey: "learning.cliDocsDescription",
         target: "https://solon.noear.org/article/soloncode",
         icon: "documentation"
     },
     {
-        title: "Studio 官网",
-        description: "版本发布与产品动态",
+        titleKey: "learning.website",
+        descriptionKey: "learning.websiteDescription",
         target: "https://soloncode.studio/",
         icon: "official-website"
     },
     {
-        title: "Studio 源码仓库",
-        description: "源码、Issue 与更新日志",
+        titleKey: "learning.repository",
+        descriptionKey: "learning.repositoryDescription",
         target: "github-release",
         icon: "source-repository"
     }
@@ -31,34 +33,31 @@ function open(resource) {
 <template>
     <div class="learning-panel">
         <header class="learning-header">
-            <span class="learning-kicker">SOLONCODE STUDIO 学习中心</span>
-            <h1>让“数字员工”参与思考、创作与实践</h1>
-            <p>
-                SolonCode Studio 是 SolonCode CLI 的桌面专属工作台。你可以围绕资料、想法或项目建立工作区，通过 Web 或
-                CLI 持续推进任务。
-            </p>
+            <span class="learning-kicker">{{ t("learning.kicker") }}</span>
+            <h1>{{ t("learning.hero") }}</h1>
+            <p>{{ t("learning.intro") }}</p>
         </header>
         <div class="learning-content">
             <section class="learning-section">
                 <div class="learning-section-heading">
                     <span class="learning-section-index">01</span>
                     <div>
-                        <h2>开始工作</h2>
-                        <p>从你正在处理的内容和目标出发。</p>
+                        <h2>{{ t("learning.start") }}</h2>
+                        <p>{{ t("learning.startDescription") }}</p>
                     </div>
                 </div>
                 <ol class="learning-steps">
                     <li>
-                        <strong>准备上下文</strong>
-                        <span>选择包含资料、想法或项目的本地目录，或添加云端工作区。</span>
+                        <strong>{{ t("learning.stepContext") }}</strong>
+                        <span>{{ t("learning.stepContextDescription") }}</span>
                     </li>
                     <li>
-                        <strong>选择交互入口</strong>
-                        <span>使用 Web 获得直观体验，或通过 CLI 进入更灵活的命令行工作方式。</span>
+                        <strong>{{ t("learning.stepEntry") }}</strong>
+                        <span>{{ t("learning.stepEntryDescription") }}</span>
                     </li>
                     <li>
-                        <strong>说清你的目标</strong>
-                        <span>描述想理解的问题、要整理的资料或希望完成的成果，再通过对话逐步完善。</span>
+                        <strong>{{ t("learning.stepGoal") }}</strong>
+                        <span>{{ t("learning.stepGoalDescription") }}</span>
                     </li>
                 </ol>
             </section>
@@ -66,30 +65,30 @@ function open(resource) {
                 <div class="learning-section-heading">
                     <span class="learning-section-index">02</span>
                     <div>
-                        <h2>探索更多可能</h2>
-                        <p>赋能数字员工，灵活应对各类任务。</p>
+                        <h2>{{ t("learning.explore") }}</h2>
+                        <p>{{ t("learning.exploreDescription") }}</p>
                     </div>
                 </div>
                 <div class="learning-possibilities">
                     <article class="learning-possibility">
-                        <strong>学习与理解</strong>
-                        <span>梳理概念、阅读资料、拆解问题，形成自己的知识脉络。</span>
+                        <strong>{{ t("learning.understand") }}</strong>
+                        <span>{{ t("learning.understandDescription") }}</span>
                     </article>
                     <article class="learning-possibility">
-                        <strong>内容与创作</strong>
-                        <span>推演想法、组织结构、打磨表达，让零散灵感逐渐成形。</span>
+                        <strong>{{ t("learning.create") }}</strong>
+                        <span>{{ t("learning.createDescription") }}</span>
                     </article>
                     <article class="learning-possibility">
-                        <strong>分析与整理</strong>
-                        <span>归纳本地内容、提取重点、比较方案，并沉淀可复用的结果。</span>
+                        <strong>{{ t("learning.analyze") }}</strong>
+                        <span>{{ t("learning.analyzeDescription") }}</span>
                     </article>
                     <article class="learning-possibility">
-                        <strong>研发与工程</strong>
-                        <span>理解需求、规划改动、执行任务，将想法落实到真实项目中。</span>
+                        <strong>{{ t("learning.engineer") }}</strong>
+                        <span>{{ t("learning.engineerDescription") }}</span>
                     </article>
                     <article class="learning-possibility learning-possibility-more">
-                        <strong>更多，等你发现</strong>
-                        <span>任务没有固定边界，带着你的想法与目标，探索“数字员工”更多适合你的工作方式。</span>
+                        <strong>{{ t("learning.more") }}</strong>
+                        <span>{{ t("learning.moreDescription") }}</span>
                     </article>
                 </div>
             </section>
@@ -97,21 +96,21 @@ function open(resource) {
                 <div class="learning-section-heading">
                     <span class="learning-section-index">03</span>
                     <div>
-                        <h2>官方资源</h2>
-                        <p>文档、产品动态与开源代码集中在这里。</p>
+                        <h2>{{ t("learning.resources") }}</h2>
+                        <p>{{ t("learning.resourcesDescription") }}</p>
                     </div>
                 </div>
                 <div class="learning-resources">
                     <button
                         v-for="resource in resources"
-                        :key="resource.title"
+                        :key="resource.titleKey"
                         class="learning-resource"
                         type="button"
                         @click="open(resource)">
                         <span class="learning-resource-icon"><AppIcon :name="resource.icon" /></span>
                         <span class="learning-resource-copy">
-                            <strong>{{ resource.title }}</strong>
-                            <small>{{ resource.description }}</small>
+                            <strong>{{ t(resource.titleKey) }}</strong>
+                            <small>{{ t(resource.descriptionKey) }}</small>
                         </span>
                         <span class="learning-resource-arrow"><AppIcon name="open-resource" /></span>
                     </button>

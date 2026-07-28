@@ -1,3 +1,4 @@
+import { t } from "../../i18n/index.js";
 import { DEFAULT_WORKSPACE_GROUP_ID } from "./constants.js";
 import {
     loadWorkspaceAliases,
@@ -10,13 +11,13 @@ import {
 import { normalizeWebPageUrl } from "./url.js";
 
 export function getWorkspaceName(path) {
-    if (!path) return "用户目录";
+    if (!path) return t("workspace.home");
     if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(path)) return path;
     return path.split(/[\\/]/).filter(Boolean).pop() || path;
 }
 
 export function getWorkspaceDisplayName(path, fallbackName) {
-    if (!path) return fallbackName || "用户目录";
+    if (!path) return fallbackName || t("workspace.home");
     const alias = loadWorkspaceAliases()[path];
     if (typeof alias === "string" && alias.trim()) return alias.trim();
     return fallbackName || getWorkspaceName(path);

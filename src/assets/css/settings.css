@@ -135,26 +135,26 @@
     right: 0;
     left: 0;
     display: grid;
-    gap: 3px;
-    padding: 5px;
+    gap: 4px;
+    padding: 6px;
     border: 1px solid var(--border-strong);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     background: var(--panel);
     box-shadow: var(--shadow-float);
 }
 
 .settings-select-option {
     display: grid;
-    grid-template-columns: 18px minmax(0, 1fr);
+    grid-template-columns: 16px minmax(0, 1fr);
     align-items: center;
-    gap: 8px;
-    min-height: 32px;
-    padding: 0 8px;
+    gap: var(--icon-text-gap);
+    min-height: 34px;
+    padding: 0 10px;
     border: 0;
-    border-radius: calc(var(--radius-md) - 2px);
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: 0.86rem;
     text-align: left;
     cursor: pointer;
 }
@@ -162,7 +162,7 @@
 .settings-select-option:hover,
 .settings-select-option:focus-visible {
     outline: none;
-    background: var(--control-hover);
+    background: var(--menu-hover);
 }
 
 .settings-select-option.selected {
@@ -173,7 +173,8 @@
 .settings-select-check {
     width: 6px;
     height: 11px;
-    margin: -2px 0 0 4px;
+    justify-self: center;
+    margin-top: -2px;
     border-right: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
     opacity: 0;

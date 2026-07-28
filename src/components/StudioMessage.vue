@@ -1,8 +1,10 @@
 <script setup>
+import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 import AppIcon from "./AppIcon.vue";
 
 const studio = useStudioStore();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -19,8 +21,8 @@ const studio = useStudioStore();
                 <button
                     class="studio-message-close"
                     type="button"
-                    title="关闭提示"
-                    aria-label="关闭提示"
+                    :title="t('dialog.dismissMessage')"
+                    :aria-label="t('dialog.dismissMessage')"
                     @click="studio.closeMessage(message.id)">
                     <AppIcon name="close" />
                 </button>

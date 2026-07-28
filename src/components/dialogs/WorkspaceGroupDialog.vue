@@ -1,10 +1,12 @@
 <script setup>
 import { computed, ref, watch } from "vue";
+import { useI18n } from "../../i18n/index.js";
 import { useStudioStore } from "../../stores/studio.js";
 
 const studio = useStudioStore();
+const { t } = useI18n();
 const touched = ref(false);
-const nameError = computed(() => (studio.dialogForms.workspaceGroupName.trim() ? "" : "请输入分组名称"));
+const nameError = computed(() => (studio.dialogForms.workspaceGroupName.trim() ? "" : t("dialog.groupRequired")));
 
 watch(
     () => studio.dialogs.workspaceGroup,
@@ -18,10 +20,10 @@ watch(
     <Transition name="dialog">
         <div v-if="studio.dialogs.workspaceGroup" class="dialog-backdrop">
             <section class="dialog-panel" role="dialog" aria-modal="true">
-                <h2>{{ studio.dialogForms.editingWorkspaceGroup ? "修改分组" : "创建分组" }}</h2>
+                <h2>{{ t(studio.dialogForms.editingWorkspaceGroup ? "dialog.groupEdit" : "dialog.groupCreate") }}</h2>
                 <div class="workspace-alias-form">
                     <label class="remote-workspace-field required-field">
-                        <span>分组名称</span>
+                        <span>{{ t("dialog.groupName") }}</span>
                         <input
                             v-model="studio.dialogForms.workspaceGroupName"
                             maxlength="40"
@@ -30,7 +32,7 @@ watch(
                             :aria-invalid="touched && Boolean(nameError)"
                             aria-describedby="workspace-group-name-error"
                             @blur="touched = true"
-                            placeholder="例如：公司项目" />
+                            :placeholder="t('dialog.groupExample')" />
                         <small v-if="touched && nameError" id="workspace-group-name-error" class="dialog-field-error">
                             {{ nameError }}
                         </small>
@@ -38,14 +40,14 @@ watch(
                 </div>
                 <div class="dialog-actions">
                     <button class="dialog-btn" type="button" @click="studio.dialogs.workspaceGroup = false">
-                        取消
+                        {{ t("common.cancel") }}
                     </button>
                     <button
                         class="dialog-btn primary"
                         type="button"
                         :disabled="Boolean(nameError)"
                         @click="studio.saveWorkspaceGroup">
-                        {{ studio.dialogForms.editingWorkspaceGroup ? "保存" : "创建" }}
+                        {{ t(studio.dialogForms.editingWorkspaceGroup ? "common.save" : "common.create") }}
                     </button>
                 </div>
             </section>

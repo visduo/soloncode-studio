@@ -41,6 +41,7 @@ import {
     setWorkspacePinnedValue,
     touchWorkspaceEntry
 } from "../assets/js/workspace-store.js";
+import { setLocale, t } from "../i18n/index.js";
 
 const state = reactive({
     initialized: false,
@@ -51,7 +52,7 @@ const state = reactive({
     busy: false,
     cliUpdateAvailable: false,
     studioUpdateAvailable: false,
-    studioVersion: "版本未知",
+    studioVersion: t("status.versionUnknown"),
     studioLatestVersion: "",
     cliVersion: "",
     cliLatestVersion: "",
@@ -60,12 +61,13 @@ const state = reactive({
     selectedWorkspace: null,
     activeTabKey: HOME_TAB_KEY,
     homeSection: "workspace",
-    status: { text: "检测中", type: "detecting" },
+    status: { text: t("status.checking"), type: "detecting" },
     workspaceSearch: "",
     openMenu: null,
     preferences: loadAppPreferences(),
     terminalSettings: loadTerminalSettings()
 });
+setLocale(state.preferences.locale);
 const workspaces = ref(loadWorkspaces());
 const workspaceGroups = ref(loadWorkspaceGroups());
 const projects = shallowReactive(new Map());
@@ -106,7 +108,8 @@ const messageTimers = new Map();
 const invoke = (...args) => window.__TAURI__.core.invoke(...args);
 const workspaceKey = (path) => path || HOME_WORKSPACE_KEY;
 const makeProjectKey = (path, mode = LAUNCH_MODES.web) => `${workspaceKey(path)}::${mode}`;
-const formatError = (error) => (String(error || "未知错误").startsWith("❌") ? String(error) : `❌ ${error}`);
+const formatError = (error) =>
+    String(error || t("log.unknownError")).startsWith("❌") ? String(error) : `❌ ${error}`;
 
 function projectsForWorkspace(path) {
     const prefix = `${workspaceKey(path)}::`;
@@ -165,13 +168,13 @@ function selectWorkspace(path) {
 
 function appendWorkspaceLog(payload) {
     const key = payload.workspace_key || "system";
-    const old = logs.get(key) || { name: payload.name || "系统", lines: [] };
+    const old = logs.get(key) || { name: payload.name || t("log.system"), lines: [] };
     const entry = { name: payload.name || old.name, lines: [...old.lines, payload.message || ""] };
     if (entry.lines.length > MAX_LOG_LINES) entry.lines.splice(0, entry.lines.length - MAX_LOG_LINES);
     logs.set(key, entry);
 }
 
-function appendLog(text, key = HOME_WORKSPACE_KEY, name = "用户目录") {
+function appendLog(text, key = HOME_WORKSPACE_KEY, name = t("workspace.home")) {
     appendWorkspaceLog({ workspace_key: key, name, message: text });
 }
 
@@ -197,7 +200,7 @@ function confirmAction({ key, title, message, confirmLabel, onConfirm }) {
         title,
         message,
         actions: [
-            { label: "取消", handler: closePrompt },
+            { label: t("common.cancel"), handler: closePrompt },
             { label: confirmLabel, primary: true, handler: () => (closePrompt(), onConfirm()) }
         ]
     });
@@ -284,7 +287,7 @@ async function openExternalUrl(url, credentials = {}) {
             url: withBasicAuth(url, credentials.username, credentials.password)
         });
     } catch (error) {
-        appendLog(formatError(`打开链接失败: ${error}`));
+        appendLog(formatError(t("log.openUrlFailed", { error })));
     }
 }
 
@@ -311,7 +314,7 @@ async function revealWorkspace(path) {
 async function pickWorkspace() {
     if (state.busy) return;
     try {
-        const path = await invoke("pick_workspace");
+        const path = await invoke("pick_workspace", { title: t("workspace.pickTitle") });
         if (path && rememberLocalWorkspace(path)) {
             refreshWorkspaces();
             selectWorkspace(path);
@@ -336,10 +339,10 @@ function saveAlias() {
         dialogs.alias = false;
         dialogForms.editingWorkspace = null;
         refreshWorkspaces();
-        showSuccess("保存成功");
+        showSuccess(t("message.saveSuccess"));
         return true;
     } catch (error) {
-        showError(`保存失败：${error}`);
+        showError(t("message.saveFailed", { error }));
         return false;
     }
 }
@@ -384,10 +387,10 @@ function saveRemote() {
         }
         dialogs.remote = false;
         refreshWorkspaces();
-        showSuccess(previous ? "更新成功" : "创建成功");
+        showSuccess(t(previous ? "message.updateSuccess" : "message.createSuccess"));
         return true;
     } catch (error) {
-        showError(`${previous ? "更新" : "创建"}失败：${error}`);
+        showError(t(previous ? "message.updateFailed" : "message.createFailed", { error }));
         return false;
     }
 }
@@ -421,10 +424,10 @@ function saveWorkspaceGroup() {
         dialogs.workspaceGroup = false;
         dialogForms.editingWorkspaceGroup = null;
         refreshWorkspaceGroups();
-        showSuccess(editing ? "更新成功" : "创建成功");
+        showSuccess(t(editing ? "message.updateSuccess" : "message.createSuccess"));
         return true;
     } catch (error) {
-        showError(`${editing ? "更新" : "创建"}失败：${error}`);
+        showError(t(editing ? "message.updateFailed" : "message.createFailed", { error }));
         return false;
     }
 }
@@ -443,10 +446,10 @@ function moveWorkspace(path, targetGroupId, sourceGroupId) {
     try {
         if (!setWorkspaceGroup(path, targetGroupId)) return false;
         refreshWorkspaces();
-        showSuccess("移动成功");
+        showSuccess(t("message.moveSuccess"));
         return true;
     } catch (error) {
-        showError(`移动失败：${error}`);
+        showError(t("message.moveFailed", { error }));
         return false;
     }
 }
@@ -472,9 +475,9 @@ function requestDeleteWorkspaceGroup(group) {
     dismissMenu();
     confirmAction({
         key: `delete-workspace-group-${group.id}`,
-        title: "删除分组",
-        message: `确认删除「${group.name}」？分组内的工作区将移动到默认分组。`,
-        confirmLabel: "删除",
+        title: t("prompt.deleteGroupTitle"),
+        message: t("prompt.deleteGroupMessage", { name: group.name }),
+        confirmLabel: t("prompt.delete"),
         onConfirm: () => {
             if (!deleteWorkspaceGroup(group.id)) return;
             refreshWorkspaceGroups();
@@ -490,11 +493,11 @@ function toggleWorkspaceGroup(group) {
 function showInstallPrompt() {
     queuePrompt({
         key: "install-cli",
-        title: "CLI 未安装",
-        message: "SolonCode CLI 未安装，请先点击左下角安装 CLI。",
+        title: t("prompt.cliMissingTitle"),
+        message: t("prompt.cliMissingMessage"),
         actions: [
-            { label: "知道了", handler: closePrompt },
-            { label: "安装 CLI", primary: true, handler: () => (closePrompt(), handleInstall()) }
+            { label: t("prompt.acknowledge"), handler: closePrompt },
+            { label: t("prompt.installCli"), primary: true, handler: () => (closePrompt(), handleInstall()) }
         ]
     });
 }
@@ -502,12 +505,12 @@ function showInstallPrompt() {
 function showJavaPrompt() {
     queuePrompt({
         key: "missing-java",
-        title: "缺少 Java 环境",
-        message: "未检测到 Java 运行环境，请先安装 Java 运行环境后再安装/启动 SolonCode CLI。",
+        title: t("prompt.javaMissingTitle"),
+        message: t("prompt.javaMissingMessage"),
         actions: [
-            { label: "知道了", handler: closePrompt },
+            { label: t("prompt.acknowledge"), handler: closePrompt },
             {
-                label: "快速安装环境",
+                label: t("prompt.installEnvironment"),
                 primary: true,
                 handler: () => (closePrompt(), openExternalUrl("https://www.flyenv.com/zh/download.html"))
             }
@@ -521,24 +524,30 @@ async function refreshVersions(options = {}) {
         state.installed = Boolean(info.installed);
         state.cliUpdateAvailable = Boolean(info.cli_update_available);
         state.studioUpdateAvailable = Boolean(info.studio_update_available);
-        state.studioVersion = info.studio_current ? `v${String(info.studio_current).replace(/^v/, "")}` : "版本未知";
+        state.studioVersion = info.studio_current
+            ? `v${String(info.studio_current).replace(/^v/, "")}`
+            : t("status.versionUnknown");
         state.studioLatestVersion = info.studio_latest ? `v${String(info.studio_latest).replace(/^v/, "")}` : "";
         state.cliVersion = info.cli_current ? `v${String(info.cli_current).replace(/^v/, "")}` : "";
         state.cliLatestVersion = info.cli_latest ? `v${String(info.cli_latest).replace(/^v/, "")}` : "";
-        if (info.error) showError(`检测失败：${info.error}`);
+        if (info.error) showError(t("message.checkFailed", { error: info.error }));
         setStatus(
-            state.installed ? (state.cliUpdateAvailable ? "CLI 可更新" : "已安装") : "CLI 未安装，请先安装",
+            state.installed
+                ? state.cliUpdateAvailable
+                    ? t("status.cliUpdateAvailable")
+                    : t("common.installed")
+                : t("status.cliMissing"),
             state.installed ? (state.cliUpdateAvailable ? "update-available" : "installed") : "not-installed"
         );
         if (info.cli_update_available && !cliUpdatePromptShown) {
             cliUpdatePromptShown = true;
             queuePrompt({
                 key: "cli-update",
-                title: "CLI 可更新",
-                message: "SolonCode CLI 有新版本可用，是否立即更新？",
+                title: t("prompt.cliUpdateTitle"),
+                message: t("prompt.cliUpdateMessage"),
                 actions: [
-                    { label: "稍后", handler: closePrompt },
-                    { label: "立即更新", primary: true, handler: () => (closePrompt(), performUpdate()) }
+                    { label: t("prompt.later"), handler: closePrompt },
+                    { label: t("prompt.updateNow"), primary: true, handler: () => (closePrompt(), performUpdate()) }
                 ]
             });
         }
@@ -546,12 +555,12 @@ async function refreshVersions(options = {}) {
         if (info.studio_update_available && localStorage.getItem(HIDDEN_STUDIO_UPDATE_KEY) !== latestStudioVersion) {
             queuePrompt({
                 key: `studio-update-${info.studio_latest}`,
-                title: "Studio 可更新",
-                message: "SolonCode Studio 有新版本可用，请从官网下载最新安装包。",
+                title: t("prompt.studioUpdateTitle"),
+                message: t("prompt.studioUpdateMessage"),
                 actions: [
-                    { label: "稍后", handler: closePrompt },
+                    { label: t("prompt.later"), handler: closePrompt },
                     {
-                        label: "立即更新",
+                        label: t("prompt.updateNow"),
                         primary: true,
                         handler: () => (closePrompt(), openExternalUrl("https://soloncode.studio/"))
                     }
@@ -561,8 +570,8 @@ async function refreshVersions(options = {}) {
         return info;
     } catch (error) {
         if (!options.preserveInstalledOnError) state.installed = false;
-        showError(`版本检测失败：${error}`);
-        setStatus(`检测失败: ${error}`, state.installed ? "installed" : "not-installed");
+        showError(t("message.versionCheckFailed", { error }));
+        setStatus(t("status.checkFailed", { error }), state.installed ? "installed" : "not-installed");
         return { error: String(error) };
     }
 }
@@ -581,8 +590,8 @@ async function refreshEnvironment(options = {}) {
     } catch (error) {
         state.javaAvailable = false;
         state.javaVersion = "";
-        showError(`Java 检测失败：${error}`);
-        appendLog(formatError(`Java 检测失败: ${error}`));
+        showError(t("message.javaCheckFailed", { error }));
+        appendLog(formatError(t("log.javaCheckFailed", { error })));
     }
     try {
         return await refreshVersions(options);
@@ -595,19 +604,19 @@ async function performInstall(action = "install") {
     if (state.busy || state.environmentChecking) return;
     selectWorkspace(null);
     dialogs.logs = true;
-    appendLog("正在安装 SolonCode CLI...");
+    appendLog(t("log.installingCli"));
     state.busy = true;
-    setStatus("正在安装 CLI...", "detecting");
+    setStatus(t("status.installingCli"), "detecting");
     try {
         await invoke("install_soloncode");
         state.installed = true;
         await refreshEnvironment({ preserveInstalledOnError: true });
-        showSuccess(action === "update" ? "更新成功" : "安装成功");
+        showSuccess(t(action === "update" ? "message.updateSuccess" : "message.installSuccess"));
         return true;
     } catch (error) {
         appendLog(formatError(error));
-        setStatus("CLI 安装失败", "not-installed");
-        showError(`${action === "update" ? "更新" : "安装"}失败：${error}`);
+        setStatus(t("status.cliInstallFailed"), "not-installed");
+        showError(t(action === "update" ? "message.updateFailed" : "message.installFailed", { error }));
         return false;
     } finally {
         state.busy = false;
@@ -618,9 +627,9 @@ function handleInstall() {
     if (state.busy || state.environmentChecking) return;
     confirmAction({
         key: "confirm-install-cli",
-        title: "安装 CLI",
-        message: "确认安装 SolonCode CLI？",
-        confirmLabel: "确认安装",
+        title: t("prompt.installTitle"),
+        message: t("prompt.installMessage"),
+        confirmLabel: t("prompt.confirmInstall"),
         onConfirm: performInstall
     });
 }
@@ -634,9 +643,9 @@ function handleUpdate() {
     if (state.environmentChecking || !state.cliUpdateAvailable) return;
     confirmAction({
         key: "confirm-update-cli",
-        title: "更新 CLI",
-        message: "确认更新 SolonCode CLI？",
-        confirmLabel: "确认更新",
+        title: t("prompt.updateTitle"),
+        message: t("prompt.updateMessage"),
+        confirmLabel: t("prompt.confirmUpdate"),
         onConfirm: performUpdate
     });
 }
@@ -649,7 +658,7 @@ async function performUninstall() {
     if (state.busy || state.environmentChecking) return;
     selectWorkspace(null);
     dialogs.logs = true;
-    appendLog("正在卸载 SolonCode CLI...");
+    appendLog(t("log.uninstallingCli"));
     state.busy = true;
     try {
         await invoke("uninstall_soloncode");
@@ -660,12 +669,12 @@ async function performUninstall() {
         syncTabOrder();
         activateHome();
         await refreshVersions();
-        setStatus("CLI 已卸载", "not-installed");
-        showSuccess("卸载成功");
+        setStatus(t("status.cliUninstalled"), "not-installed");
+        showSuccess(t("message.uninstallSuccess"));
         return true;
     } catch (error) {
         appendLog(formatError(error));
-        showError(`卸载失败：${error}`);
+        showError(t("message.uninstallFailed", { error }));
         return false;
     } finally {
         state.busy = false;
@@ -676,9 +685,9 @@ function handleUninstall() {
     if (state.busy || state.environmentChecking) return;
     confirmAction({
         key: "confirm-uninstall-cli",
-        title: "卸载 CLI",
-        message: "确认卸载 SolonCode CLI？",
-        confirmLabel: "确认卸载",
+        title: t("prompt.uninstallTitle"),
+        message: t("prompt.uninstallMessage"),
+        confirmLabel: t("prompt.confirmUninstall"),
         onConfirm: performUninstall
     });
 }
@@ -695,15 +704,18 @@ async function runWorkspace(path = state.selectedWorkspace, target = RUN_TARGETS
     refreshWorkspaces();
     state.busy = true;
     startingWorkspaceKeys.add(key);
-    setStatus("正在启动...", "detecting");
+    setStatus(t("status.starting"), "detecting");
     const name = getWorkspaceDisplayName(targetWorkspace, getWorkspaceName(targetWorkspace));
     try {
-        appendLog(`📁 本次启动工作区: ${targetWorkspace || "用户目录"}`, key, name);
+        appendLog(`📁 ${t("log.launchWorkspace", { workspace: targetWorkspace || t("workspace.home") })}`, key, name);
         if (target === RUN_TARGETS.cliSystem) {
             await invoke("open_soloncode_system_terminal", { workspace: targetWorkspace });
             startingWorkspaceKeys.delete(key);
-            appendLog("✅ 已打开系统终端，请关注系统终端状态", key, name);
-            return setStatus(projects.size ? "部分工作区运行中" : "未启动", projects.size ? "running" : "installed");
+            appendLog(`✅ ${t("log.systemTerminalOpened")}`, key, name);
+            return setStatus(
+                t(projects.size ? "status.partiallyRunning" : "status.notStarted"),
+                projects.size ? "running" : "installed"
+            );
         }
         pendingRunTargets.set(makeProjectKey(targetWorkspace, option.mode), target);
         const project = await invoke("start_soloncode", { workspace: targetWorkspace, mode: option.mode });
@@ -713,13 +725,13 @@ async function runWorkspace(path = state.selectedWorkspace, target = RUN_TARGETS
             upsertProject(project);
             activateProject(project.project_key);
         }
-        setStatus(`${option.mode === LAUNCH_MODES.cli ? "CLI" : "Web"} 启动中...`, "running");
+        setStatus(t("status.modeStarting", { mode: option.mode === LAUNCH_MODES.cli ? "CLI" : "Web" }), "running");
     } catch (error) {
         pendingRunTargets.delete(makeProjectKey(targetWorkspace, option.mode));
         startingWorkspaceKeys.delete(key);
         appendLog(formatError(error), key, name);
         dialogs.logs = true;
-        setStatus("启动失败", "installed");
+        setStatus(t("status.startFailed"), "installed");
     } finally {
         state.busy = false;
     }
@@ -737,7 +749,10 @@ async function stopWorkspace(path, mode) {
         startingWorkspaceKeys.delete(key);
         syncTabOrder();
         if (project && state.activeTabKey === project.project_key) activateHome();
-        setStatus(projects.size ? "部分工作区运行中" : "已停止", projects.size ? "running" : "installed");
+        setStatus(
+            t(projects.size ? "status.partiallyRunning" : "status.stopped"),
+            projects.size ? "running" : "installed"
+        );
     } catch (error) {
         appendLog(formatError(error), key, project?.name || getWorkspaceName(path));
     } finally {
@@ -750,12 +765,12 @@ function requestCloseProject(key) {
     if (!project || state.busy) return;
     queuePrompt({
         key: `close-project-${key}`,
-        title: "关闭工作区",
-        message: `确认关闭「${project.name}」？`,
+        title: t("prompt.closeWorkspaceTitle"),
+        message: t("prompt.closeWorkspaceMessage", { name: project.name }),
         actions: [
-            { label: "取消", handler: closePrompt },
+            { label: t("common.cancel"), handler: closePrompt },
             {
-                label: "关闭",
+                label: t("common.close"),
                 primary: true,
                 handler: () => {
                     closePrompt();
@@ -786,10 +801,10 @@ function saveTerminalSettings(settings) {
     try {
         state.terminalSettings = normalizeTerminalSettings(settings);
         persistTerminalSettings(state.terminalSettings);
-        showSuccess("保存成功");
+        showSuccess(t("message.saveSuccess"));
         return true;
     } catch (error) {
-        showError(`保存失败：${error}`);
+        showError(t("message.saveFailed", { error }));
         return false;
     }
 }
@@ -797,11 +812,13 @@ function saveTerminalSettings(settings) {
 function saveAppPreferences(preferences) {
     try {
         state.preferences = normalizeAppPreferences(preferences);
+        setLocale(state.preferences.locale);
         persistAppPreferences(state.preferences);
-        showSuccess("保存成功");
+        refreshWorkspaceGroups();
+        showSuccess(t("message.saveSuccess"));
         return true;
     } catch (error) {
-        showError(`保存失败：${error}`);
+        showError(t("message.saveFailed", { error }));
         return false;
     }
 }
@@ -815,20 +832,20 @@ function handleCloseRequested() {
     if (saved === "quit" || saved === "tray") return applyCloseBehavior(saved);
     queuePrompt({
         key: "close-window-behavior",
-        title: "关闭提示",
-        message: "点击关闭按钮时：",
+        title: t("prompt.closeBehaviorTitle"),
+        message: t("prompt.closeBehaviorMessage"),
         closeBehavior: {
             selected: "quit",
             options: [
-                { value: "tray", label: "最小化到系统托盘" },
-                { value: "quit", label: "退出 SolonCode Studio" }
+                { value: "tray", label: t("prompt.minimizeToTray") },
+                { value: "quit", label: t("prompt.quitStudio") }
             ]
         },
-        checkbox: { label: "不再提醒" },
+        checkbox: { label: t("prompt.doNotAskAgain") },
         actions: [
-            { label: "取消", handler: closePrompt },
+            { label: t("common.cancel"), handler: closePrompt },
             {
-                label: "确定",
+                label: t("common.confirm"),
                 primary: true,
                 handler: ({ checked, behavior }) => {
                     if (checked) localStorage.setItem(CLOSE_WINDOW_BEHAVIOR_KEY, behavior);
@@ -849,8 +866,8 @@ function handleReady(event) {
     project.external = RUN_TARGET_OPTIONS.find((option) => option.key === target)?.external || false;
     startingWorkspaceKeys.delete(project.workspace_key);
     upsertProject(project);
-    appendLog(`✅ 就绪: ${project.name}`, project.workspace_key, project.name);
-    setStatus(`${project.mode === LAUNCH_MODES.cli ? "CLI" : "Web"} 已就绪`, "running");
+    appendLog(`✅ ${t("log.ready", { name: project.name })}`, project.workspace_key, project.name);
+    setStatus(t("status.modeReady", { mode: project.mode === LAUNCH_MODES.cli ? "CLI" : "Web" }), "running");
     if (target === RUN_TARGETS.webSystem && project.url) openExternalUrl(project.url);
     else if (!project.external) activateProject(project.project_key);
 }
@@ -863,9 +880,9 @@ function handleFailed(event) {
     for (const project of projectsForWorkspace(payload.workspace || null))
         if (project.workspace_key === key) projects.delete(project.project_key);
     syncTabOrder();
-    appendLog(formatError(payload.message || "启动失败"), key, payload.name || "用户目录");
+    appendLog(formatError(payload.message || t("status.startFailed")), key, payload.name || t("workspace.home"));
     dialogs.logs = true;
-    setStatus("启动失败", "installed");
+    setStatus(t("status.startFailed"), "installed");
     state.busy = false;
 }
 
@@ -932,8 +949,8 @@ const workspaceGroupsWithEntries = computed(() => {
     const validGroupIds = new Set(workspaceGroups.value.map((group) => group.id));
     const homeWorkspace = {
         path: null,
-        name: "用户目录",
-        detail: state.homeWorkspacePath || "用户目录",
+        name: t("workspace.home"),
+        detail: state.homeWorkspacePath || t("workspace.home"),
         removable: false,
         type: "local"
     };
