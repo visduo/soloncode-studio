@@ -210,7 +210,7 @@
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr) 16px;
     align-items: center;
-    gap: 10px;
+    gap: var(--icon-text-gap);
     width: 100%;
     min-height: 62px;
     padding: 12px 8px;

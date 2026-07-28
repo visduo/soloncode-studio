@@ -4,7 +4,7 @@ import { computed } from "vue";
 const props = defineProps({ name: { type: String, required: true } });
 const icons = {
     home: "ri-apps-ai-line",
-    workspaces: "ri-folder-open-line",
+    workspaces: "ri-apps-line",
     learning: "ri-book-ai-line",
     "mode-cli": "ri-terminal-box-line",
     "mode-web": "ri-window-line",

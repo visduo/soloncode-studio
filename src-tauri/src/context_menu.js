@@ -87,7 +87,7 @@
             display: "grid",
             gridTemplateColumns: "16px max-content",
             alignItems: "center",
-            gap: "8px",
+            gap: "6px",
             width: "100%",
             minHeight: "34px",
             padding: "0 10px",

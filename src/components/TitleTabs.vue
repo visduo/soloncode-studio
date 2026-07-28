@@ -8,8 +8,11 @@ const tabBar = ref(null);
 const hasOverflow = ref(false);
 const canScrollPrevious = ref(false);
 const canScrollNext = ref(false);
+const isFullscreen = ref(false);
+const appWindow = window.__TAURI__.window.getCurrentWindow();
 let draggedKey = null;
 let resizeObserver;
+let unlistenWindowResize;
 
 function updateScrollControls() {
     const element = tabBar.value;
@@ -59,21 +62,29 @@ function drop(targetKey) {
     draggedKey = null;
 }
 
+async function updateFullscreenState() {
+    isFullscreen.value = await appWindow.isFullscreen();
+}
+
 watch(
     () => studio.orderedProjects.value.length,
     () => nextTick(updateScrollControls)
 );
 
-onMounted(() => {
+onMounted(async () => {
     resizeObserver = new ResizeObserver(updateScrollControls);
     resizeObserver.observe(tabBar.value);
     updateScrollControls();
+    await updateFullscreenState();
+    unlistenWindowResize = await appWindow.onResized(updateFullscreenState);
 });
 
-onBeforeUnmount(() => resizeObserver?.disconnect());
+onBeforeUnmount(() => {
+    resizeObserver?.disconnect();
+    unlistenWindowResize?.();
+});
 
 async function windowAction(action) {
-    const appWindow = window.__TAURI__.window.getCurrentWindow();
     if (action === "minimize") await appWindow.minimize();
     if (action === "maximize") await appWindow.toggleMaximize();
     if (action === "close") await appWindow.close();
@@ -82,7 +93,7 @@ async function windowAction(action) {
 
 <template>
     <header class="title-bar">
-        <div class="macos-traffic-light-space" aria-hidden="true"></div>
+        <div v-if="!isFullscreen" class="macos-traffic-light-space" aria-hidden="true"></div>
         <button
             v-if="hasOverflow"
             class="tab-scroll-control"
