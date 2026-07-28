@@ -2,9 +2,9 @@
     --bg-primary: #eef2f6;
     --panel: #ffffff;
     --panel-soft: #f6f8fa;
-    --surface-hover: #f7f8fa;
-    --control-hover: #e9edf2;
-    --menu-hover: #f1f3f6;
+    --surface-hover: #fafbfc;
+    --control-hover: #f2f4f7;
+    --menu-hover: #f7f8fa;
     --surface-active: #edf4ff;
     --border: #d8dee7;
     --border-strong: #bcc7d5;
@@ -13,6 +13,7 @@
     --text-muted: #6f7d8e;
     --accent: #3478f6;
     --accent-strong: #2463d4;
+    --accent-hover: #4b88f7;
     --accent-soft: #edf4ff;
     --focus-ring: rgba(52, 120, 246, 0.32);
     --font-regular: 400;
@@ -23,6 +24,7 @@
     --state-running-border: #bdd9cd;
     --state-idle: #788699;
     --state-error: #c73535;
+    --state-error-hover: #d84b4b;
     --state-error-soft: #fff0f0;
     --state-error-border: #efb7b7;
     --state-loading: #b66a08;

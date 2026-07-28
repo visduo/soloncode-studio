@@ -179,8 +179,8 @@
 }
 
 .welcome-action.primary:hover {
-    border-color: var(--accent-strong);
-    background: var(--accent-strong);
+    border-color: var(--accent-hover);
+    background: var(--accent-hover);
 }
 .workspace-add-trigger {
     padding-right: 9px;
@@ -322,6 +322,11 @@
     background: var(--surface-hover);
 }
 
+.workspace-group-header.drag-over {
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+
 .workspace-group-header .app-icon {
     width: 16px;
     height: 16px;
@@ -412,6 +417,18 @@
 
 .workspace-item.active::before {
     background: var(--accent);
+}
+
+.workspace-item[data-workspace-draggable="true"] .workspace-copy {
+    cursor: grab;
+}
+
+.workspace-item.dragging {
+    opacity: 0.48;
+}
+
+.workspace-item.dragging .workspace-copy {
+    cursor: grabbing;
 }
 
 .workspace-copy {

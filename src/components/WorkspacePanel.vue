@@ -1,9 +1,15 @@
 <script setup>
-import { nextTick, reactive } from "vue";
+import { nextTick, onBeforeUnmount, reactive } from "vue";
 import { useStudioStore } from "../stores/studio.js";
 import AppIcon from "./AppIcon.vue";
 const studio = useStudioStore();
 const menuPosition = reactive({ left: "0px", top: "0px" });
+let draggedWorkspace = null;
+let draggedWorkspaceElement = null;
+let workspaceDropTarget = null;
+let workspacePointerStartX = 0;
+let workspacePointerStartY = 0;
+let suppressWorkspaceActivationUntil = 0;
 
 function menuKey(type, entry) {
     return `${type}:${studio.workspaceKey(entry.path)}`;
@@ -44,6 +50,85 @@ async function toggle(event, type, entry) {
     menuPosition.left = `${left}px`;
     menuPosition.top = `${top}px`;
 }
+
+function workspaceClick(entry) {
+    if (performance.now() < suppressWorkspaceActivationUntil) return;
+    studio.selectWorkspace(entry.path);
+}
+
+function workspaceDoubleClick(entry) {
+    if (performance.now() < suppressWorkspaceActivationUntil) return;
+    if (entry.type === "remote") {
+        studio.openWebPage(entry.detail, { username: entry.username, password: entry.password });
+        return;
+    }
+    studio.runWorkspace(entry.path, studio.state.preferences.defaultRunTarget);
+}
+
+function workspacePointerDown(event, entry, sourceGroupId) {
+    if (event.button !== 0 || !entry.removable || !entry.path || event.target.closest(".workspace-actions")) return;
+    draggedWorkspace = { path: entry.path, sourceGroupId };
+    draggedWorkspaceElement = event.currentTarget;
+    workspacePointerStartX = event.clientX;
+    workspacePointerStartY = event.clientY;
+    draggedWorkspaceElement.setPointerCapture(event.pointerId);
+}
+
+function findWorkspaceDropTarget(clientX, clientY) {
+    return (
+        document
+            .elementsFromPoint(clientX, clientY)
+            .map((element) => element.closest?.(".workspace-group-header[data-workspace-group-id]"))
+            .find((element) => element && element.dataset.workspaceGroupId !== draggedWorkspace?.sourceGroupId) || null
+    );
+}
+
+function workspacePointerMove(event) {
+    if (!draggedWorkspaceElement || !draggedWorkspace) return;
+    if (!draggedWorkspaceElement.classList.contains("dragging")) {
+        const distance = Math.hypot(event.clientX - workspacePointerStartX, event.clientY - workspacePointerStartY);
+        if (distance < 5) return;
+        draggedWorkspaceElement.classList.add("dragging");
+        studio.dismissMenu();
+    }
+    const target = findWorkspaceDropTarget(event.clientX, event.clientY);
+    if (target === workspaceDropTarget) return;
+    workspaceDropTarget?.classList.remove("drag-over");
+    workspaceDropTarget = target;
+    workspaceDropTarget?.classList.add("drag-over");
+}
+
+function clearWorkspaceDrag(pointerId) {
+    if (draggedWorkspaceElement?.hasPointerCapture(pointerId)) draggedWorkspaceElement.releasePointerCapture(pointerId);
+    draggedWorkspaceElement?.classList.remove("dragging");
+    workspaceDropTarget?.classList.remove("drag-over");
+    draggedWorkspace = null;
+    draggedWorkspaceElement = null;
+    workspaceDropTarget = null;
+}
+
+function finishWorkspaceDrag(event) {
+    if (!draggedWorkspaceElement || !draggedWorkspace) return;
+    const wasDragging = draggedWorkspaceElement.classList.contains("dragging");
+    const path = draggedWorkspace.path;
+    const sourceGroupId = draggedWorkspace.sourceGroupId;
+    const targetGroupId = workspaceDropTarget?.dataset.workspaceGroupId;
+    clearWorkspaceDrag(event.pointerId);
+    if (!wasDragging) return;
+    suppressWorkspaceActivationUntil = performance.now() + 300;
+    if (targetGroupId) studio.moveWorkspace(path, targetGroupId, sourceGroupId);
+}
+
+function cancelWorkspaceDrag(event) {
+    const wasDragging = draggedWorkspaceElement?.classList.contains("dragging");
+    clearWorkspaceDrag(event.pointerId);
+    if (wasDragging) suppressWorkspaceActivationUntil = performance.now() + 300;
+}
+
+onBeforeUnmount(() => {
+    draggedWorkspaceElement?.classList.remove("dragging");
+    workspaceDropTarget?.classList.remove("drag-over");
+});
 </script>
 
 <template>
@@ -93,15 +178,17 @@ async function toggle(event, type, entry) {
                     v-for="group in studio.workspaceGroupsWithEntries.value"
                     :key="group.id"
                     class="workspace-group">
-                    <div class="workspace-group-header">
+                    <div class="workspace-group-header" :data-workspace-group-id="group.id">
                         <button
                             class="workspace-group-toggle"
                             type="button"
                             :aria-expanded="!group.collapsed"
                             @click="studio.toggleWorkspaceGroup(group)">
                             <AppIcon :name="group.collapsed ? 'group-collapsed' : 'group-expanded'" />
-                            <span>{{ group.name }}</span>
-                            <small>{{ group.entries.length }}</small>
+                            <span>
+                                {{ group.name }}
+                                <small>（共 {{ group.entries.length }} 个项目）</small>
+                            </span>
                         </button>
                         <div v-if="group.id !== studio.constants.DEFAULT_WORKSPACE_GROUP_ID" class="app-menu-wrap">
                             <button
@@ -143,21 +230,20 @@ async function toggle(event, type, entry) {
                             v-for="entry in group.entries"
                             :key="entry.path || studio.constants.HOME_WORKSPACE_KEY"
                             class="workspace-item"
+                            :data-workspace-draggable="Boolean(entry.removable && entry.path)"
                             :class="{
                                 active: studio.state.selectedWorkspace === entry.path,
                                 running:
                                     studio.projectForWorkspace(entry.path) &&
                                     !studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
                             }"
-                            @click="studio.selectWorkspace(entry.path)"
-                            @dblclick="
-                                entry.type === 'remote'
-                                    ? studio.openWebPage(entry.detail, {
-                                          username: entry.username,
-                                          password: entry.password
-                                      })
-                                    : studio.runWorkspace(entry.path, studio.state.preferences.defaultRunTarget)
-                            ">
+                            @click="workspaceClick(entry)"
+                            @dblclick="workspaceDoubleClick(entry)"
+                            @pointerdown="workspacePointerDown($event, entry, group.id)"
+                            @pointermove="workspacePointerMove"
+                            @pointerup="finishWorkspaceDrag"
+                            @pointercancel="cancelWorkspaceDrag"
+                            @lostpointercapture="cancelWorkspaceDrag">
                             <button class="workspace-copy" type="button">
                                 <span class="workspace-badge" aria-hidden="true">
                                     {{ workspaceInitial(entry.name) }}

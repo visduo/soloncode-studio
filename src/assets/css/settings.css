@@ -285,8 +285,8 @@
 }
 
 .settings-button.primary:hover:not(:disabled) {
-    border-color: var(--accent-strong);
-    background: var(--accent-strong);
+    border-color: var(--accent-hover);
+    background: var(--accent-hover);
 }
 
 .settings-button:disabled {

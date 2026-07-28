@@ -437,24 +437,35 @@ function showWorkspaceMoveDialog(entry) {
     dialogs.workspaceMove = true;
 }
 
+function moveWorkspace(path, targetGroupId, sourceGroupId) {
+    if (!path || targetGroupId === sourceGroupId || !workspaceGroups.value.some((group) => group.id === targetGroupId))
+        return false;
+    try {
+        if (!setWorkspaceGroup(path, targetGroupId)) return false;
+        refreshWorkspaces();
+        showSuccess("移动成功");
+        return true;
+    } catch (error) {
+        showError(`移动失败：${error}`);
+        return false;
+    }
+}
+
 function moveWorkspaceToGroup() {
     if (
         !workspaceGroups.value.some((group) => group.id === dialogForms.workspaceMoveGroupId) ||
         dialogForms.workspaceMoveGroupId === dialogForms.workspaceMoveSourceGroupId
     )
         return false;
-    try {
-        if (setWorkspaceGroup(dialogForms.movingWorkspace, dialogForms.workspaceMoveGroupId)) {
-            dialogs.workspaceMove = false;
-            dialogForms.movingWorkspace = null;
-            refreshWorkspaces();
-            showSuccess("移动成功");
-            return true;
-        }
-    } catch (error) {
-        showError(`移动失败：${error}`);
-    }
-    return false;
+    const moved = moveWorkspace(
+        dialogForms.movingWorkspace,
+        dialogForms.workspaceMoveGroupId,
+        dialogForms.workspaceMoveSourceGroupId
+    );
+    if (!moved) return false;
+    dialogs.workspaceMove = false;
+    dialogForms.movingWorkspace = null;
+    return true;
 }
 
 function requestDeleteWorkspaceGroup(group) {
@@ -462,7 +473,7 @@ function requestDeleteWorkspaceGroup(group) {
     confirmAction({
         key: `delete-workspace-group-${group.id}`,
         title: "删除分组",
-        message: `确认删除“${group.name}”？分组内的工作区将移动到默认分组。`,
+        message: `确认删除「${group.name}」？分组内的工作区将移动到默认分组。`,
         confirmLabel: "删除",
         onConfirm: () => {
             if (!deleteWorkspaceGroup(group.id)) return;
@@ -999,6 +1010,7 @@ export function useStudioStore() {
         showWorkspaceGroupDialog,
         saveWorkspaceGroup,
         showWorkspaceMoveDialog,
+        moveWorkspace,
         moveWorkspaceToGroup,
         requestDeleteWorkspaceGroup,
         toggleWorkspaceGroup,
