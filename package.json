@@ -1,7 +1,7 @@
 {
     "name": "soloncode-studio",
     "private": true,
-    "version": "26.721.2",
+    "version": "26.728.5",
     "type": "module",
     "scripts": {
         "dev": "vite",

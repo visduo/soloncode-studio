@@ -11,6 +11,11 @@ const canScrollNext = ref(false);
 const isFullscreen = ref(false);
 const appWindow = window.__TAURI__.window.getCurrentWindow();
 let draggedKey = null;
+let draggedTab = null;
+let dropTarget = null;
+let dropAfter = false;
+let pointerStartX = 0;
+let suppressTabClick = false;
 let resizeObserver;
 let unlistenWindowResize;
 
@@ -50,16 +55,64 @@ function activateHome(event) {
 }
 
 function activateProject(event, key) {
+    if (suppressTabClick) {
+        suppressTabClick = false;
+        return;
+    }
     studio.activateProject(key);
     revealTab(event.currentTarget);
 }
 
-function dragStart(key) {
+function pointerDown(event, key) {
+    if (event.button !== 0 || event.target.closest(".tab-close")) return;
+    suppressTabClick = false;
     draggedKey = key;
+    draggedTab = event.currentTarget;
+    pointerStartX = event.clientX;
+    draggedTab.setPointerCapture(event.pointerId);
 }
-function drop(targetKey) {
-    if (draggedKey) studio.reorderTab(draggedKey, targetKey);
+
+function pointerMove(event) {
+    if (!draggedTab || !draggedKey) return;
+    if (!draggedTab.classList.contains("dragging")) {
+        if (Math.abs(event.clientX - pointerStartX) < 5) return;
+        draggedTab.classList.add("dragging");
+        suppressTabClick = true;
+    }
+    const target = document
+        .elementsFromPoint(event.clientX, event.clientY)
+        .map((element) => element.closest?.(".tab-item[data-project-key]"))
+        .find((element) => element && element !== draggedTab);
+    const nextDropAfter = Boolean(target && draggedTab.offsetLeft < target.offsetLeft);
+    if (target === dropTarget && nextDropAfter === dropAfter) return;
+    dropTarget?.classList.remove("drag-over-before", "drag-over-after");
+    dropTarget = target || null;
+    dropAfter = nextDropAfter;
+    dropTarget?.classList.add(dropAfter ? "drag-over-after" : "drag-over-before");
+}
+
+function finishPointerDrag(event) {
+    if (!draggedTab) return;
+    const targetKey = dropTarget?.dataset.projectKey;
+    if (draggedTab.hasPointerCapture(event.pointerId)) draggedTab.releasePointerCapture(event.pointerId);
+    draggedTab.classList.remove("dragging");
+    dropTarget?.classList.remove("drag-over-before", "drag-over-after");
+    if (suppressTabClick && targetKey) studio.reorderTab(draggedKey, targetKey);
     draggedKey = null;
+    draggedTab = null;
+    dropTarget = null;
+    dropAfter = false;
+}
+
+function cancelPointerDrag(event) {
+    if (draggedTab?.hasPointerCapture(event.pointerId)) draggedTab.releasePointerCapture(event.pointerId);
+    draggedTab?.classList.remove("dragging");
+    dropTarget?.classList.remove("drag-over-before", "drag-over-after");
+    draggedKey = null;
+    draggedTab = null;
+    dropTarget = null;
+    dropAfter = false;
+    suppressTabClick = false;
 }
 
 async function updateFullscreenState() {
@@ -116,26 +169,36 @@ async function windowAction(action) {
                 v-for="project in studio.orderedProjects.value"
                 :key="project.project_key"
                 class="tab-item"
+                :data-project-key="project.project_key"
                 :class="{
                     active: studio.state.activeTabKey === project.project_key,
                     'task-running': studio.taskSessions.has(project.project_key)
                 }"
                 type="button"
-                draggable="true"
-                @dragstart="dragStart(project.project_key)"
-                @dragover.prevent
-                @drop="drop(project.project_key)"
+                @pointerdown="pointerDown($event, project.project_key)"
+                @pointermove="pointerMove"
+                @pointerup="finishPointerDrag"
+                @pointercancel="cancelPointerDrag"
                 @click="activateProject($event, project.project_key)">
                 <span class="tab-main">
                     <span class="tab-mode">
-                        <AppIcon
-                            :name="
-                                studio.taskSessions.has(project.project_key)
-                                    ? 'loading'
-                                    : project.mode === 'cli'
-                                      ? 'mode-cli'
-                                      : 'mode-web'
-                            " />
+                        <Transition name="icon-swap" mode="out-in">
+                            <AppIcon
+                                :key="
+                                    studio.taskSessions.has(project.project_key)
+                                        ? 'loading'
+                                        : project.mode === 'cli'
+                                          ? 'mode-cli'
+                                          : 'mode-web'
+                                "
+                                :name="
+                                    studio.taskSessions.has(project.project_key)
+                                        ? 'loading'
+                                        : project.mode === 'cli'
+                                          ? 'mode-cli'
+                                          : 'mode-web'
+                                " />
+                        </Transition>
                     </span>
                     <span class="tab-label">{{ project.name }}</span>
                 </span>

@@ -15,3 +15,15 @@ export function normalizeWebPageUrl(value) {
     if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)) return raw;
     return `https://${raw}`;
 }
+
+export function withBasicAuth(url, username, password) {
+    if (!username || !password) return url;
+    try {
+        const parsedUrl = new URL(url);
+        parsedUrl.username = username;
+        parsedUrl.password = password;
+        return parsedUrl.toString();
+    } catch (_) {
+        return url;
+    }
+}

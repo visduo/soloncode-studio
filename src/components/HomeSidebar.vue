@@ -16,9 +16,11 @@ function toggleCliMenu() {
             <span class="welcome-brand-copy">
                 <strong>SolonCode Studio</strong>
                 <small>
-                    <span class="version-item" :class="{ 'version-update': studio.state.studioUpdateAvailable }">
-                        {{ studio.state.studioVersion }}
-                    </span>
+                    <Transition name="status-text" mode="out-in">
+                        <span :key="studio.state.studioVersion" class="version-item">
+                            {{ studio.state.studioVersion }}
+                        </span>
+                    </Transition>
                 </small>
             </span>
         </div>
@@ -45,45 +47,49 @@ function toggleCliMenu() {
                 <button class="sidebar-cli-settings" type="button" @click="toggleCliMenu">
                     <AppIcon name="cli-settings" />
                 </button>
-                <div
-                    v-if="studio.state.openMenu === 'cli'"
-                    class="app-menu cli-actions-menu"
-                    @click.capture="studio.dismissMenu">
-                    <button
-                        v-if="!studio.state.javaAvailable"
-                        class="app-menu-item"
-                        type="button"
-                        @click="studio.openExternalUrl('https://www.flyenv.com/zh/download.html')">
-                        <span class="app-menu-icon"><AppIcon name="install-java" /></span>
-                        <span>安装 Java</span>
-                    </button>
-                    <button
-                        class="app-menu-item"
-                        type="button"
-                        :disabled="!studio.state.studioUpdateAvailable"
-                        @click="studio.openExternalUrl('https://soloncode.studio/')">
-                        <span class="app-menu-icon"><AppIcon name="update-studio" /></span>
-                        <span>更新 Studio</span>
-                    </button>
-                    <button
-                        class="app-menu-item"
-                        type="button"
-                        :disabled="studio.state.busy || (studio.state.installed && !studio.state.cliUpdateAvailable)"
-                        @click="studio.handleCliPrimaryAction">
-                        <span class="app-menu-icon">
-                            <AppIcon :name="studio.state.installed ? 'update-cli' : 'install-cli'" />
-                        </span>
-                        <span>{{ studio.state.installed ? "更新 CLI" : "安装 CLI" }}</span>
-                    </button>
-                    <button
-                        class="app-menu-item cli-uninstall-item"
-                        type="button"
-                        :disabled="studio.state.busy || !studio.state.installed || studio.projects.size > 0"
-                        @click="studio.handleUninstall">
-                        <span class="app-menu-icon"><AppIcon name="uninstall-cli" /></span>
-                        <span>卸载 CLI</span>
-                    </button>
-                </div>
+                <Transition name="menu">
+                    <div
+                        v-if="studio.state.openMenu === 'cli'"
+                        class="app-menu cli-actions-menu"
+                        @click.capture="studio.dismissMenu">
+                        <button
+                            v-if="!studio.state.javaAvailable"
+                            class="app-menu-item"
+                            type="button"
+                            @click="studio.openExternalUrl('https://www.flyenv.com/zh/download.html')">
+                            <span class="app-menu-icon"><AppIcon name="install-java" /></span>
+                            <span>安装 Java</span>
+                        </button>
+                        <button
+                            class="app-menu-item"
+                            type="button"
+                            :disabled="!studio.state.studioUpdateAvailable"
+                            @click="studio.openExternalUrl('https://soloncode.studio/')">
+                            <span class="app-menu-icon"><AppIcon name="update-studio" /></span>
+                            <span>更新 Studio</span>
+                        </button>
+                        <button
+                            class="app-menu-item"
+                            type="button"
+                            :disabled="
+                                studio.state.busy || (studio.state.installed && !studio.state.cliUpdateAvailable)
+                            "
+                            @click="studio.handleCliPrimaryAction">
+                            <span class="app-menu-icon">
+                                <AppIcon :name="studio.state.installed ? 'update-cli' : 'install-cli'" />
+                            </span>
+                            <span>{{ studio.state.installed ? "更新 CLI" : "安装 CLI" }}</span>
+                        </button>
+                        <button
+                            class="app-menu-item cli-uninstall-item"
+                            type="button"
+                            :disabled="studio.state.busy || !studio.state.installed || studio.projects.size > 0"
+                            @click="studio.handleUninstall">
+                            <span class="app-menu-icon"><AppIcon name="uninstall-cli" /></span>
+                            <span>卸载 CLI</span>
+                        </button>
+                    </div>
+                </Transition>
             </div>
         </div>
     </section>

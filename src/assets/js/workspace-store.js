@@ -52,16 +52,25 @@ export function rememberLocalWorkspace(path) {
     return true;
 }
 
-export function rememberRemoteWorkspaceEntry(urlValue) {
+export function rememberRemoteWorkspaceEntry({ name, url: urlValue, username, password }) {
     const url = normalizeWebPageUrl(urlValue);
     if (!url) return null;
     const workspaces = loadWorkspaces().filter((item) => item.path !== url);
-    workspaces.push({ path: url, type: "remote", url, pinned: false, lastOpenedAt: Date.now() });
+    workspaces.push({
+        path: url,
+        type: "remote",
+        url,
+        username: String(username || "").trim(),
+        password: String(password || ""),
+        pinned: false,
+        lastOpenedAt: Date.now()
+    });
     saveWorkspaces(workspaces);
+    setWorkspaceAlias(url, String(name || "").trim());
     return url;
 }
 
-export function replaceRemoteWorkspace(path, urlValue) {
+export function replaceRemoteWorkspace(path, { name, url: urlValue, username, password }) {
     const url = normalizeWebPageUrl(urlValue);
     if (!path || !url) return null;
     const workspaces = loadWorkspaces();
@@ -72,15 +81,21 @@ export function replaceRemoteWorkspace(path, urlValue) {
     workspaces.splice(index, 1);
     const duplicateIndex = workspaces.findIndex((item) => item.path === url);
     if (duplicateIndex !== -1) workspaces.splice(duplicateIndex, 1);
-    workspaces.push({ ...current, path: url, url, lastOpenedAt: Date.now() });
+    workspaces.push({
+        ...current,
+        path: url,
+        url,
+        username: String(username || "").trim(),
+        password: String(password || ""),
+        lastOpenedAt: Date.now()
+    });
     saveWorkspaces(workspaces);
 
     const aliases = loadWorkspaceAliases();
-    if (path in aliases) {
-        aliases[url] = aliases[path];
-        delete aliases[path];
-        saveWorkspaceAliases(aliases);
-    }
+    delete aliases[path];
+    const alias = String(name || "").trim();
+    if (alias) aliases[url] = alias;
+    saveWorkspaceAliases(aliases);
     return url;
 }
 

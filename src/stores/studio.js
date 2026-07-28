@@ -13,7 +13,7 @@ import {
 } from "../assets/js/constants.js";
 import { loadTerminalSettings, normalizeTerminalSettings, persistTerminalSettings } from "../assets/js/storage.js";
 import { isTerminalControlSequence } from "../assets/js/terminal-input.js";
-import { normalizeWebPageUrl } from "../assets/js/url.js";
+import { normalizeWebPageUrl, withBasicAuth } from "../assets/js/url.js";
 import {
     getWorkspaceDisplayName,
     getWorkspaceEntry,
@@ -55,7 +55,15 @@ const promptQueue = ref([]);
 const queuedPromptKeys = new Set();
 const taskSessions = shallowReactive(new Map());
 const dialogs = reactive({ alias: false, remote: false, logs: false, terminalSettings: false });
-const dialogForms = reactive({ alias: "", remote: "", editingWorkspace: null, editingRemote: null });
+const dialogForms = reactive({
+    alias: "",
+    remoteName: "",
+    remoteUrl: "",
+    remoteUsername: "",
+    remotePassword: "",
+    editingWorkspace: null,
+    editingRemote: null
+});
 let cliUpdatePromptShown = false;
 let installCliPromptShown = false;
 let javaPromptShown = false;
@@ -190,17 +198,18 @@ function reorderTab(sourceKey, targetKey) {
     tabOrder.value = order;
 }
 
-function openWebPage(urlValue) {
-    const url = normalizeWebPageUrl(urlValue);
+function openWebPage(urlValue, credentials = {}) {
+    const baseUrl = normalizeWebPageUrl(urlValue);
+    const url = withBasicAuth(baseUrl, credentials.username, credentials.password);
     if (!url) return;
-    touchWorkspaceEntry(url);
+    touchWorkspaceEntry(baseUrl);
     refreshWorkspaces();
-    const key = `web::${url}`;
+    const key = `web::${baseUrl}`;
     upsertProject({
         project_key: key,
         workspace_key: key,
-        workspace: url,
-        name: getWorkspaceDisplayName(url, url),
+        workspace: baseUrl,
+        name: getWorkspaceDisplayName(baseUrl, baseUrl),
         mode: LAUNCH_MODES.web,
         type: PROJECT_TYPES.webPage,
         url,
@@ -210,9 +219,11 @@ function openWebPage(urlValue) {
     activateProject(key);
 }
 
-async function openExternalUrl(url) {
+async function openExternalUrl(url, credentials = {}) {
     try {
-        await invoke("open_external_url", { url });
+        await invoke("open_external_url", {
+            url: withBasicAuth(url, credentials.username, credentials.password)
+        });
     } catch (error) {
         appendLog(formatError(`打开链接失败: ${error}`));
     }
@@ -270,7 +281,10 @@ function showRemoteDialog(path = null) {
     dismissMenu();
     const entry = path ? getWorkspaceEntry(path) : null;
     dialogForms.editingRemote = entry?.type === "remote" ? path : null;
-    dialogForms.remote = dialogForms.editingRemote ? entry.url || entry.path : "";
+    dialogForms.remoteName = dialogForms.editingRemote ? getWorkspaceDisplayName(path) : "";
+    dialogForms.remoteUrl = dialogForms.editingRemote ? entry.url || entry.path : "";
+    dialogForms.remoteUsername = dialogForms.editingRemote ? entry.username || "" : "";
+    dialogForms.remotePassword = dialogForms.editingRemote ? entry.password || "" : "";
     dialogs.remote = true;
 }
 
@@ -281,14 +295,19 @@ function showLogsDialog(path = state.selectedWorkspace) {
 
 function saveRemote() {
     const previous = dialogForms.editingRemote;
-    const url = normalizeWebPageUrl(dialogForms.remote);
-    if (!url) return;
+    const remote = {
+        name: dialogForms.remoteName.trim(),
+        url: normalizeWebPageUrl(dialogForms.remoteUrl),
+        username: dialogForms.remoteUsername.trim(),
+        password: dialogForms.remotePassword
+    };
+    if (!remote.name || !remote.url) return;
     dialogs.remote = false;
     if (!previous) {
-        const saved = rememberRemoteWorkspaceEntry(url);
+        const saved = rememberRemoteWorkspaceEntry(remote);
         if (saved) selectWorkspace(saved);
     } else {
-        const saved = replaceRemoteWorkspace(previous, url);
+        const saved = replaceRemoteWorkspace(previous, remote);
         if (!saved) return;
         projects.delete(`web::${previous}`);
         syncTabOrder();
@@ -365,11 +384,11 @@ async function refreshVersions(options = {}) {
             queuePrompt({
                 key: `studio-update-${info.studio_latest}`,
                 title: "Studio 可更新",
-                message: "SolonCode Studio 有新版本，请从官网下载最新安装包。",
+                message: "SolonCode Studio 有新版本可用，请从官网下载最新安装包。",
                 actions: [
                     { label: "稍后", handler: closePrompt },
                     {
-                        label: "更新 Studio",
+                        label: "立即更新",
                         primary: true,
                         handler: () => (closePrompt(), openExternalUrl("https://soloncode.studio/"))
                     }

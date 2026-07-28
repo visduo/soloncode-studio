@@ -29,7 +29,7 @@ function open(resource) {
 </script>
 
 <template>
-    <section class="learning-panel">
+    <div class="learning-panel">
         <header class="learning-header">
             <span class="learning-kicker">SOLONCODE STUDIO 学习中心</span>
             <h1>让“数字员工”参与思考、创作与实践</h1>
@@ -74,7 +74,8 @@ function open(resource) {
                     <article
                         v-for="item in ['学习与理解', '内容与创作', '分析与整理', '研发与工程', '更多，等你发现']"
                         :key="item"
-                        class="learning-possibility">
+                        class="learning-possibility"
+                        :class="{ 'learning-possibility-more': item === '更多，等你发现' }">
                         <strong>{{ item }}</strong>
                         <span>围绕资料、想法和真实项目持续思考、整理并完成任务。</span>
                     </article>
@@ -105,5 +106,5 @@ function open(resource) {
                 </div>
             </section>
         </div>
-    </section>
+    </div>
 </template>

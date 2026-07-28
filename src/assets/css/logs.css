@@ -267,14 +267,8 @@
     color: var(--text-muted);
 }
 
-.workspace-list::-webkit-scrollbar,
 .log-content::-webkit-scrollbar {
     width: 6px;
-}
-
-.workspace-list::-webkit-scrollbar-thumb {
-    background: var(--border-strong);
-    border-radius: 999px;
 }
 
 .log-content::-webkit-scrollbar-thumb {

@@ -70,10 +70,10 @@ onBeforeUnmount(() => window.removeEventListener("message", message));
     <section class="project-view">
         <div
             v-for="project in studio.orderedProjects.value"
+            v-show="studio.state.activeTabKey === project.project_key"
             :key="project.project_key"
             class="vue-project-host"
-            :data-project-key="project.project_key"
-            v-show="studio.state.activeTabKey === project.project_key">
+            :data-project-key="project.project_key">
             <TerminalView
                 v-if="project.mode === studio.constants.LAUNCH_MODES.cli"
                 :project="project"

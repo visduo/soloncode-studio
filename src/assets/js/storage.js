@@ -71,6 +71,8 @@ export function loadWorkspaces() {
                         path: item.path,
                         type: item.type === "remote" ? "remote" : "local",
                         url: item.type === "remote" ? item.url || item.path : undefined,
+                        username: item.type === "remote" ? String(item.username || "") : undefined,
+                        password: item.type === "remote" ? String(item.password || "") : undefined,
                         pinned: Boolean(item.pinned),
                         lastOpenedAt: Number.isFinite(Number(item.lastOpenedAt)) ? Number(item.lastOpenedAt) : 0
                     };

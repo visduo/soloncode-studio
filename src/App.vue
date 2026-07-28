@@ -69,10 +69,12 @@ onBeforeUnmount(() => {
             <TitleTabs />
             <div v-show="studio.state.activeTabKey === studio.constants.HOME_TAB_KEY" class="home-view">
                 <HomeSidebar />
-                <WorkspacePanel v-if="studio.state.homeSection === 'workspace'" />
-                <LearningPanel v-else />
+                <section class="home-content-panel">
+                    <WorkspacePanel v-if="studio.state.homeSection === 'workspace'" />
+                    <LearningPanel v-else />
+                </section>
             </div>
-            <ProjectHost />
+            <ProjectHost v-show="studio.state.activeTabKey !== studio.constants.HOME_TAB_KEY" />
         </main>
         <StudioDialogs />
     </div>

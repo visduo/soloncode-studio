@@ -1,47 +1,6 @@
-.sidebar,
-.main-panel {
-    min-height: 0;
-    border: 1px solid rgba(188, 199, 213, 0.5);
-    border-radius: var(--radius-window);
-    box-shadow: none;
-}
-
-.sidebar {
-    grid-column: 1;
-    grid-row: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 28px 12px 18px;
-    background: var(--panel);
-    overflow: hidden;
-}
-
-.main-panel {
-    grid-column: 2;
-    grid-row: 1;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 0;
-    padding: 22px 26px 18px;
-    background: var(--panel);
-    overflow: hidden;
-}
-
-.main-panel[hidden],
-.learning-panel[hidden] {
-    display: none;
-}
-
 .learning-panel {
-    grid-column: 2;
-    grid-row: 1;
+    width: 100%;
     min-width: 0;
-    min-height: 0;
-    padding: 44px 52px 36px;
-    overflow-y: auto;
-    border: 1px solid rgba(188, 199, 213, 0.5);
-    border-radius: var(--radius-window);
-    background: var(--panel);
 }
 
 .learning-header {
@@ -86,6 +45,10 @@
     gap: 42px;
     padding: 30px 0;
     border-bottom: 1px solid var(--border);
+}
+
+.learning-section:last-child {
+    padding-bottom: 0px;
 }
 
 .learning-section:last-child {
@@ -195,11 +158,6 @@
 
 .learning-possibility-more {
     grid-column: 1 / -1;
-    background: var(--accent-soft);
-}
-
-.learning-possibility-more strong {
-    color: var(--accent-strong);
 }
 
 .learning-resources {
@@ -277,10 +235,6 @@
     color: var(--text-secondary);
 }
 
-.version-update {
-    color: var(--state-loading);
-}
-
 .version-main {
     min-width: 0;
     overflow: hidden;
@@ -293,24 +247,4 @@
     margin-right: 4px;
     font-size: 0.62rem;
     line-height: 1;
-}
-
-.version-update-text {
-    display: inline-flex;
-    align-items: center;
-    height: 18px;
-    box-sizing: border-box;
-    flex: 0 0 auto;
-    padding: 0 5px;
-    border: 1px solid var(--state-loading-border);
-    border-radius: 999px;
-    background: var(--state-loading-soft);
-    color: var(--state-loading);
-    font-size: 0.66rem;
-    font-weight: var(--font-medium);
-    line-height: 1;
-}
-
-.version-update-text:empty {
-    display: none;
 }
