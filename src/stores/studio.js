@@ -82,10 +82,18 @@ function refreshWorkspaces() {
     workspaces.value = loadWorkspaces();
 }
 
+function dismissMenu() {
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement && activeElement.closest(".app-menu-wrap, .app-menu")) {
+        activeElement.blur();
+    }
+    state.openMenu = null;
+}
+
 function selectWorkspace(path) {
     state.selectedWorkspace = path || null;
     localStorage.setItem("soloncode.selectedWorkspace", state.selectedWorkspace || "");
-    state.openMenu = null;
+    dismissMenu();
 }
 
 function appendWorkspaceLog(payload) {
@@ -112,7 +120,7 @@ function closePrompt() {
 function queuePrompt(prompt) {
     if (prompt.key && queuedPromptKeys.has(prompt.key)) return;
     if (prompt.key) queuedPromptKeys.add(prompt.key);
-    state.openMenu = null;
+    dismissMenu();
     promptQueue.value.push(prompt);
 }
 
@@ -152,12 +160,19 @@ function shouldRenderProject(project) {
 }
 
 function activateHome() {
+    dismissMenu();
     state.activeTabKey = HOME_TAB_KEY;
 }
 
 function activateProject(key) {
+    dismissMenu();
     const project = projects.get(key);
     state.activeTabKey = project && shouldRenderProject(project) ? key : HOME_TAB_KEY;
+}
+
+function activateHomeSection(section) {
+    dismissMenu();
+    state.homeSection = section;
 }
 
 async function openProject(project) {
@@ -237,7 +252,7 @@ async function pickWorkspace() {
 }
 
 function showAliasDialog(path) {
-    state.openMenu = null;
+    dismissMenu();
     dialogForms.editingWorkspace = path;
     dialogForms.alias = getWorkspaceDisplayName(path);
     dialogs.alias = true;
@@ -252,7 +267,7 @@ function saveAlias() {
 }
 
 function showRemoteDialog(path = null) {
-    state.openMenu = null;
+    dismissMenu();
     const entry = path ? getWorkspaceEntry(path) : null;
     dialogForms.editingRemote = entry?.type === "remote" ? path : null;
     dialogForms.remote = dialogForms.editingRemote ? entry.url || entry.path : "";
@@ -261,7 +276,6 @@ function showRemoteDialog(path = null) {
 
 function showLogsDialog(path = state.selectedWorkspace) {
     selectWorkspace(path);
-    state.openMenu = null;
     dialogs.logs = true;
 }
 
@@ -729,8 +743,10 @@ export function useStudioStore() {
         constants: { HOME_TAB_KEY, HOME_WORKSPACE_KEY, LAUNCH_MODES, PROJECT_TYPES, RUN_TARGETS, IS_DEVELOPMENT_MODE },
         workspaceKey,
         projectForWorkspace,
+        dismissMenu,
         activateHome,
         activateProject,
+        activateHomeSection,
         openProject,
         reorderTab,
         requestCloseProject,

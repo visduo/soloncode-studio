@@ -35,8 +35,8 @@
     display: flex;
     align-items: stretch;
     min-width: 0;
-    min-height: 40px;
-    margin: 0 -10px 6px;
+    min-height: 48px;
+    margin: 0 -10px;
     padding-inline: 10px;
     border-bottom: 0;
     background: var(--bg-primary);
@@ -74,7 +74,7 @@
 }
 
 .tab-scroll-control:hover:not(:disabled) {
-    color: var(--text-primary);
+    background: var(--control-hover);
 }
 
 .tab-scroll-control:disabled {
@@ -93,7 +93,7 @@
     align-items: center;
     gap: 2px;
     min-width: 0;
-    min-height: 40px;
+    min-height: 30px;
     padding: 0 12px;
     overflow-x: auto;
     overflow-y: hidden;
@@ -138,13 +138,7 @@
 }
 
 .window-control:hover {
-    background: var(--surface-hover);
-    color: var(--text-primary);
-}
-
-.window-control-close:hover {
-    background: var(--state-error);
-    color: #ffffff;
+    background: var(--control-hover);
 }
 
 .window-control [class^="ri-"] {
@@ -217,9 +211,8 @@
     animation: spin 0.9s linear infinite;
 }
 
-.tab-item:hover {
+.tab-item:not(.active):hover {
     background: var(--surface-hover);
-    color: var(--text-primary);
 }
 
 .tab-item.dragging {
@@ -239,9 +232,7 @@
 }
 
 .tab-item.active:hover {
-    border-color: var(--border-strong);
     background: var(--panel-soft);
-    color: var(--text-primary);
 }
 
 .tab-label {
@@ -276,6 +267,5 @@
 }
 
 .tab-close:hover {
-    background: var(--surface-hover);
-    color: var(--state-error);
+    background: var(--control-hover);
 }

@@ -42,9 +42,12 @@ h1 {
     transition: color 0.15s ease;
 }
 
-.sidebar-cli-settings:hover,
 .sidebar-cli-settings[aria-expanded="true"] {
     color: var(--text-primary);
+}
+
+.sidebar-cli-settings:hover {
+    background: var(--control-hover);
 }
 
 .sidebar-cli-settings .app-icon {
@@ -101,15 +104,13 @@ h1 {
         box-shadow 0.15s ease;
 }
 
-.tool-btn:hover:not(:disabled) {
-    border-color: var(--border-strong);
-    background: var(--surface-hover);
-    color: var(--text-primary);
-}
-
 .tool-btn:disabled {
     opacity: 0.42;
     cursor: not-allowed;
+}
+
+.tool-btn:hover:not(:disabled) {
+    background: var(--control-hover);
 }
 
 .tool-icon {
@@ -139,21 +140,14 @@ h1 {
     color: #ffffff;
 }
 
-.tool-install:hover:not(:disabled) {
-    border-color: var(--accent-strong);
+.tool-install:hover:not(:disabled),
+.tool-update:hover:not(:disabled) {
     background: var(--accent-strong);
-    color: #ffffff;
 }
 
 .tool-update:not(:disabled) {
     border-color: var(--accent);
     background: var(--accent);
-    color: #ffffff;
-}
-
-.tool-update:hover:not(:disabled) {
-    border-color: var(--accent-strong);
-    background: var(--accent-strong);
     color: #ffffff;
 }
 
@@ -168,9 +162,7 @@ h1 {
 }
 
 .tool-uninstall:hover:not(:disabled) {
-    border-color: var(--state-error-border);
     background: var(--state-error-soft);
-    color: var(--state-error);
 }
 
 .tool-website .tool-icon,
@@ -201,7 +193,6 @@ h1 {
     min-height: 52px;
     margin: 0 4px 14px;
     padding: 0 8px 12px;
-    border-bottom: 1px solid var(--border);
 }
 .welcome-logo {
     display: block;
@@ -256,14 +247,14 @@ h1 {
     font-weight: var(--font-regular);
     text-align: left;
 }
-.welcome-nav-item:hover {
-    background: var(--surface-hover);
-    color: var(--text-primary);
-}
 .welcome-nav-item.active {
     background: var(--accent-soft);
     color: var(--accent-strong);
     font-weight: var(--font-medium);
+}
+
+.welcome-nav-item:not(.active):hover {
+    background: var(--surface-hover);
 }
 .welcome-nav-icon {
     width: 16px;
@@ -274,8 +265,7 @@ h1 {
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
 }
 .workspace-search {
     position: relative;
@@ -304,8 +294,8 @@ h1 {
     height: 36px;
     padding: 0 16px 0 36px;
     border: 0;
-    border-radius: 0;
-    background: transparent;
+    border-radius: var(--radius-lg);
+    background: var(--panel-soft);
     color: var(--text-primary);
     font-size: 0.88rem;
     outline: none;
@@ -321,7 +311,7 @@ h1 {
     color: var(--accent);
 }
 .workspace-search:focus-within input {
-    background: transparent;
+    background: var(--surface-hover);
 }
 .welcome-actions {
     display: flex;
@@ -345,19 +335,18 @@ h1 {
     cursor: pointer;
     font-size: 0.8rem;
 }
-.welcome-action:hover {
-    border-color: var(--border-strong);
-    background: var(--surface-hover);
-}
 .welcome-action.primary {
     border-color: var(--accent);
     background: var(--accent);
     color: #fff;
 }
+
+.welcome-action:hover {
+    background: var(--control-hover);
+}
+
 .welcome-action.primary:hover {
-    border-color: var(--accent-strong);
     background: var(--accent-strong);
-    color: #fff;
 }
 .workspace-add-trigger {
     padding-right: 9px;
@@ -438,12 +427,6 @@ h1 {
         box-shadow 0.15s ease;
 }
 
-.workspace-add:hover {
-    border-color: var(--accent-strong);
-    background: var(--accent-strong);
-    color: #ffffff;
-}
-
 .workspace-add-icon {
     display: inline-grid;
     place-items: center;
@@ -505,11 +488,15 @@ h1 {
     background: transparent;
 }
 
-.workspace-item:hover {
+.workspace-item.active {
+    background: var(--surface-active);
+}
+
+.workspace-item:not(.active):hover {
     background: var(--surface-hover);
 }
 
-.workspace-item.active {
+.workspace-item.active:hover {
     background: var(--surface-active);
 }
 
@@ -607,10 +594,8 @@ h1 {
     height: 17px;
 }
 
-.workspace-icon-btn:hover {
-    border-color: var(--border-strong);
-    background: var(--surface-hover);
-    color: var(--text-primary);
+.workspace-icon-btn:hover:not(:disabled) {
+    background: var(--control-hover);
 }
 
 .workspace-icon-btn.is-disabled {
@@ -618,19 +603,7 @@ h1 {
     cursor: not-allowed;
 }
 
-.workspace-icon-btn.is-disabled:hover {
-    border-color: var(--border);
-    background: var(--panel);
-    color: var(--text-secondary);
-}
-
 .workspace-icon-btn.run {
-    color: var(--state-running);
-}
-
-.workspace-icon-btn.run:hover {
-    border-color: var(--state-running-border);
-    background: var(--state-running-soft);
     color: var(--state-running);
 }
 
@@ -651,24 +624,13 @@ h1 {
     border-color: var(--state-loading-border);
 }
 
-.workspace-icon-btn.stop:hover {
-    color: var(--state-loading);
-    background: #ffedc2;
-    border-color: var(--state-loading);
-}
-
 .workspace-icon-btn.more {
     color: var(--text-secondary);
 }
 
+.workspace-icon-btn.open,
 .workspace-icon-btn.folder {
     color: var(--text-secondary);
-}
-
-.workspace-icon-btn.folder:hover {
-    border-color: var(--border-strong);
-    background: var(--accent-soft);
-    color: var(--accent);
 }
 
 .app-menu {
@@ -715,12 +677,12 @@ h1 {
     display: block;
 }
 
-.app-menu-item:hover {
-    background: var(--surface-hover);
-}
-
 .app-menu-item:focus-visible {
     background: var(--accent-soft);
+}
+
+.app-menu-item:hover:not(:disabled) {
+    background: var(--menu-hover);
 }
 
 .app-menu-item:disabled {

@@ -85,14 +85,13 @@
         border-color 0.15s ease;
 }
 
-.terminal-settings-button:hover {
-    border-color: rgba(216, 231, 246, 0.62);
-    background: rgba(30, 41, 59, 0.9);
-}
-
 .terminal-settings-button .app-icon {
     width: 15px;
     height: 15px;
+}
+
+.terminal-settings-button:hover {
+    background: rgba(30, 41, 59, 0.9);
 }
 
 @media (max-width: 640px) {
@@ -134,7 +133,7 @@ body.project-mode .home-view {
 }
 
 body.project-mode .tab-bar {
-    min-height: 40px;
+    min-height: 30px;
 }
 
 body.project-mode .project-view {

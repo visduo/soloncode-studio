@@ -103,7 +103,7 @@
             whiteSpace: "nowrap"
         });
         item.addEventListener("mouseenter", () => {
-            if (enabled) item.style.background = "#eef2f6";
+            if (enabled) item.style.background = "#f1f3f6";
         });
         item.addEventListener("mouseleave", () => (item.style.background = "transparent"));
         item.addEventListener("mousedown", (event) => event.preventDefault());

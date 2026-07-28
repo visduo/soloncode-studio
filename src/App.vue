@@ -13,8 +13,7 @@ let cleanupEvents;
 
 function dismissMenu() {
     if (!studio.state.openMenu) return;
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    studio.state.openMenu = null;
+    studio.dismissMenu();
 }
 
 function handleDocumentPointerDown(event) {

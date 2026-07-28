@@ -2,7 +2,9 @@
     --bg-primary: #eef2f6;
     --panel: #ffffff;
     --panel-soft: #f6f8fa;
-    --surface-hover: #eef2f6;
+    --surface-hover: #f7f8fa;
+    --control-hover: #e9edf2;
+    --menu-hover: #f1f3f6;
     --surface-active: #edf4ff;
     --border: #d8dee7;
     --border-strong: #bcc7d5;
@@ -16,9 +18,9 @@
     --font-regular: 400;
     --font-medium: 500;
     --font-semibold: 600;
-    --state-running: #168344;
-    --state-running-soft: #eaf7ef;
-    --state-running-border: #a9d9ba;
+    --state-running: #2f7d62;
+    --state-running-soft: #eef7f3;
+    --state-running-border: #bdd9cd;
     --state-idle: #788699;
     --state-error: #c73535;
     --state-error-soft: #fff0f0;

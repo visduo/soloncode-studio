@@ -192,19 +192,17 @@
         box-shadow 0.15s ease;
 }
 
-.dialog-btn:hover {
-    border-color: var(--border-strong);
-    background: var(--surface-hover);
-}
-
 .dialog-btn.primary {
     border-color: var(--accent);
     background: var(--accent);
     color: #ffffff;
 }
 
+.dialog-btn:hover {
+    background: var(--control-hover);
+}
+
 .dialog-btn.primary:hover {
-    border-color: var(--accent-strong);
     background: var(--accent-strong);
 }
 
@@ -215,7 +213,6 @@
 }
 
 .dialog-btn.danger:hover {
-    border-color: #a92323;
     background: #a92323;
 }
 
@@ -257,4 +254,3 @@ h3,
 strong {
     font-weight: var(--font-semibold);
 }
-

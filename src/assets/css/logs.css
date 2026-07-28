@@ -49,8 +49,7 @@
     height: 16px;
 }
 .dialog-close:hover {
-    background: var(--surface-hover);
-    color: var(--text-primary);
+    background: var(--control-hover);
 }
 .log-dialog-panel .log-clear {
     height: 30px;
@@ -61,17 +60,12 @@
     font-size: 0.7rem;
     font-weight: var(--font-regular);
 }
-.log-dialog-panel .log-clear:hover {
-    border-color: transparent;
-    background: #26333f;
-    color: #ffffff;
-}
 .log-dialog-panel .dialog-close {
     color: #91a0af;
 }
+.log-dialog-panel .log-clear:hover,
 .log-dialog-panel .dialog-close:hover {
     background: #26333f;
-    color: #ffffff;
 }
 .log-dialog-panel .log-content {
     padding: 18px 20px 28px;
@@ -202,9 +196,7 @@
 }
 
 .log-clear:hover {
-    border-color: var(--border-strong);
-    background: var(--surface-hover);
-    color: var(--text-primary);
+    background: var(--control-hover);
 }
 
 .log-content {
@@ -289,4 +281,3 @@
     background: var(--border-strong);
     border-radius: 999px;
 }
-

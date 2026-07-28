@@ -13,17 +13,15 @@ function workspaceInitial(name) {
     return Array.from(String(name || "?").trim())[0]?.toLocaleUpperCase() || "?";
 }
 
-function releaseMenuFocus(event) {
-    event.target.closest("button")?.blur();
-    queueMicrotask(() => {
-        studio.state.openMenu = null;
-    });
+function toggleAddMenu() {
+    if (studio.state.openMenu === "add") studio.dismissMenu();
+    else studio.state.openMenu = "add";
 }
 
 async function toggle(event, type, entry) {
     const key = menuKey(type, entry);
     if (studio.state.openMenu === key) {
-        studio.state.openMenu = null;
+        studio.dismissMenu();
         return;
     }
     const triggerBounds = event.currentTarget.getBoundingClientRect();
@@ -61,17 +59,14 @@ async function toggle(event, type, entry) {
             </label>
             <div class="welcome-actions">
                 <div class="app-menu-wrap workspace-add-menu-wrap">
-                    <button
-                        class="welcome-action primary workspace-add-trigger"
-                        type="button"
-                        @click="studio.state.openMenu = studio.state.openMenu === 'add' ? null : 'add'">
+                    <button class="welcome-action primary workspace-add-trigger" type="button" @click="toggleAddMenu">
                         <span class="workspace-add-icon"><AppIcon name="add-workspace" /></span>
                         <span>添加工作区</span>
                     </button>
                     <div
                         v-if="studio.state.openMenu === 'add'"
                         class="app-menu workspace-add-menu"
-                        @click.capture="releaseMenuFocus">
+                        @click.capture="studio.dismissMenu">
                         <button class="app-menu-item" type="button" @click="studio.pickWorkspace">
                             <span class="app-menu-icon"><AppIcon name="add-local-workspace" /></span>
                             <span>本地工作区</span>
@@ -106,14 +101,14 @@ async function toggle(event, type, entry) {
                 <div class="workspace-actions" @click.stop>
                     <button
                         v-if="entry.type === 'remote'"
-                        class="workspace-icon-btn run"
+                        class="workspace-icon-btn open"
                         type="button"
                         @click="studio.openWebPage(entry.detail)">
                         <AppIcon name="open-project" />
                     </button>
                     <template v-else-if="studio.projectForWorkspace(entry.path)">
                         <button
-                            class="workspace-icon-btn run"
+                            class="workspace-icon-btn open"
                             type="button"
                             @click="studio.openProject(studio.projectForWorkspace(entry.path))">
                             <AppIcon name="open-project" />
@@ -147,7 +142,7 @@ async function toggle(event, type, entry) {
                                 class="app-menu run-target-menu"
                                 :data-floating-menu="menuKey('run', entry)"
                                 :style="menuPosition"
-                                @click.capture="releaseMenuFocus"
+                                @click.capture="studio.dismissMenu"
                                 @click.stop>
                                 <button
                                     v-for="target in studio.runTargets"
@@ -177,7 +172,7 @@ async function toggle(event, type, entry) {
                                 class="app-menu"
                                 :data-floating-menu="menuKey('more', entry)"
                                 :style="menuPosition"
-                                @click.capture="releaseMenuFocus"
+                                @click.capture="studio.dismissMenu"
                                 @click.stop>
                                 <button
                                     v-if="entry.path"

@@ -1,7 +1,7 @@
 .sidebar,
 .main-panel {
     min-height: 0;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(188, 199, 213, 0.5);
     border-radius: var(--radius-window);
     box-shadow: none;
 }
@@ -39,7 +39,7 @@
     min-height: 0;
     padding: 44px 52px 36px;
     overflow-y: auto;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(188, 199, 213, 0.5);
     border-radius: var(--radius-window);
     background: var(--panel);
 }
@@ -228,7 +228,7 @@
 }
 
 .learning-resource:hover {
-    background: var(--accent-soft);
+    background: var(--surface-hover);
 }
 
 .learning-resource:focus-visible {
@@ -275,19 +275,6 @@
     padding: 0 6px;
     border-radius: 5px;
     color: var(--text-secondary);
-    cursor: pointer;
-    transition:
-        background 0.15s ease,
-        color 0.15s ease;
-}
-
-.version-item:hover {
-    color: var(--text-primary);
-}
-
-.version-item:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
 }
 
 .version-update {

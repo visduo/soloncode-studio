@@ -3,11 +3,9 @@ import { useStudioStore } from "../stores/studio.js";
 import AppIcon from "./AppIcon.vue";
 const studio = useStudioStore();
 
-function releaseMenuFocus(event) {
-    event.target.closest("button")?.blur();
-    queueMicrotask(() => {
-        studio.state.openMenu = null;
-    });
+function toggleCliMenu() {
+    if (studio.state.openMenu === "cli") studio.dismissMenu();
+    else studio.state.openMenu = "cli";
 }
 </script>
 
@@ -29,7 +27,7 @@ function releaseMenuFocus(event) {
                 class="welcome-nav-item"
                 :class="{ active: studio.state.homeSection === 'workspace' }"
                 type="button"
-                @click="studio.state.homeSection = 'workspace'">
+                @click="studio.activateHomeSection('workspace')">
                 <span class="welcome-nav-icon"><AppIcon name="workspaces" /></span>
                 <span>工作区</span>
             </button>
@@ -37,23 +35,20 @@ function releaseMenuFocus(event) {
                 class="welcome-nav-item"
                 :class="{ active: studio.state.homeSection === 'learning' }"
                 type="button"
-                @click="studio.state.homeSection = 'learning'">
+                @click="studio.activateHomeSection('learning')">
                 <span class="welcome-nav-icon"><AppIcon name="learning" /></span>
                 <span>学习</span>
             </button>
         </div>
         <div class="sidebar-cli">
             <div class="app-menu-wrap sidebar-cli-menu-wrap">
-                <button
-                    class="sidebar-cli-settings"
-                    type="button"
-                    @click="studio.state.openMenu = studio.state.openMenu === 'cli' ? null : 'cli'">
+                <button class="sidebar-cli-settings" type="button" @click="toggleCliMenu">
                     <AppIcon name="cli-settings" />
                 </button>
                 <div
                     v-if="studio.state.openMenu === 'cli'"
                     class="app-menu cli-actions-menu"
-                    @click.capture="releaseMenuFocus">
+                    @click.capture="studio.dismissMenu">
                     <button
                         v-if="!studio.state.javaAvailable"
                         class="app-menu-item"
