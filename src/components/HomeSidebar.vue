@@ -44,6 +44,14 @@ const studio = useStudioStore();
                 <span class="welcome-nav-icon"><AppIcon name="environment" /></span>
                 <span>环境</span>
             </button>
+            <button
+                class="welcome-nav-item"
+                :class="{ active: studio.state.homeSection === 'settings' }"
+                type="button"
+                @click="studio.activateHomeSection('settings')">
+                <span class="welcome-nav-icon"><AppIcon name="settings" /></span>
+                <span>设置</span>
+            </button>
         </div>
     </section>
 </template>

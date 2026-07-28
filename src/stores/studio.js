@@ -73,8 +73,7 @@ const dialogs = reactive({
     remote: false,
     workspaceGroup: false,
     workspaceMove: false,
-    logs: false,
-    terminalSettings: false
+    logs: false
 });
 const dialogForms = reactive({
     alias: "",

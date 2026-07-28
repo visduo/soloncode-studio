@@ -7,7 +7,6 @@
     width: min(100%, 920px);
     margin-inline: auto;
     padding-bottom: 32px;
-    border-bottom: 1px solid var(--border);
 }
 
 .learning-kicker {

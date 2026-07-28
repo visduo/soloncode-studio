@@ -10,7 +10,6 @@ import {
     removeLastTerminalInputChar
 } from "../assets/js/terminal-input.js";
 import { useStudioStore } from "../stores/studio.js";
-import AppIcon from "./AppIcon.vue";
 
 const props = defineProps({ project: { type: Object, required: true }, active: Boolean });
 const studio = useStudioStore();
@@ -144,8 +143,5 @@ onBeforeUnmount(() => {
             ref="host"
             class="terminal-surface"
             :style="{ background: studio.state.terminalSettings.background }"></div>
-        <button class="terminal-settings-button" type="button" @click="studio.dialogs.terminalSettings = true">
-            <AppIcon name="terminal-settings" />
-        </button>
     </div>
 </template>

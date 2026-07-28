@@ -79,8 +79,7 @@ strong {
     .learning-resource,
     .dialog-btn,
     .dialog-close,
-    .log-clear,
-    .terminal-settings-button
+    .log-clear
 ):focus-visible {
     outline: 2px solid var(--focus-ring);
     outline-offset: 1px;

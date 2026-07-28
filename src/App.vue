@@ -4,6 +4,7 @@ import EnvironmentPanel from "./components/EnvironmentPanel.vue";
 import HomeSidebar from "./components/HomeSidebar.vue";
 import LearningPanel from "./components/LearningPanel.vue";
 import ProjectHost from "./components/ProjectHost.vue";
+import SettingsPanel from "./components/SettingsPanel.vue";
 import StudioDialogs from "./components/StudioDialogs.vue";
 import TitleTabs from "./components/TitleTabs.vue";
 import WorkspacePanel from "./components/WorkspacePanel.vue";
@@ -39,8 +40,7 @@ watch(
         studio.dialogs.remote,
         studio.dialogs.workspaceGroup,
         studio.dialogs.workspaceMove,
-        studio.dialogs.logs,
-        studio.dialogs.terminalSettings
+        studio.dialogs.logs
     ],
     (modalStates) => {
         if (modalStates.some(Boolean)) dismissMenu();
@@ -75,7 +75,8 @@ onBeforeUnmount(() => {
                 <section class="home-content-panel">
                     <WorkspacePanel v-if="studio.state.homeSection === 'workspace'" />
                     <LearningPanel v-else-if="studio.state.homeSection === 'learning'" />
-                    <EnvironmentPanel v-else />
+                    <EnvironmentPanel v-else-if="studio.state.homeSection === 'environment'" />
+                    <SettingsPanel v-else />
                 </section>
             </div>
             <ProjectHost v-show="studio.state.activeTabKey !== studio.constants.HOME_TAB_KEY" />
