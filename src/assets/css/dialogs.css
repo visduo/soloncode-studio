@@ -177,6 +177,26 @@
     box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
+.remote-workspace-field input[aria-invalid="true"],
+.remote-workspace-field select[aria-invalid="true"],
+.terminal-settings-field input[aria-invalid="true"] {
+    border-color: var(--state-error-border);
+}
+
+.remote-workspace-field input[aria-invalid="true"]:focus,
+.remote-workspace-field select[aria-invalid="true"]:focus,
+.terminal-settings-field input[aria-invalid="true"]:focus {
+    border-color: var(--state-error);
+    box-shadow: 0 0 0 2px var(--state-error-soft);
+}
+
+.dialog-field-error {
+    color: var(--state-error);
+    font-size: 0.76rem;
+    font-weight: var(--font-regular);
+    line-height: 1.4;
+}
+
 .workspace-alias-input {
     width: 100%;
     height: 40px;

@@ -16,6 +16,15 @@ export function normalizeWebPageUrl(value) {
     return `https://${raw}`;
 }
 
+export function isValidWebPageUrl(value) {
+    try {
+        const url = new URL(normalizeWebPageUrl(value));
+        return ["http:", "https:"].includes(url.protocol) && Boolean(url.hostname);
+    } catch (_) {
+        return false;
+    }
+}
+
 export function withBasicAuth(url, username, password) {
     if (!username || !password) return url;
     try {

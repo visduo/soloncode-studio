@@ -149,7 +149,7 @@
                 menu.appendChild(createItem("folder", "打开工作区文件夹", true, () => sendAction("open-workspace")));
             }
             if (context.developmentMode) {
-                menu.appendChild(createItem("devtools", "打开开发者调试模式", true, () => sendAction("open-devtools")));
+                menu.appendChild(createItem("devtools", "打开开发者调试工具", true, () => sendAction("open-devtools")));
             }
             document.body.appendChild(menu);
             const bounds = menu.getBoundingClientRect();

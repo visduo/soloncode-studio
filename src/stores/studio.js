@@ -14,7 +14,7 @@ import {
 } from "../assets/js/constants.js";
 import { loadTerminalSettings, normalizeTerminalSettings, persistTerminalSettings } from "../assets/js/storage.js";
 import { isTerminalControlSequence } from "../assets/js/terminal-input.js";
-import { normalizeWebPageUrl, withBasicAuth } from "../assets/js/url.js";
+import { isValidWebPageUrl, normalizeWebPageUrl, withBasicAuth } from "../assets/js/url.js";
 import {
     createWorkspaceGroup,
     deleteWorkspaceGroup,
@@ -84,6 +84,7 @@ const dialogForms = reactive({
     remotePassword: "",
     workspaceGroupName: "",
     workspaceMoveGroupId: DEFAULT_WORKSPACE_GROUP_ID,
+    workspaceMoveSourceGroupId: DEFAULT_WORKSPACE_GROUP_ID,
     editingWorkspace: null,
     editingRemote: null,
     editingWorkspaceGroup: null,
@@ -299,11 +300,13 @@ function showAliasDialog(path) {
 }
 
 function saveAlias() {
-    if (!dialogForms.editingWorkspace) return;
-    setWorkspaceAlias(dialogForms.editingWorkspace, dialogForms.alias.trim());
+    const alias = dialogForms.alias.trim();
+    if (!dialogForms.editingWorkspace || !alias) return false;
+    setWorkspaceAlias(dialogForms.editingWorkspace, alias);
     dialogs.alias = false;
     dialogForms.editingWorkspace = null;
     refreshWorkspaces();
+    return true;
 }
 
 function showRemoteDialog(path = null) {
@@ -330,7 +333,7 @@ function saveRemote() {
         username: dialogForms.remoteUsername.trim(),
         password: dialogForms.remotePassword
     };
-    if (!remote.name || !remote.url) return;
+    if (!remote.name || !isValidWebPageUrl(remote.url)) return false;
     dialogs.remote = false;
     if (!previous) {
         const saved = rememberRemoteWorkspaceEntry(remote);
@@ -344,6 +347,7 @@ function saveRemote() {
         if (state.selectedWorkspace === previous) selectWorkspace(saved);
     }
     refreshWorkspaces();
+    return true;
 }
 
 function removeWorkspace(path) {
@@ -365,6 +369,7 @@ function showWorkspaceGroupDialog(group = null) {
 }
 
 function saveWorkspaceGroup() {
+    if (!dialogForms.workspaceGroupName.trim()) return false;
     const saved = dialogForms.editingWorkspaceGroup
         ? renameWorkspaceGroup(dialogForms.editingWorkspaceGroup, dialogForms.workspaceGroupName)
         : createWorkspaceGroup(dialogForms.workspaceGroupName);
@@ -372,21 +377,30 @@ function saveWorkspaceGroup() {
     dialogs.workspaceGroup = false;
     dialogForms.editingWorkspaceGroup = null;
     refreshWorkspaceGroups();
+    return true;
 }
 
 function showWorkspaceMoveDialog(entry) {
     dismissMenu();
     dialogForms.movingWorkspace = entry.path;
     dialogForms.workspaceMoveGroupId = entry.groupId || DEFAULT_WORKSPACE_GROUP_ID;
+    dialogForms.workspaceMoveSourceGroupId = entry.groupId || DEFAULT_WORKSPACE_GROUP_ID;
     dialogs.workspaceMove = true;
 }
 
 function moveWorkspaceToGroup() {
+    if (
+        !workspaceGroups.value.some((group) => group.id === dialogForms.workspaceMoveGroupId) ||
+        dialogForms.workspaceMoveGroupId === dialogForms.workspaceMoveSourceGroupId
+    )
+        return false;
     if (setWorkspaceGroup(dialogForms.movingWorkspace, dialogForms.workspaceMoveGroupId)) {
         dialogs.workspaceMove = false;
         dialogForms.movingWorkspace = null;
         refreshWorkspaces();
+        return true;
     }
+    return false;
 }
 
 function requestDeleteWorkspaceGroup(group) {

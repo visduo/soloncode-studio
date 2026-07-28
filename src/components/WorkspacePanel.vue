@@ -154,7 +154,7 @@ async function toggle(event, type, entry) {
                                 </span>
                                 <span class="workspace-text">
                                     <span class="workspace-name">{{ entry.name }}</span>
-                                    <span class="workspace-path" :title="entry.detail">{{ entry.detail }}</span>
+                                    <span class="workspace-path">{{ entry.detail }}</span>
                                 </span>
                             </button>
                             <div class="workspace-actions" @click.stop>

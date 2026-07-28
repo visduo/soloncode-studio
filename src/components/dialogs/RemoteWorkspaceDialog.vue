@@ -1,7 +1,23 @@
 <script setup>
+import { computed, reactive, watch } from "vue";
+import { isValidWebPageUrl } from "../../assets/js/url.js";
 import { useStudioStore } from "../../stores/studio.js";
 
 const studio = useStudioStore();
+const touched = reactive({ name: false, url: false });
+const nameError = computed(() => (studio.dialogForms.remoteName.trim() ? "" : "请输入工作区名称"));
+const urlError = computed(() => {
+    if (!studio.dialogForms.remoteUrl.trim()) return "请输入服务器 URL";
+    return isValidWebPageUrl(studio.dialogForms.remoteUrl) ? "" : "请输入有效的 HTTP 或 HTTPS 地址";
+});
+const invalid = computed(() => Boolean(nameError.value || urlError.value));
+
+watch(
+    () => studio.dialogs.remote,
+    (open) => {
+        if (open) Object.assign(touched, { name: false, url: false });
+    }
+);
 </script>
 
 <template>
@@ -15,16 +31,30 @@ const studio = useStudioStore();
                         <input
                             v-model="studio.dialogForms.remoteName"
                             maxlength="60"
+                            required
                             autocomplete="off"
+                            :aria-invalid="touched.name && Boolean(nameError)"
+                            aria-describedby="remote-name-error"
+                            @blur="touched.name = true"
                             placeholder="例如：我的云端服务器" />
+                        <small v-if="touched.name && nameError" id="remote-name-error" class="dialog-field-error">
+                            {{ nameError }}
+                        </small>
                     </label>
                     <label class="remote-workspace-field">
                         <span>服务器 URL</span>
                         <input
                             v-model="studio.dialogForms.remoteUrl"
                             type="url"
+                            required
                             autocomplete="url"
+                            :aria-invalid="touched.url && Boolean(urlError)"
+                            aria-describedby="remote-url-error"
+                            @blur="touched.url = true"
                             placeholder="例如：https://example.com" />
+                        <small v-if="touched.url && urlError" id="remote-url-error" class="dialog-field-error">
+                            {{ urlError }}
+                        </small>
                     </label>
                     <label class="remote-workspace-field">
                         <span>用户名（可选）</span>
@@ -44,11 +74,7 @@ const studio = useStudioStore();
                 </form>
                 <div class="dialog-actions">
                     <button class="dialog-btn" type="button" @click="studio.dialogs.remote = false">取消</button>
-                    <button
-                        class="dialog-btn primary"
-                        type="button"
-                        :disabled="!studio.dialogForms.remoteName.trim() || !studio.dialogForms.remoteUrl.trim()"
-                        @click="studio.saveRemote">
+                    <button class="dialog-btn primary" type="button" :disabled="invalid" @click="studio.saveRemote">
                         {{ studio.dialogForms.editingRemote ? "保存" : "添加" }}
                     </button>
                 </div>
