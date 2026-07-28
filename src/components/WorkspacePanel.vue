@@ -149,7 +149,15 @@ async function toggle(event, type, entry) {
                                     studio.projectForWorkspace(entry.path) &&
                                     !studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
                             }"
-                            @click="studio.selectWorkspace(entry.path)">
+                            @click="studio.selectWorkspace(entry.path)"
+                            @dblclick="
+                                entry.type === 'remote'
+                                    ? studio.openWebPage(entry.detail, {
+                                          username: entry.username,
+                                          password: entry.password
+                                      })
+                                    : studio.runWorkspace(entry.path, studio.state.preferences.defaultRunTarget)
+                            ">
                             <button class="workspace-copy" type="button">
                                 <span class="workspace-badge" aria-hidden="true">
                                     {{ workspaceInitial(entry.name) }}
@@ -159,7 +167,7 @@ async function toggle(event, type, entry) {
                                     <span class="workspace-path">{{ entry.detail }}</span>
                                 </span>
                             </button>
-                            <div class="workspace-actions" @click.stop>
+                            <div class="workspace-actions" @click.stop @dblclick.stop>
                                 <button
                                     v-if="entry.type === 'remote'"
                                     class="workspace-icon-btn open"

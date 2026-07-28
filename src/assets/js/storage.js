@@ -1,11 +1,33 @@
 import {
+    APP_PREFERENCES_KEY,
+    DEFAULT_APP_PREFERENCES,
     DEFAULT_TERMINAL_SETTINGS,
     DEFAULT_WORKSPACE_GROUP_ID,
+    RUN_TARGET_OPTIONS,
     TERMINAL_SETTINGS_KEY,
     WORKSPACE_ALIASES_KEY,
     WORKSPACE_GROUPS_KEY,
     WORKSPACES_KEY
 } from "./constants.js";
+
+export function normalizeAppPreferences(preferences) {
+    const defaultRunTarget = RUN_TARGET_OPTIONS.some((option) => option.key === preferences?.defaultRunTarget)
+        ? preferences.defaultRunTarget
+        : DEFAULT_APP_PREFERENCES.defaultRunTarget;
+    return { defaultRunTarget };
+}
+
+export function loadAppPreferences() {
+    try {
+        return normalizeAppPreferences(JSON.parse(localStorage.getItem(APP_PREFERENCES_KEY) || "{}"));
+    } catch (_) {
+        return { ...DEFAULT_APP_PREFERENCES };
+    }
+}
+
+export function persistAppPreferences(preferences) {
+    localStorage.setItem(APP_PREFERENCES_KEY, JSON.stringify(normalizeAppPreferences(preferences)));
+}
 
 function clampNumber(value, min, max) {
     return Math.min(max, Math.max(min, value));

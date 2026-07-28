@@ -12,7 +12,14 @@ import {
     RUN_TARGET_OPTIONS,
     RUN_TARGETS
 } from "../assets/js/constants.js";
-import { loadTerminalSettings, normalizeTerminalSettings, persistTerminalSettings } from "../assets/js/storage.js";
+import {
+    loadAppPreferences,
+    loadTerminalSettings,
+    normalizeAppPreferences,
+    normalizeTerminalSettings,
+    persistAppPreferences,
+    persistTerminalSettings
+} from "../assets/js/storage.js";
 import { isTerminalControlSequence } from "../assets/js/terminal-input.js";
 import { isValidWebPageUrl, normalizeWebPageUrl, withBasicAuth } from "../assets/js/url.js";
 import {
@@ -56,6 +63,7 @@ const state = reactive({
     status: { text: "检测中", type: "detecting" },
     workspaceSearch: "",
     openMenu: null,
+    preferences: loadAppPreferences(),
     terminalSettings: loadTerminalSettings()
 });
 const workspaces = ref(loadWorkspaces());
@@ -775,6 +783,18 @@ function saveTerminalSettings(settings) {
     }
 }
 
+function saveAppPreferences(preferences) {
+    try {
+        state.preferences = normalizeAppPreferences(preferences);
+        persistAppPreferences(state.preferences);
+        showSuccess("保存成功");
+        return true;
+    } catch (error) {
+        showError(`保存失败：${error}`);
+        return false;
+    }
+}
+
 async function applyCloseBehavior(behavior) {
     await invoke(behavior === "quit" ? "quit_studio" : "minimize_to_tray");
 }
@@ -997,6 +1017,7 @@ export function useStudioStore() {
         clearLog,
         closePrompt,
         closeMessage,
+        saveAppPreferences,
         saveTerminalSettings,
         initialize,
         registerEvents,

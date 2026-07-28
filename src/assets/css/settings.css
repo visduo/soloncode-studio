@@ -70,6 +70,132 @@
     padding: 28px 0;
 }
 
+.preferences-settings-section {
+    display: grid;
+    align-content: start;
+    gap: 18px;
+}
+
+.preferences-settings-form {
+    width: min(420px, 100%);
+}
+
+.settings-select {
+    position: relative;
+}
+
+.settings-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    height: 36px;
+    padding: 0 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--panel);
+    color: var(--text-primary);
+    font-size: 0.94rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.settings-select-trigger:hover {
+    background: var(--control-hover);
+}
+
+.settings-select.open .settings-select-trigger,
+.settings-select-trigger:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.settings-select-chevron {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 0.16s ease;
+}
+
+.settings-select.open .settings-select-chevron {
+    transform: translateY(2px) rotate(225deg);
+}
+
+.settings-select-menu {
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + 6px);
+    right: 0;
+    left: 0;
+    display: grid;
+    gap: 3px;
+    padding: 5px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--panel);
+    box-shadow: var(--shadow-float);
+}
+
+.settings-select-option {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: calc(var(--radius-md) - 2px);
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.settings-select-option:hover,
+.settings-select-option:focus-visible {
+    outline: none;
+    background: var(--control-hover);
+}
+
+.settings-select-option.selected {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
+.settings-select-check {
+    width: 6px;
+    height: 11px;
+    margin: -2px 0 0 4px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    opacity: 0;
+    transform: rotate(45deg);
+}
+
+.settings-select-option.selected .settings-select-check {
+    opacity: 1;
+}
+
+.settings-select-menu-enter-active,
+.settings-select-menu-leave-active {
+    transition:
+        opacity 0.12s ease,
+        transform 0.12s ease;
+    transform-origin: top;
+}
+
+.settings-select-menu-enter-from,
+.settings-select-menu-leave-to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+}
+
 .terminal-settings-section {
     display: grid;
     gap: 18px;

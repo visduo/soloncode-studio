@@ -8,6 +8,7 @@ export const HOME_TAB_KEY = "home";
 export const HOME_WORKSPACE_KEY = "__home__";
 export const HIDDEN_STUDIO_UPDATE_KEY = "soloncode.hiddenStudioUpdate";
 export const TERMINAL_SETTINGS_KEY = "soloncode.terminalSettings";
+export const APP_PREFERENCES_KEY = "soloncode.preferences";
 export const CLOSE_WINDOW_BEHAVIOR_KEY = "soloncode.closeWindowBehavior";
 export const MAX_LOG_LINES = 500;
 
@@ -43,3 +44,7 @@ export const RUN_TARGET_OPTIONS = [
     { key: RUN_TARGETS.cliInternal, mode: LAUNCH_MODES.cli, label: "启动 CLI 模式（内置终端）", external: false },
     { key: RUN_TARGETS.cliSystem, mode: LAUNCH_MODES.cli, label: "启动 CLI 模式（系统终端）", external: true }
 ];
+
+export const DEFAULT_APP_PREFERENCES = {
+    defaultRunTarget: RUN_TARGETS.webInternal
+};

@@ -1,10 +1,13 @@
 <script setup>
-import { computed, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { DEFAULT_TERMINAL_SETTINGS } from "../assets/js/constants.js";
 import { useStudioStore } from "../stores/studio.js";
 
 const studio = useStudioStore();
 const activeSection = ref("preferences");
+const preferencesDropdown = ref(null);
+const preferencesDropdownOpen = ref(false);
+const preferencesForm = reactive({ ...studio.state.preferences });
 const form = reactive({ ...studio.state.terminalSettings });
 const touched = reactive({ fontFamily: false, fontSize: false, lineHeight: false });
 const errors = computed(() => ({
@@ -14,14 +17,35 @@ const errors = computed(() => ({
         Number.isFinite(form.lineHeight) && form.lineHeight >= 1 && form.lineHeight <= 2 ? "" : "行高应为 1 至 2"
 }));
 const invalid = computed(() => Object.values(errors.value).some(Boolean));
+const selectedRunTarget = computed(() =>
+    studio.runTargets.find((target) => target.key === preferencesForm.defaultRunTarget)
+);
+
+function closePreferencesDropdown(event) {
+    if (!preferencesDropdown.value?.contains(event.target)) preferencesDropdownOpen.value = false;
+}
+
+function selectRunTarget(target) {
+    preferencesForm.defaultRunTarget = target;
+    preferencesDropdownOpen.value = false;
+}
 
 function selectSection(section) {
     activeSection.value = section;
-    if (section === "terminal") {
+    preferencesDropdownOpen.value = false;
+    if (section === "preferences") Object.assign(preferencesForm, studio.state.preferences);
+    else {
         Object.assign(form, studio.state.terminalSettings);
         Object.assign(touched, { fontFamily: false, fontSize: false, lineHeight: false });
     }
 }
+
+function savePreferences() {
+    studio.saveAppPreferences(preferencesForm);
+}
+
+onMounted(() => document.addEventListener("pointerdown", closePreferencesDropdown));
+onBeforeUnmount(() => document.removeEventListener("pointerdown", closePreferencesDropdown));
 
 function save() {
     if (invalid.value) return;
@@ -57,7 +81,48 @@ function reset() {
             </button>
         </nav>
 
-        <section v-if="activeSection === 'preferences'" class="settings-content"></section>
+        <section v-if="activeSection === 'preferences'" class="settings-content preferences-settings-section">
+            <div class="preferences-settings-form">
+                <div class="terminal-settings-field required-field">
+                    <span>双击工作区默认启动方式</span>
+                    <div
+                        ref="preferencesDropdown"
+                        class="settings-select"
+                        :class="{ open: preferencesDropdownOpen }"
+                        @keydown.esc="preferencesDropdownOpen = false">
+                        <button
+                            class="settings-select-trigger"
+                            type="button"
+                            aria-haspopup="listbox"
+                            :aria-expanded="preferencesDropdownOpen"
+                            @click="preferencesDropdownOpen = !preferencesDropdownOpen"
+                            @keydown.down.prevent="preferencesDropdownOpen = true">
+                            <span>{{ selectedRunTarget?.label.replace(/^启动 /, "") }}</span>
+                            <span class="settings-select-chevron" aria-hidden="true"></span>
+                        </button>
+                        <Transition name="settings-select-menu">
+                            <div v-if="preferencesDropdownOpen" class="settings-select-menu" role="listbox">
+                                <button
+                                    v-for="target in studio.runTargets"
+                                    :key="target.key"
+                                    class="settings-select-option"
+                                    :class="{ selected: target.key === preferencesForm.defaultRunTarget }"
+                                    type="button"
+                                    role="option"
+                                    :aria-selected="target.key === preferencesForm.defaultRunTarget"
+                                    @click="selectRunTarget(target.key)">
+                                    <span class="settings-select-check" aria-hidden="true"></span>
+                                    <span>{{ target.label.replace(/^启动 /, "") }}</span>
+                                </button>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-actions">
+                <button class="settings-button primary" type="button" @click="savePreferences">保存</button>
+            </div>
+        </section>
         <section v-else class="settings-content terminal-settings-section">
             <form class="terminal-settings-form" @submit.prevent>
                 <label class="terminal-settings-field terminal-settings-field-wide required-field">
