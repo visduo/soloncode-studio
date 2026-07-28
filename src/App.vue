@@ -68,7 +68,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="launcher-container">
+    <div class="launcher-container" :class="`theme-${studio.state.preferences.interfaceStyle}`">
         <main class="app-shell">
             <TitleTabs />
             <div v-show="studio.state.activeTabKey === studio.constants.HOME_TAB_KEY" class="home-view">

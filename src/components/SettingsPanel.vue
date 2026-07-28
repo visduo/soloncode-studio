@@ -1,12 +1,12 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
-import { DEFAULT_TERMINAL_SETTINGS } from "../assets/js/constants.js";
+import { DEFAULT_TERMINAL_SETTINGS, INTERFACE_STYLE_OPTIONS } from "../assets/js/constants.js";
 import { useStudioStore } from "../stores/studio.js";
 
 const studio = useStudioStore();
 const activeSection = ref("preferences");
-const preferencesDropdown = ref(null);
-const preferencesDropdownOpen = ref(false);
+const preferencesSettingsForm = ref(null);
+const openPreferencesDropdown = ref(null);
 const preferencesForm = reactive({ ...studio.state.preferences });
 const form = reactive({ ...studio.state.terminalSettings });
 const touched = reactive({ fontFamily: false, fontSize: false, lineHeight: false });
@@ -20,19 +20,27 @@ const invalid = computed(() => Object.values(errors.value).some(Boolean));
 const selectedRunTarget = computed(() =>
     studio.runTargets.find((target) => target.key === preferencesForm.defaultRunTarget)
 );
+const selectedInterfaceStyle = computed(() =>
+    INTERFACE_STYLE_OPTIONS.find((style) => style.key === preferencesForm.interfaceStyle)
+);
 
 function closePreferencesDropdown(event) {
-    if (!preferencesDropdown.value?.contains(event.target)) preferencesDropdownOpen.value = false;
+    if (!preferencesSettingsForm.value?.contains(event.target)) openPreferencesDropdown.value = null;
 }
 
 function selectRunTarget(target) {
     preferencesForm.defaultRunTarget = target;
-    preferencesDropdownOpen.value = false;
+    openPreferencesDropdown.value = null;
+}
+
+function selectInterfaceStyle(style) {
+    preferencesForm.interfaceStyle = style;
+    openPreferencesDropdown.value = null;
 }
 
 function selectSection(section) {
     activeSection.value = section;
-    preferencesDropdownOpen.value = false;
+    openPreferencesDropdown.value = null;
     if (section === "preferences") Object.assign(preferencesForm, studio.state.preferences);
     else {
         Object.assign(form, studio.state.terminalSettings);
@@ -82,26 +90,30 @@ function reset() {
         </nav>
 
         <section v-if="activeSection === 'preferences'" class="settings-content preferences-settings-section">
-            <div class="preferences-settings-form">
+            <div ref="preferencesSettingsForm" class="preferences-settings-form">
                 <div class="terminal-settings-field required-field">
                     <span>双击工作区默认启动方式</span>
                     <div
-                        ref="preferencesDropdown"
                         class="settings-select"
-                        :class="{ open: preferencesDropdownOpen }"
-                        @keydown.esc="preferencesDropdownOpen = false">
+                        :class="{ open: openPreferencesDropdown === 'run-target' }"
+                        @keydown.esc="openPreferencesDropdown = null">
                         <button
                             class="settings-select-trigger"
                             type="button"
                             aria-haspopup="listbox"
-                            :aria-expanded="preferencesDropdownOpen"
-                            @click="preferencesDropdownOpen = !preferencesDropdownOpen"
-                            @keydown.down.prevent="preferencesDropdownOpen = true">
+                            :aria-expanded="openPreferencesDropdown === 'run-target'"
+                            @click="
+                                openPreferencesDropdown = openPreferencesDropdown === 'run-target' ? null : 'run-target'
+                            "
+                            @keydown.down.prevent="openPreferencesDropdown = 'run-target'">
                             <span>{{ selectedRunTarget?.label.replace(/^启动 /, "") }}</span>
                             <span class="settings-select-chevron" aria-hidden="true"></span>
                         </button>
                         <Transition name="settings-select-menu">
-                            <div v-if="preferencesDropdownOpen" class="settings-select-menu" role="listbox">
+                            <div
+                                v-if="openPreferencesDropdown === 'run-target'"
+                                class="settings-select-menu"
+                                role="listbox">
                                 <button
                                     v-for="target in studio.runTargets"
                                     :key="target.key"
@@ -113,6 +125,46 @@ function reset() {
                                     @click="selectRunTarget(target.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
                                     <span>{{ target.label.replace(/^启动 /, "") }}</span>
+                                </button>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+                <div class="terminal-settings-field required-field">
+                    <span>主题</span>
+                    <div
+                        class="settings-select"
+                        :class="{ open: openPreferencesDropdown === 'interface-style' }"
+                        @keydown.esc="openPreferencesDropdown = null">
+                        <button
+                            class="settings-select-trigger"
+                            type="button"
+                            aria-haspopup="listbox"
+                            :aria-expanded="openPreferencesDropdown === 'interface-style'"
+                            @click="
+                                openPreferencesDropdown =
+                                    openPreferencesDropdown === 'interface-style' ? null : 'interface-style'
+                            "
+                            @keydown.down.prevent="openPreferencesDropdown = 'interface-style'">
+                            <span>{{ selectedInterfaceStyle?.label }}</span>
+                            <span class="settings-select-chevron" aria-hidden="true"></span>
+                        </button>
+                        <Transition name="settings-select-menu">
+                            <div
+                                v-if="openPreferencesDropdown === 'interface-style'"
+                                class="settings-select-menu"
+                                role="listbox">
+                                <button
+                                    v-for="style in INTERFACE_STYLE_OPTIONS"
+                                    :key="style.key"
+                                    class="settings-select-option"
+                                    :class="{ selected: style.key === preferencesForm.interfaceStyle }"
+                                    type="button"
+                                    role="option"
+                                    :aria-selected="style.key === preferencesForm.interfaceStyle"
+                                    @click="selectInterfaceStyle(style.key)">
+                                    <span class="settings-select-check" aria-hidden="true"></span>
+                                    <span>{{ style.label }}</span>
                                 </button>
                             </div>
                         </Transition>

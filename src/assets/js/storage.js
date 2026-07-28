@@ -3,6 +3,7 @@ import {
     DEFAULT_APP_PREFERENCES,
     DEFAULT_TERMINAL_SETTINGS,
     DEFAULT_WORKSPACE_GROUP_ID,
+    INTERFACE_STYLE_OPTIONS,
     RUN_TARGET_OPTIONS,
     TERMINAL_SETTINGS_KEY,
     WORKSPACE_ALIASES_KEY,
@@ -14,7 +15,10 @@ export function normalizeAppPreferences(preferences) {
     const defaultRunTarget = RUN_TARGET_OPTIONS.some((option) => option.key === preferences?.defaultRunTarget)
         ? preferences.defaultRunTarget
         : DEFAULT_APP_PREFERENCES.defaultRunTarget;
-    return { defaultRunTarget };
+    const interfaceStyle = INTERFACE_STYLE_OPTIONS.some((option) => option.key === preferences?.interfaceStyle)
+        ? preferences.interfaceStyle
+        : DEFAULT_APP_PREFERENCES.interfaceStyle;
+    return { defaultRunTarget, interfaceStyle };
 }
 
 export function loadAppPreferences() {

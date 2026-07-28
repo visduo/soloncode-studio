@@ -45,6 +45,17 @@ export const RUN_TARGET_OPTIONS = [
     { key: RUN_TARGETS.cliSystem, mode: LAUNCH_MODES.cli, label: "启动 CLI 模式（系统终端）", external: true }
 ];
 
+export const INTERFACE_STYLES = {
+    idea: "idea",
+    studio: "studio"
+};
+
+export const INTERFACE_STYLE_OPTIONS = [
+    { key: INTERFACE_STYLES.idea, label: "IDEA 风格" },
+    { key: INTERFACE_STYLES.studio, label: "Studio 风格" }
+];
+
 export const DEFAULT_APP_PREFERENCES = {
-    defaultRunTarget: RUN_TARGETS.webInternal
+    defaultRunTarget: RUN_TARGETS.webInternal,
+    interfaceStyle: INTERFACE_STYLES.idea
 };

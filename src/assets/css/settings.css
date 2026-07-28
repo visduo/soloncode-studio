@@ -77,6 +77,8 @@
 }
 
 .preferences-settings-form {
+    display: grid;
+    gap: 14px;
     width: min(420px, 100%);
 }
 

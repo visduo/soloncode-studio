@@ -1,0 +1,103 @@
+.theme-idea {
+    --bg-primary: #f4f7fb;
+    --panel: #ffffff;
+    --panel-soft: #f8fafc;
+    --surface-hover: #e3e7ed;
+    --surface-active: #eaf3ff;
+    --border: #dbe4ef;
+    --border-strong: #c8d5e4;
+    --text-primary: #142033;
+    --text-secondary: #526174;
+    --text-muted: #8895a7;
+    --accent: #246bfe;
+    --accent-strong: #1d4ed8;
+    --accent-hover: #3b7cff;
+    --accent-soft: #d6e7ff;
+    --focus-ring: rgba(36, 107, 254, 0.32);
+    --state-running: #16a34a;
+    --state-running-soft: #edf9f0;
+    --state-running-border: #b9e3c4;
+    --state-idle: #94a3b8;
+    --state-error: #dc2626;
+    --state-error-hover: #e23d3d;
+    --state-error-soft: #fff1f1;
+    --state-error-border: #f2b8b8;
+    --state-loading: #f59e0b;
+    --state-loading-soft: #fff7e8;
+    --state-loading-border: #f1cf91;
+}
+
+.theme-idea .app-shell {
+    padding: 0;
+}
+
+.theme-idea .title-bar {
+    min-height: 48px;
+    margin: 0;
+    padding-inline: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.theme-idea .home-view {
+    gap: 0;
+    background: var(--panel);
+}
+
+.theme-idea .sidebar,
+.theme-idea .home-content-panel {
+    border: 0;
+    border-radius: 0;
+}
+
+.theme-idea .sidebar {
+    border-right: 1px solid var(--border);
+    background: var(--bg-primary);
+}
+
+.theme-idea .tab-bar {
+    gap: 4px;
+    padding-inline: 8px;
+}
+
+.theme-idea .tab-item {
+    height: 32px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+}
+
+.theme-idea .tab-item.active {
+    border-color: var(--border);
+    background: var(--panel);
+    box-shadow: 0 1px 3px rgba(24, 34, 48, 0.1);
+}
+
+.theme-idea .tab-item.active:hover {
+    background: var(--panel);
+}
+
+.theme-idea .project-view {
+    border-radius: 0;
+}
+
+.theme-idea .workspace-search input,
+.theme-idea .workspace-search:hover input,
+.theme-idea .workspace-search:focus-within input {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+}
+
+.theme-idea .welcome-toolbar {
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.theme-idea .welcome-toolbar + .workspace-list {
+    border-top: 0;
+}
+
+.theme-idea .workspace-content::before,
+.theme-idea .workspace-content::after {
+    content: none;
+}
