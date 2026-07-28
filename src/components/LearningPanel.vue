@@ -50,7 +50,7 @@ function open(resource) {
                 <ol class="learning-steps">
                     <li>
                         <strong>准备上下文</strong>
-                        <span>选择包含资料、内容或项目的本地目录，也可以添加在远程服务器运行的工作区。</span>
+                        <span>选择包含资料、想法或项目的本地目录，或添加云端工作区。</span>
                     </li>
                     <li>
                         <strong>选择交互入口</strong>

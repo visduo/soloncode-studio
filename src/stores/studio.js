@@ -32,10 +32,16 @@ const state = reactive({
     initialized: false,
     installed: false,
     javaAvailable: false,
+    javaVersion: "",
+    environmentChecking: false,
     busy: false,
     cliUpdateAvailable: false,
     studioUpdateAvailable: false,
     studioVersion: "版本未知",
+    studioLatestVersion: "",
+    cliVersion: "",
+    cliLatestVersion: "",
+    environmentError: "",
     homeWorkspacePath: "",
     selectedWorkspace: null,
     activeTabKey: HOME_TAB_KEY,
@@ -363,6 +369,10 @@ async function refreshVersions(options = {}) {
         state.cliUpdateAvailable = Boolean(info.cli_update_available);
         state.studioUpdateAvailable = Boolean(info.studio_update_available);
         state.studioVersion = info.studio_current ? `v${String(info.studio_current).replace(/^v/, "")}` : "版本未知";
+        state.studioLatestVersion = info.studio_latest ? `v${String(info.studio_latest).replace(/^v/, "")}` : "";
+        state.cliVersion = info.cli_current ? `v${String(info.cli_current).replace(/^v/, "")}` : "";
+        state.cliLatestVersion = info.cli_latest ? `v${String(info.cli_latest).replace(/^v/, "")}` : "";
+        state.environmentError = info.error || "";
         setStatus(
             state.installed ? (state.cliUpdateAvailable ? "CLI 可更新" : "已安装") : "CLI 未安装，请先安装",
             state.installed ? (state.cliUpdateAvailable ? "update-available" : "installed") : "not-installed"
@@ -398,23 +408,35 @@ async function refreshVersions(options = {}) {
         return info;
     } catch (error) {
         if (!options.preserveInstalledOnError) state.installed = false;
+        state.environmentError = String(error);
         setStatus(`检测失败: ${error}`, state.installed ? "installed" : "not-installed");
         return { error: String(error) };
     }
 }
 
 async function refreshEnvironment(options = {}) {
+    if (state.environmentChecking) return;
+    state.environmentChecking = true;
+    state.environmentError = "";
     try {
-        state.javaAvailable = Boolean(await invoke("check_java"));
+        const javaVersion = await invoke("check_java");
+        state.javaVersion = typeof javaVersion === "string" ? javaVersion : "";
+        state.javaAvailable = Boolean(state.javaVersion);
         if (!state.javaAvailable && !javaPromptShown) {
             javaPromptShown = true;
             showJavaPrompt();
         }
     } catch (error) {
         state.javaAvailable = false;
+        state.javaVersion = "";
+        state.environmentError = `Java 检测失败: ${error}`;
         appendLog(formatError(`Java 检测失败: ${error}`));
     }
-    return refreshVersions(options);
+    try {
+        return await refreshVersions(options);
+    } finally {
+        state.environmentChecking = false;
+    }
 }
 
 async function performInstall() {
@@ -785,6 +807,7 @@ export function useStudioStore() {
         revealWorkspace,
         handleCliPrimaryAction,
         handleUninstall,
+        refreshEnvironment,
         runWorkspace,
         stopWorkspace,
         sendCliInput,

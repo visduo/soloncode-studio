@@ -74,6 +74,36 @@ pub(crate) fn is_java_available() -> bool {
     command.status().is_ok_and(|status| status.success())
 }
 
+fn current_java_version() -> Option<String> {
+    let mut command = Command::new("java");
+    command.arg("-version");
+    #[cfg(windows)]
+    command.creation_flags(CREATE_NO_WINDOW);
+    let output = command.output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let text = format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stderr),
+        String::from_utf8_lossy(&output.stdout)
+    );
+    let first_line = text.lines().find(|line| !line.trim().is_empty())?;
+    first_line
+        .split('"')
+        .nth(1)
+        .or_else(|| {
+            first_line.split_whitespace().find(|part| {
+                part
+                    .chars()
+                    .next()
+                    .is_some_and(|character| character.is_ascii_digit())
+            })
+        })
+        .map(|version| version.trim().to_string())
+        .filter(|version| !version.is_empty())
+}
+
 fn parse_soloncode_version(output: &str) -> Option<String> {
     output
         .split_whitespace()
@@ -162,10 +192,10 @@ pub(crate) async fn check_soloncode() -> bool {
 }
 
 #[tauri::command]
-pub(crate) async fn check_java() -> bool {
-    tauri::async_runtime::spawn_blocking(is_java_available)
+pub(crate) async fn check_java() -> Option<String> {
+    tauri::async_runtime::spawn_blocking(current_java_version)
         .await
-        .unwrap_or(false)
+        .unwrap_or(None)
 }
 
 #[tauri::command]

@@ -71,7 +71,7 @@ function resetTerminal() {
     <Transition name="dialog">
         <div v-if="studio.dialogs.alias" class="dialog-backdrop">
             <section class="dialog-panel" role="dialog">
-                <h2>修改工作区名称</h2>
+                <h2>修改工作区信息</h2>
                 <div class="workspace-alias-form">
                     <input v-model="studio.dialogForms.alias" class="workspace-alias-input" maxlength="60" />
                 </div>

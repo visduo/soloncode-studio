@@ -1,0 +1,85 @@
+* {
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    font-weight: var(--font-regular);
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+input,
+textarea,
+[contenteditable="true"],
+[contenteditable="plaintext-only"] {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+button {
+    font: inherit;
+}
+
+input,
+select,
+textarea {
+    font: inherit;
+    font-weight: var(--font-regular);
+}
+
+h1,
+h2,
+h3,
+p {
+    margin: 0;
+}
+
+h1 {
+    font-size: 1.22rem;
+    letter-spacing: 0;
+}
+
+h1,
+h2,
+h3,
+strong {
+    font-weight: var(--font-semibold);
+}
+
+.app-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: inherit;
+    line-height: 1;
+}
+
+:is(
+    .tab-scroll-control,
+    .window-control,
+    .tab-item,
+    .welcome-nav-item,
+    .welcome-action,
+    .workspace-add,
+    .workspace-copy,
+    .workspace-icon-btn,
+    .app-menu-item,
+    .learning-resource,
+    .dialog-btn,
+    .dialog-close,
+    .log-clear,
+    .terminal-settings-button
+):focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+}

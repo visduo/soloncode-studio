@@ -1,5 +1,6 @@
 <script setup>
 import { onBeforeUnmount, onMounted, watch } from "vue";
+import EnvironmentPanel from "./components/EnvironmentPanel.vue";
 import HomeSidebar from "./components/HomeSidebar.vue";
 import LearningPanel from "./components/LearningPanel.vue";
 import ProjectHost from "./components/ProjectHost.vue";
@@ -71,7 +72,8 @@ onBeforeUnmount(() => {
                 <HomeSidebar />
                 <section class="home-content-panel">
                     <WorkspacePanel v-if="studio.state.homeSection === 'workspace'" />
-                    <LearningPanel v-else />
+                    <LearningPanel v-else-if="studio.state.homeSection === 'learning'" />
+                    <EnvironmentPanel v-else />
                 </section>
             </div>
             <ProjectHost v-show="studio.state.activeTabKey !== studio.constants.HOME_TAB_KEY" />

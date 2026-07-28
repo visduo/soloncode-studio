@@ -2,11 +2,6 @@
 import { useStudioStore } from "../stores/studio.js";
 import AppIcon from "./AppIcon.vue";
 const studio = useStudioStore();
-
-function toggleCliMenu() {
-    if (studio.state.openMenu === "cli") studio.dismissMenu();
-    else studio.state.openMenu = "cli";
-}
 </script>
 
 <template>
@@ -41,56 +36,14 @@ function toggleCliMenu() {
                 <span class="welcome-nav-icon"><AppIcon name="learning" /></span>
                 <span>学习</span>
             </button>
-        </div>
-        <div class="sidebar-cli">
-            <div class="app-menu-wrap sidebar-cli-menu-wrap">
-                <button class="sidebar-cli-settings" type="button" @click="toggleCliMenu">
-                    <AppIcon name="cli-settings" />
-                </button>
-                <Transition name="menu">
-                    <div
-                        v-if="studio.state.openMenu === 'cli'"
-                        class="app-menu cli-actions-menu"
-                        @click.capture="studio.dismissMenu">
-                        <button
-                            v-if="!studio.state.javaAvailable"
-                            class="app-menu-item"
-                            type="button"
-                            @click="studio.openExternalUrl('https://www.flyenv.com/zh/download.html')">
-                            <span class="app-menu-icon"><AppIcon name="install-java" /></span>
-                            <span>安装 Java</span>
-                        </button>
-                        <button
-                            class="app-menu-item"
-                            type="button"
-                            :disabled="!studio.state.studioUpdateAvailable"
-                            @click="studio.openExternalUrl('https://soloncode.studio/')">
-                            <span class="app-menu-icon"><AppIcon name="update-studio" /></span>
-                            <span>更新 Studio</span>
-                        </button>
-                        <button
-                            class="app-menu-item"
-                            type="button"
-                            :disabled="
-                                studio.state.busy || (studio.state.installed && !studio.state.cliUpdateAvailable)
-                            "
-                            @click="studio.handleCliPrimaryAction">
-                            <span class="app-menu-icon">
-                                <AppIcon :name="studio.state.installed ? 'update-cli' : 'install-cli'" />
-                            </span>
-                            <span>{{ studio.state.installed ? "更新 CLI" : "安装 CLI" }}</span>
-                        </button>
-                        <button
-                            class="app-menu-item cli-uninstall-item"
-                            type="button"
-                            :disabled="studio.state.busy || !studio.state.installed || studio.projects.size > 0"
-                            @click="studio.handleUninstall">
-                            <span class="app-menu-icon"><AppIcon name="uninstall-cli" /></span>
-                            <span>卸载 CLI</span>
-                        </button>
-                    </div>
-                </Transition>
-            </div>
+            <button
+                class="welcome-nav-item"
+                :class="{ active: studio.state.homeSection === 'environment' }"
+                type="button"
+                @click="studio.activateHomeSection('environment')">
+                <span class="welcome-nav-icon"><AppIcon name="environment" /></span>
+                <span>环境</span>
+            </button>
         </div>
     </section>
 </template>

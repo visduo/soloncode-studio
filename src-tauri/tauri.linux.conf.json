@@ -7,8 +7,8 @@
                 "theme": "Light",
                 "width": 1200,
                 "height": 780,
-                "minWidth": 1000,
-                "minHeight": 700,
+                "minWidth": 1200,
+                "minHeight": 780,
                 "center": true,
                 "resizable": true,
                 "decorations": false
