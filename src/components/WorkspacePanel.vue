@@ -9,6 +9,10 @@ function menuKey(type, entry) {
     return `${type}:${studio.workspaceKey(entry.path)}`;
 }
 
+function workspaceInitial(name) {
+    return Array.from(String(name || "?").trim())[0]?.toLocaleUpperCase() || "?";
+}
+
 function releaseMenuFocus(event) {
     event.target.closest("button")?.blur();
     queueMicrotask(() => {
@@ -61,7 +65,7 @@ async function toggle(event, type, entry) {
                         class="welcome-action primary workspace-add-trigger"
                         type="button"
                         @click="studio.state.openMenu = studio.state.openMenu === 'add' ? null : 'add'">
-                        <span class="workspace-add-icon"><AppIcon name="add" /></span>
+                        <span class="workspace-add-icon"><AppIcon name="add-workspace" /></span>
                         <span>添加工作区</span>
                     </button>
                     <div
@@ -69,11 +73,11 @@ async function toggle(event, type, entry) {
                         class="app-menu workspace-add-menu"
                         @click.capture="releaseMenuFocus">
                         <button class="app-menu-item" type="button" @click="studio.pickWorkspace">
-                            <span class="app-menu-icon"><AppIcon name="folder" /></span>
+                            <span class="app-menu-icon"><AppIcon name="add-local-workspace" /></span>
                             <span>本地工作区</span>
                         </button>
                         <button class="app-menu-item" type="button" @click="studio.showRemoteDialog()">
-                            <span class="app-menu-icon"><i class="ri-upload-cloud-fill app-icon"></i></span>
+                            <span class="app-menu-icon"><AppIcon name="add-remote-workspace" /></span>
                             <span>远程工作区</span>
                         </button>
                     </div>
@@ -91,9 +95,12 @@ async function toggle(event, type, entry) {
                 }"
                 @click="studio.selectWorkspace(entry.path)">
                 <button class="workspace-copy" type="button">
+                    <span class="workspace-badge" aria-hidden="true">
+                        {{ workspaceInitial(entry.name) }}
+                    </span>
                     <span class="workspace-text">
                         <span class="workspace-name">{{ entry.name }}</span>
-                        <span class="workspace-path">{{ entry.detail }}</span>
+                        <span class="workspace-path" :title="entry.detail">{{ entry.detail }}</span>
                     </span>
                 </button>
                 <div class="workspace-actions" @click.stop>
@@ -102,20 +109,20 @@ async function toggle(event, type, entry) {
                         class="workspace-icon-btn run"
                         type="button"
                         @click="studio.openWebPage(entry.detail)">
-                        <AppIcon name="external" />
+                        <AppIcon name="open-project" />
                     </button>
                     <template v-else-if="studio.projectForWorkspace(entry.path)">
                         <button
                             class="workspace-icon-btn run"
                             type="button"
                             @click="studio.openProject(studio.projectForWorkspace(entry.path))">
-                            <AppIcon name="external" />
+                            <AppIcon name="open-project" />
                         </button>
                         <button
                             class="workspace-icon-btn stop"
                             type="button"
                             @click="studio.stopWorkspace(entry.path, studio.projectForWorkspace(entry.path).mode)">
-                            <AppIcon name="stop" />
+                            <AppIcon name="stop-workspace" />
                         </button>
                     </template>
                     <div v-else class="app-menu-wrap">
@@ -131,7 +138,7 @@ async function toggle(event, type, entry) {
                                 :name="
                                     studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
                                         ? 'loading'
-                                        : 'play'
+                                        : 'start-workspace'
                                 " />
                         </button>
                         <Teleport to="body">
@@ -158,14 +165,11 @@ async function toggle(event, type, entry) {
                         class="workspace-icon-btn folder"
                         type="button"
                         @click="studio.revealWorkspace(entry.path)">
-                        <AppIcon name="folder" />
+                        <AppIcon name="open-folder" />
                     </button>
                     <div class="app-menu-wrap">
-                        <button
-                            class="workspace-icon-btn more"
-                            type="button"
-                            @click="toggle($event, 'more', entry)">
-                            <AppIcon name="more" />
+                        <button class="workspace-icon-btn more" type="button" @click="toggle($event, 'more', entry)">
+                            <AppIcon name="more-actions" />
                         </button>
                         <Teleport to="body">
                             <div
@@ -180,7 +184,7 @@ async function toggle(event, type, entry) {
                                     class="app-menu-item"
                                     type="button"
                                     @click="studio.togglePinned(entry.path)">
-                                    <span class="app-menu-icon"><AppIcon name="pin" /></span>
+                                    <span class="app-menu-icon"><AppIcon name="pin-workspace" /></span>
                                     <span>{{ entry.pinned ? "取消置顶" : "置顶" }}</span>
                                 </button>
                                 <button
@@ -188,7 +192,7 @@ async function toggle(event, type, entry) {
                                     class="app-menu-item"
                                     type="button"
                                     @click="studio.showAliasDialog(entry.path)">
-                                    <span class="app-menu-icon"><AppIcon name="edit" /></span>
+                                    <span class="app-menu-icon"><AppIcon name="rename-workspace" /></span>
                                     <span>重命名</span>
                                 </button>
                                 <button
@@ -196,7 +200,7 @@ async function toggle(event, type, entry) {
                                     class="app-menu-item"
                                     type="button"
                                     @click="studio.showRemoteDialog(entry.path)">
-                                    <span class="app-menu-icon"><AppIcon name="edit" /></span>
+                                    <span class="app-menu-icon"><AppIcon name="edit-address" /></span>
                                     <span>修改地址</span>
                                 </button>
                                 <button
@@ -204,7 +208,7 @@ async function toggle(event, type, entry) {
                                     class="app-menu-item"
                                     type="button"
                                     @click="studio.openExternalUrl(entry.detail)">
-                                    <span class="app-menu-icon"><AppIcon name="external" /></span>
+                                    <span class="app-menu-icon"><AppIcon name="open-external" /></span>
                                     <span>使用系统浏览器打开</span>
                                 </button>
                                 <button
@@ -212,7 +216,7 @@ async function toggle(event, type, entry) {
                                     class="app-menu-item"
                                     type="button"
                                     @click="studio.showLogsDialog(entry.path)">
-                                    <span class="app-menu-icon"><AppIcon name="log" /></span>
+                                    <span class="app-menu-icon"><AppIcon name="view-logs" /></span>
                                     <span>运行日志</span>
                                 </button>
                                 <button
@@ -220,7 +224,7 @@ async function toggle(event, type, entry) {
                                     class="app-menu-item"
                                     type="button"
                                     @click="studio.removeWorkspace(entry.path)">
-                                    <span class="app-menu-icon"><AppIcon name="remove" /></span>
+                                    <span class="app-menu-icon"><AppIcon name="remove-workspace" /></span>
                                     <span>移除工作区</span>
                                 </button>
                             </div>

@@ -99,7 +99,6 @@ async function windowAction(action) {
                 @click="activateHome">
                 <span class="tab-main">
                     <span class="tab-mode"><AppIcon name="home" /></span>
-                    <span class="tab-label">首页</span>
                 </span>
             </button>
             <button
@@ -123,8 +122,8 @@ async function windowAction(action) {
                                 studio.taskSessions.has(project.project_key)
                                     ? 'loading'
                                     : project.mode === 'cli'
-                                      ? 'cli'
-                                      : 'web'
+                                      ? 'mode-cli'
+                                      : 'mode-web'
                             " />
                     </span>
                     <span class="tab-label">{{ project.name }}</span>
@@ -150,10 +149,7 @@ async function windowAction(action) {
             <button class="window-control" type="button" @click="windowAction('maximize')">
                 <i class="ri-checkbox-blank-line"></i>
             </button>
-            <button
-                class="window-control window-control-close"
-                type="button"
-                @click="windowAction('close')">
+            <button class="window-control window-control-close" type="button" @click="windowAction('close')">
                 <i class="ri-close-line"></i>
             </button>
         </div>

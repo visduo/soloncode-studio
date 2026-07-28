@@ -8,12 +8,12 @@
     const contextResponseType = "soloncode-frame-context-response";
     const pendingContextRequests = new Map();
     const iconNames = {
-        copy: "ri-file-copy-fill",
-        paste: "ri-clipboard-fill",
-        refresh: "ri-refresh-fill",
-        external: "ri-external-link-fill",
-        folder: "ri-folder-open-fill",
-        devtools: "ri-code-fill"
+        copy: "ri-file-copy-line",
+        paste: "ri-clipboard-line",
+        refresh: "ri-refresh-line",
+        external: "ri-external-link-line",
+        folder: "ri-folder-open-line",
+        devtools: "ri-code-line"
     };
     const ensureIconStyles = () => {
         if (document.getElementById("soloncode-remix-icon-styles")) return;
@@ -87,24 +87,23 @@
             display: "grid",
             gridTemplateColumns: "16px max-content",
             alignItems: "center",
-            gap: "10px",
+            gap: "8px",
             width: "100%",
             minHeight: "34px",
             padding: "0 10px",
             border: "0",
-            borderRadius: "8px",
+            borderRadius: "3px",
             background: "transparent",
             color: "#142033",
             cursor: enabled ? "pointer" : "not-allowed",
             fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
             fontSize: "0.86rem",
-            fontWeight: "750",
             opacity: enabled ? "1" : "0.45",
             textAlign: "left",
             whiteSpace: "nowrap"
         });
         item.addEventListener("mouseenter", () => {
-            if (enabled) item.style.background = "#f3f7fb";
+            if (enabled) item.style.background = "#eef2f6";
         });
         item.addEventListener("mouseleave", () => (item.style.background = "transparent"));
         item.addEventListener("mousedown", (event) => event.preventDefault());
@@ -138,7 +137,7 @@
                 minWidth: "156px",
                 padding: "6px",
                 border: "1px solid #dbe4ef",
-                borderRadius: "14px",
+                borderRadius: "6px",
                 background: "#ffffff",
                 boxShadow: "0 12px 28px rgba(31, 50, 79, 0.1)"
             });

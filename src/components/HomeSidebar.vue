@@ -30,7 +30,7 @@ function releaseMenuFocus(event) {
                 :class="{ active: studio.state.homeSection === 'workspace' }"
                 type="button"
                 @click="studio.state.homeSection = 'workspace'">
-                <span class="welcome-nav-icon"><AppIcon name="folder" /></span>
+                <span class="welcome-nav-icon"><AppIcon name="workspaces" /></span>
                 <span>工作区</span>
             </button>
             <button
@@ -48,7 +48,7 @@ function releaseMenuFocus(event) {
                     class="sidebar-cli-settings"
                     type="button"
                     @click="studio.state.openMenu = studio.state.openMenu === 'cli' ? null : 'cli'">
-                    <AppIcon name="settings" />
+                    <AppIcon name="cli-settings" />
                 </button>
                 <div
                     v-if="studio.state.openMenu === 'cli'"
@@ -59,7 +59,7 @@ function releaseMenuFocus(event) {
                         class="app-menu-item"
                         type="button"
                         @click="studio.openExternalUrl('https://www.flyenv.com/zh/download.html')">
-                        <span class="app-menu-icon"><AppIcon name="install" /></span>
+                        <span class="app-menu-icon"><AppIcon name="install-java" /></span>
                         <span>安装 Java</span>
                     </button>
                     <button
@@ -67,7 +67,7 @@ function releaseMenuFocus(event) {
                         type="button"
                         :disabled="!studio.state.studioUpdateAvailable"
                         @click="studio.openExternalUrl('https://soloncode.studio/')">
-                        <span class="app-menu-icon"><AppIcon name="install" /></span>
+                        <span class="app-menu-icon"><AppIcon name="update-studio" /></span>
                         <span>更新 Studio</span>
                     </button>
                     <button
@@ -75,7 +75,9 @@ function releaseMenuFocus(event) {
                         type="button"
                         :disabled="studio.state.busy || (studio.state.installed && !studio.state.cliUpdateAvailable)"
                         @click="studio.handleCliPrimaryAction">
-                        <span class="app-menu-icon"><AppIcon name="install" /></span>
+                        <span class="app-menu-icon">
+                            <AppIcon :name="studio.state.installed ? 'update-cli' : 'install-cli'" />
+                        </span>
                         <span>{{ studio.state.installed ? "更新 CLI" : "安装 CLI" }}</span>
                     </button>
                     <button
@@ -83,7 +85,7 @@ function releaseMenuFocus(event) {
                         type="button"
                         :disabled="studio.state.busy || !studio.state.installed || studio.projects.size > 0"
                         @click="studio.handleUninstall">
-                        <span class="app-menu-icon"><AppIcon name="close" /></span>
+                        <span class="app-menu-icon"><AppIcon name="uninstall-cli" /></span>
                         <span>卸载 CLI</span>
                     </button>
                 </div>

@@ -1,28 +1,48 @@
 <script setup>
-defineProps({ name: { type: String, required: true } });
+import { computed } from "vue";
+
+const props = defineProps({ name: { type: String, required: true } });
 const icons = {
-    home: "ri-home-3-line",
-    cli: "ri-terminal-box-line",
-    web: "ri-window-line",
-    close: "ri-close-line",
-    settings: "ri-settings-4-line",
-    folder: "ri-folder-open-line",
+    home: "ri-apps-ai-line",
+    workspaces: "ri-folder-open-line",
     learning: "ri-book-ai-line",
-    add: "ri-folder-add-line",
-    play: "ri-play-large-line",
-    stop: "ri-stop-large-line",
-    more: "ri-more-2-fill",
-    pin: "ri-pushpin-line",
-    edit: "ri-edit-2-line",
-    remove: "ri-delete-bin-line",
-    external: "ri-external-link-line",
-    log: "ri-timeline-view",
+    "mode-cli": "ri-terminal-box-line",
+    "mode-web": "ri-window-line",
+    "add-workspace": "ri-folder-add-line",
+    "add-local-workspace": "ri-folder-open-line",
+    "add-remote-workspace": "ri-upload-cloud-2-line",
+    "start-workspace": "ri-play-large-line",
+    "stop-workspace": "ri-stop-large-line",
+    "open-project": "ri-external-link-line",
+    "open-folder": "ri-folder-open-line",
+    "open-external": "ri-external-link-line",
+    "open-resource": "ri-arrow-right-line",
+    "more-actions": "ri-more-2-fill",
+    "pin-workspace": "ri-pushpin-line",
+    "rename-workspace": "ri-edit-2-line",
+    "edit-address": "ri-link",
+    "remove-workspace": "ri-delete-bin-line",
+    "view-logs": "ri-timeline-view",
+    "cli-settings": "ri-settings-4-line",
+    "terminal-settings": "ri-settings-4-line",
+    "install-java": "ri-install-line",
+    "install-cli": "ri-install-line",
+    "update-cli": "ri-download-cloud-line",
+    "update-studio": "ri-download-cloud-line",
+    "uninstall-cli": "ri-uninstall-line",
+    documentation: "ri-book-open-line",
+    "official-website": "ri-global-line",
+    "source-repository": "ri-github-fill",
+    refresh: "ri-refresh-line",
     loading: "ri-loader-4-fill",
-    install: "ri-install-line",
-    github: "ri-github-fill",
-    website: "ri-macbook-line",
-    refresh: "ri-refresh-line"
+    close: "ri-close-line"
 };
+
+const iconClass = computed(() => {
+    const icon = icons[props.name];
+    if (!icon && import.meta.env.DEV) console.warn(`Unknown app icon: ${props.name}`);
+    return icon || "";
+});
 </script>
 
-<template><i :class="[icons[name] || icons.play, 'app-icon', `app-icon-${name}`]" aria-hidden="true"></i></template>
+<template><i :class="[iconClass, 'app-icon', `app-icon-${name}`]" aria-hidden="true"></i></template>

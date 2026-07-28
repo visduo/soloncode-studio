@@ -335,7 +335,7 @@ h1 {
 .welcome-action {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     height: 34px;
     padding: 0 12px;
     border: 1px solid var(--border);
@@ -471,10 +471,10 @@ h1 {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
-    min-height: 62px;
-    padding: 10px 8px 10px 12px;
+    min-height: 56px;
+    padding: 6px 8px 6px 12px;
     border: 0;
     border-left: 0;
     border-radius: var(--radius-md);
@@ -490,12 +490,16 @@ h1 {
     display: none;
 }
 
+.workspace-item:not(:last-child) {
+    margin-bottom: 6px;
+}
+
 .workspace-item::before {
     content: "";
     position: absolute;
     left: 0;
-    top: 8px;
-    bottom: 8px;
+    top: 6px;
+    bottom: 6px;
     width: 3px;
     border-radius: 0;
     background: transparent;
@@ -514,9 +518,9 @@ h1 {
 }
 
 .workspace-copy {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
+    display: flex;
     align-items: center;
+    gap: 10px;
     width: 100%;
     min-width: 0;
     border: 0;
@@ -526,7 +530,23 @@ h1 {
     text-align: left;
 }
 
+.workspace-badge {
+    display: grid;
+    place-items: center;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #f0f1f5, #ffffff);
+    color: #6b7280;
+    font-size: 0.86rem;
+    font-weight: var(--font-semibold);
+    line-height: 1;
+}
+
 .workspace-text {
+    display: block;
+    flex: 1 1 auto;
     min-width: 0;
 }
 
@@ -538,6 +558,7 @@ h1 {
     color: var(--text-primary);
     font-size: 0.9rem;
     font-weight: var(--font-semibold);
+    line-height: 1.25;
 }
 
 .workspace-path {
@@ -548,6 +569,8 @@ h1 {
     white-space: nowrap;
     color: var(--text-muted);
     font-size: 0.7rem;
+    font-weight: var(--font-regular);
+    line-height: 1.2;
 }
 
 .workspace-actions {
@@ -673,7 +696,7 @@ h1 {
     display: grid;
     grid-template-columns: 16px max-content;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     min-height: 34px;
     padding: 0 10px;
     border: 0;

@@ -11,13 +11,19 @@ import { useStudioStore } from "./stores/studio.js";
 const studio = useStudioStore();
 let cleanupEvents;
 
-function handleDocumentClick(event) {
-    if (!event.target.closest(".app-menu-wrap")) studio.state.openMenu = null;
+function dismissMenu() {
+    if (!studio.state.openMenu) return;
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    studio.state.openMenu = null;
+}
+
+function handleDocumentPointerDown(event) {
+    if (!event.target.closest(".app-menu-wrap, .app-menu")) dismissMenu();
 }
 
 function handleDocumentKeydown(event) {
     if (event.key !== "Escape") return;
-    studio.state.openMenu = null;
+    dismissMenu();
     studio.dialogs.logs = false;
 }
 
@@ -26,6 +32,19 @@ watch(
     (key) => document.body.classList.toggle("project-mode", key !== studio.constants.HOME_TAB_KEY),
     { immediate: true }
 );
+watch(
+    () => [
+        studio.activePrompt.value,
+        studio.dialogs.alias,
+        studio.dialogs.remote,
+        studio.dialogs.logs,
+        studio.dialogs.terminalSettings
+    ],
+    (modalStates) => {
+        if (modalStates.some(Boolean)) dismissMenu();
+    },
+    { flush: "sync" }
+);
 onMounted(async () => {
     const platform = /Mac|iPhone|iPad/.test(navigator.platform)
         ? "macos"
@@ -33,13 +52,13 @@ onMounted(async () => {
           ? "windows"
           : "linux";
     document.documentElement.classList.add(`platform-${platform}`);
-    document.addEventListener("click", handleDocumentClick);
+    document.addEventListener("pointerdown", handleDocumentPointerDown, true);
     document.addEventListener("keydown", handleDocumentKeydown);
     cleanupEvents = studio.registerEvents();
     await studio.initialize();
 });
 onBeforeUnmount(() => {
-    document.removeEventListener("click", handleDocumentClick);
+    document.removeEventListener("pointerdown", handleDocumentPointerDown, true);
     document.removeEventListener("keydown", handleDocumentKeydown);
     cleanupEvents?.();
 });

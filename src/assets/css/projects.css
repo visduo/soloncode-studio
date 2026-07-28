@@ -3,11 +3,12 @@
     display: grid;
     grid-template-columns: 238px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
-    gap: 0;
+    gap: 8px;
     height: 100%;
     min-height: 0;
     overflow: hidden;
     padding: 0;
+    background: var(--bg-primary);
 }
 
 .project-view {
@@ -16,7 +17,7 @@
     min-height: 0;
     overflow: hidden;
     border: 0;
-    border-radius: 0;
+    border-radius: var(--radius-window);
     background: var(--panel);
     box-shadow: none;
 }
@@ -120,7 +121,7 @@
 }
 
 body.project-mode .launcher-container {
-    background: var(--panel);
+    background: var(--bg-primary);
 }
 
 body.project-mode .app-shell {

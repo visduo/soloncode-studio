@@ -1,8 +1,8 @@
 .sidebar,
 .main-panel {
     min-height: 0;
-    border: 0;
-    border-radius: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-window);
     box-shadow: none;
 }
 
@@ -12,8 +12,8 @@
     display: flex;
     flex-direction: column;
     padding: 28px 12px 18px;
-    border-right: 1px solid var(--border);
-    background: var(--panel-soft);
+    background: var(--panel);
+    overflow: hidden;
 }
 
 .main-panel {
@@ -24,6 +24,7 @@
     gap: 0;
     padding: 22px 26px 18px;
     background: var(--panel);
+    overflow: hidden;
 }
 
 .main-panel[hidden],
@@ -38,6 +39,8 @@
     min-height: 0;
     padding: 44px 52px 36px;
     overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-window);
     background: var(--panel);
 }
 
@@ -207,7 +210,7 @@
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr) 16px;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
     min-height: 62px;
     padding: 12px 8px;
@@ -324,4 +327,3 @@
 .version-update-text:empty {
     display: none;
 }
-

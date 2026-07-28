@@ -5,22 +5,22 @@ import { useStudioStore } from "../stores/studio.js";
 import TerminalView from "./TerminalView.vue";
 const studio = useStudioStore();
 
-function projectBySource(source) {
-    return studio.orderedProjects.value.find(
-        (project) =>
-            document.querySelector(`[data-project-key="${CSS.escape(project.project_key)}"] iframe`)?.contentWindow ===
-            source
-    );
+function projectFrameBySource(source) {
+    for (const project of studio.orderedProjects.value) {
+        const frame = document.querySelector(`[data-project-key="${CSS.escape(project.project_key)}"] iframe`);
+        if (frame?.contentWindow === source) return { project, frame };
+    }
+    return null;
 }
 async function message(event) {
     const data = event.data;
     if (!data?.type) return;
     if (data.type === "studio-blocked-navigation") return studio.openExternalUrl(data.payload.url);
-    const project = projectBySource(event.source);
-    if (!project) return;
+    const match = projectFrameBySource(event.source);
+    if (!match) return;
+    const { project, frame } = match;
     if (data.type === "soloncode-frame-context-action") {
         if (data.action === "refresh") {
-            const frame = event.source.frameElement;
             frame.src = withStudioParam(project.url);
         }
         if (data.action === "open-external") await studio.openExternalUrl(project.url);

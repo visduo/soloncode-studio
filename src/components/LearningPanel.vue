@@ -3,13 +3,28 @@ import { useStudioStore } from "../stores/studio.js";
 import AppIcon from "./AppIcon.vue";
 const studio = useStudioStore();
 const resources = [
-    ["CLI 文档", "命令、配置与操作指南", "https://solon.noear.org/article/soloncode", "website"],
-    ["Studio 官网", "版本发布与产品动态", "https://soloncode.studio/", "website"],
-    ["Studio 源码仓库", "源码、Issue 与更新日志", "github-release", "github"]
+    {
+        title: "CLI 文档",
+        description: "命令、配置与操作指南",
+        target: "https://solon.noear.org/article/soloncode",
+        icon: "documentation"
+    },
+    {
+        title: "Studio 官网",
+        description: "版本发布与产品动态",
+        target: "https://soloncode.studio/",
+        icon: "official-website"
+    },
+    {
+        title: "Studio 源码仓库",
+        description: "源码、Issue 与更新日志",
+        target: "github-release",
+        icon: "source-repository"
+    }
 ];
 function open(resource) {
-    if (resource[2] === "github-release") studio.openStudioGithubReleasePage();
-    else studio.openExternalUrl(resource[2]);
+    if (resource.target === "github-release") studio.openStudioGithubReleasePage();
+    else studio.openExternalUrl(resource.target);
 }
 </script>
 
@@ -76,16 +91,16 @@ function open(resource) {
                 <div class="learning-resources">
                     <button
                         v-for="resource in resources"
-                        :key="resource[0]"
+                        :key="resource.title"
                         class="learning-resource"
                         type="button"
                         @click="open(resource)">
-                        <span class="learning-resource-icon"><AppIcon :name="resource[3]" /></span>
+                        <span class="learning-resource-icon"><AppIcon :name="resource.icon" /></span>
                         <span class="learning-resource-copy">
-                            <strong>{{ resource[0] }}</strong>
-                            <small>{{ resource[1] }}</small>
+                            <strong>{{ resource.title }}</strong>
+                            <small>{{ resource.description }}</small>
                         </span>
-                        <span class="learning-resource-arrow"><AppIcon name="external" /></span>
+                        <span class="learning-resource-arrow"><AppIcon name="open-resource" /></span>
                     </button>
                 </div>
             </section>

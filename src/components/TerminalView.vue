@@ -144,11 +144,8 @@ onBeforeUnmount(() => {
             ref="host"
             class="terminal-surface"
             :style="{ background: studio.state.terminalSettings.background }"></div>
-        <button
-            class="terminal-settings-button"
-            type="button"
-            @click="studio.dialogs.terminalSettings = true">
-            <AppIcon name="settings" />
+        <button class="terminal-settings-button" type="button" @click="studio.dialogs.terminalSettings = true">
+            <AppIcon name="terminal-settings" />
         </button>
     </div>
 </template>
