@@ -263,7 +263,7 @@
         box-shadow 0.15s ease;
 }
 
-.workspace-add-icon {
+.welcome-action-icon {
     display: inline-grid;
     place-items: center;
     flex: 0 0 18px;
@@ -272,7 +272,7 @@
     line-height: 1;
 }
 
-.workspace-add-icon .app-icon {
+.welcome-action-icon .app-icon {
     width: 17px;
     height: 17px;
 }
@@ -287,23 +287,78 @@
     padding-bottom: 0px;
 }
 
-.workspace-list-enter-active,
-.workspace-list-leave-active,
-.workspace-list-move {
-    transition:
-        opacity 180ms ease,
-        transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+.workspace-group + .workspace-group {
+    margin-top: 16px;
 }
 
-.workspace-list-enter-from,
-.workspace-list-leave-to {
-    opacity: 0;
-    transform: translateY(-6px);
-}
-
-.workspace-list-leave-active {
-    position: absolute;
+.workspace-group-header {
+    display: flex;
+    align-items: center;
     width: 100%;
+    min-height: 30px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+}
+
+.workspace-group-toggle {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    flex: 1;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    min-height: 30px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: var(--font-medium);
+    text-align: left;
+}
+
+.workspace-group-header:hover {
+    background: var(--surface-hover);
+}
+
+.workspace-group-header .app-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.workspace-group-action {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    margin-left: 4px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.workspace-group-action:hover {
+    background: var(--menu-hover);
+    color: var(--text-primary);
+}
+
+.workspace-group-header small {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: var(--font-regular);
+}
+
+.workspace-group-entries {
+    position: relative;
+    margin-top: 6px;
 }
 
 .workspace-item {

@@ -37,6 +37,8 @@ watch(
         studio.activePrompt.value,
         studio.dialogs.alias,
         studio.dialogs.remote,
+        studio.dialogs.workspaceGroup,
+        studio.dialogs.workspaceMove,
         studio.dialogs.logs,
         studio.dialogs.terminalSettings
     ],

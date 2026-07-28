@@ -52,19 +52,22 @@ async function toggle(event, type, entry) {
             <div class="welcome-toolbar">
                 <label class="workspace-search">
                     <span class="workspace-search-icon"><i class="ri-search-line"></i></span>
-                    <input
-                        v-model="studio.state.workspaceSearch"
-                        type="search"
-                        aria-label="搜索工作区"
-                        placeholder="搜索工作区" />
+                    <input v-model="studio.state.workspaceSearch" type="search" placeholder="搜索工作区" />
                 </label>
                 <div class="welcome-actions">
+                    <button
+                        class="welcome-action primary workspace-add-trigger"
+                        type="button"
+                        @click="studio.showWorkspaceGroupDialog">
+                        <span class="welcome-action-icon"><AppIcon name="add-group" /></span>
+                        <span>创建分组</span>
+                    </button>
                     <div class="app-menu-wrap workspace-add-menu-wrap">
                         <button
                             class="welcome-action primary workspace-add-trigger"
                             type="button"
                             @click="toggleAddMenu">
-                            <span class="workspace-add-icon"><AppIcon name="add-workspace" /></span>
+                            <span class="welcome-action-icon"><AppIcon name="add-workspace" /></span>
                             <span>添加工作区</span>
                         </button>
                         <Transition name="menu">
@@ -85,180 +88,258 @@ async function toggle(event, type, entry) {
                     </div>
                 </div>
             </div>
-            <TransitionGroup name="workspace-list" tag="div" class="workspace-list">
-                <div
-                    v-for="entry in studio.visibleWorkspaces.value"
-                    :key="entry.path || studio.constants.HOME_WORKSPACE_KEY"
-                    class="workspace-item"
-                    :class="{
-                        active: studio.state.selectedWorkspace === entry.path,
-                        running: studio.projectForWorkspace(entry.path)
-                    }"
-                    @click="studio.selectWorkspace(entry.path)">
-                    <button class="workspace-copy" type="button">
-                        <span class="workspace-badge" aria-hidden="true">
-                            {{ workspaceInitial(entry.name) }}
-                        </span>
-                        <span class="workspace-text">
-                            <span class="workspace-name">{{ entry.name }}</span>
-                            <span class="workspace-path" :title="entry.detail">{{ entry.detail }}</span>
-                        </span>
-                    </button>
-                    <div class="workspace-actions" @click.stop>
+            <div class="workspace-list">
+                <section
+                    v-for="group in studio.workspaceGroupsWithEntries.value"
+                    :key="group.id"
+                    class="workspace-group">
+                    <div class="workspace-group-header">
                         <button
-                            v-if="entry.type === 'remote'"
-                            class="workspace-icon-btn open"
+                            class="workspace-group-toggle"
                             type="button"
-                            @click="
-                                studio.openWebPage(entry.detail, {
-                                    username: entry.username,
-                                    password: entry.password
-                                })
-                            ">
-                            <AppIcon name="open-project" />
+                            :aria-expanded="!group.collapsed"
+                            @click="studio.toggleWorkspaceGroup(group)">
+                            <AppIcon :name="group.collapsed ? 'group-collapsed' : 'group-expanded'" />
+                            <span>{{ group.name }}</span>
+                            <small>{{ group.entries.length }}</small>
                         </button>
-                        <template v-else-if="studio.projectForWorkspace(entry.path)">
+                        <div v-if="group.id !== studio.constants.DEFAULT_WORKSPACE_GROUP_ID" class="app-menu-wrap">
                             <button
-                                class="workspace-icon-btn open"
+                                class="workspace-group-action"
                                 type="button"
-                                @click="studio.openProject(studio.projectForWorkspace(entry.path))">
-                                <AppIcon name="open-project" />
-                            </button>
-                            <button
-                                class="workspace-icon-btn stop"
-                                type="button"
-                                @click="studio.stopWorkspace(entry.path, studio.projectForWorkspace(entry.path).mode)">
-                                <AppIcon name="stop-workspace" />
-                            </button>
-                        </template>
-                        <div v-else class="app-menu-wrap">
-                            <button
-                                class="workspace-icon-btn run"
-                                :class="{ loading: studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path)) }"
-                                type="button"
-                                :disabled="
-                                    studio.state.busy ||
-                                    studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
-                                "
-                                @click="toggle($event, 'run', entry)">
-                                <Transition name="icon-swap" mode="out-in">
-                                    <AppIcon
-                                        :key="
-                                            studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
-                                                ? 'loading'
-                                                : 'start-workspace'
-                                        "
-                                        :name="
-                                            studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
-                                                ? 'loading'
-                                                : 'start-workspace'
-                                        " />
-                                </Transition>
-                            </button>
-                            <Teleport to="body">
-                                <Transition name="menu">
-                                    <div
-                                        v-if="studio.state.openMenu === menuKey('run', entry)"
-                                        class="app-menu run-target-menu"
-                                        :data-floating-menu="menuKey('run', entry)"
-                                        :style="menuPosition"
-                                        @click.capture="studio.dismissMenu"
-                                        @click.stop>
-                                        <button
-                                            v-for="target in studio.runTargets"
-                                            :key="target.key"
-                                            class="app-menu-item run-target-menu-item"
-                                            type="button"
-                                            @click="studio.runWorkspace(entry.path, target.key)">
-                                            {{ target.label }}
-                                        </button>
-                                    </div>
-                                </Transition>
-                            </Teleport>
-                        </div>
-                        <button
-                            v-if="entry.type !== 'remote'"
-                            class="workspace-icon-btn folder"
-                            type="button"
-                            @click="studio.revealWorkspace(entry.path)">
-                            <AppIcon name="open-folder" />
-                        </button>
-                        <div class="app-menu-wrap">
-                            <button
-                                class="workspace-icon-btn more"
-                                type="button"
-                                @click="toggle($event, 'more', entry)">
+                                @click="toggle($event, 'group', { path: group.id })">
                                 <AppIcon name="more-actions" />
                             </button>
                             <Teleport to="body">
                                 <Transition name="menu">
                                     <div
-                                        v-if="studio.state.openMenu === menuKey('more', entry)"
+                                        v-if="studio.state.openMenu === menuKey('group', { path: group.id })"
                                         class="app-menu"
-                                        :data-floating-menu="menuKey('more', entry)"
+                                        :data-floating-menu="menuKey('group', { path: group.id })"
                                         :style="menuPosition"
                                         @click.capture="studio.dismissMenu"
                                         @click.stop>
                                         <button
-                                            v-if="entry.path"
                                             class="app-menu-item"
                                             type="button"
-                                            @click="studio.togglePinned(entry.path)">
-                                            <span class="app-menu-icon"><AppIcon name="pin-workspace" /></span>
-                                            <span>{{ entry.pinned ? "取消置顶" : "置顶" }}</span>
-                                        </button>
-                                        <button
-                                            v-if="entry.removable && entry.type !== 'remote'"
-                                            class="app-menu-item"
-                                            type="button"
-                                            @click="studio.showAliasDialog(entry.path)">
+                                            @click="studio.showWorkspaceGroupDialog(group)">
                                             <span class="app-menu-icon"><AppIcon name="rename-workspace" /></span>
-                                            <span>重命名</span>
+                                            <span>修改分组</span>
                                         </button>
                                         <button
-                                            v-if="entry.type === 'remote'"
                                             class="app-menu-item"
                                             type="button"
-                                            @click="studio.showRemoteDialog(entry.path)">
-                                            <span class="app-menu-icon"><AppIcon name="edit-remote-workspace" /></span>
-                                            <span>修改远程工作区信息</span>
-                                        </button>
-                                        <button
-                                            v-if="entry.type === 'remote'"
-                                            class="app-menu-item"
-                                            type="button"
-                                            @click="
-                                                studio.openExternalUrl(entry.detail, {
-                                                    username: entry.username,
-                                                    password: entry.password
-                                                })
-                                            ">
-                                            <span class="app-menu-icon"><AppIcon name="open-external" /></span>
-                                            <span>使用系统浏览器打开</span>
-                                        </button>
-                                        <button
-                                            v-if="entry.type !== 'remote'"
-                                            class="app-menu-item"
-                                            type="button"
-                                            @click="studio.showLogsDialog(entry.path)">
-                                            <span class="app-menu-icon"><AppIcon name="view-logs" /></span>
-                                            <span>运行日志</span>
-                                        </button>
-                                        <button
-                                            v-if="entry.removable"
-                                            class="app-menu-item"
-                                            type="button"
-                                            @click="studio.removeWorkspace(entry.path)">
+                                            @click="studio.requestDeleteWorkspaceGroup(group)">
                                             <span class="app-menu-icon"><AppIcon name="remove-workspace" /></span>
-                                            <span>移除工作区</span>
+                                            <span>删除分组</span>
                                         </button>
                                     </div>
                                 </Transition>
                             </Teleport>
                         </div>
                     </div>
-                </div>
-            </TransitionGroup>
+                    <div v-if="!group.collapsed" class="workspace-group-entries">
+                        <div
+                            v-for="entry in group.entries"
+                            :key="entry.path || studio.constants.HOME_WORKSPACE_KEY"
+                            class="workspace-item"
+                            :class="{
+                                active: studio.state.selectedWorkspace === entry.path,
+                                running: studio.projectForWorkspace(entry.path)
+                            }"
+                            @click="studio.selectWorkspace(entry.path)">
+                            <button class="workspace-copy" type="button">
+                                <span class="workspace-badge" aria-hidden="true">
+                                    {{ workspaceInitial(entry.name) }}
+                                </span>
+                                <span class="workspace-text">
+                                    <span class="workspace-name">{{ entry.name }}</span>
+                                    <span class="workspace-path" :title="entry.detail">{{ entry.detail }}</span>
+                                </span>
+                            </button>
+                            <div class="workspace-actions" @click.stop>
+                                <button
+                                    v-if="entry.type === 'remote'"
+                                    class="workspace-icon-btn open"
+                                    type="button"
+                                    @click="
+                                        studio.openWebPage(entry.detail, {
+                                            username: entry.username,
+                                            password: entry.password
+                                        })
+                                    ">
+                                    <AppIcon name="open-project" />
+                                </button>
+                                <template v-else-if="studio.projectForWorkspace(entry.path)">
+                                    <button
+                                        class="workspace-icon-btn open"
+                                        type="button"
+                                        @click="studio.openProject(studio.projectForWorkspace(entry.path))">
+                                        <AppIcon name="open-project" />
+                                    </button>
+                                    <button
+                                        class="workspace-icon-btn stop"
+                                        type="button"
+                                        @click="
+                                            studio.stopWorkspace(
+                                                entry.path,
+                                                studio.projectForWorkspace(entry.path).mode
+                                            )
+                                        ">
+                                        <AppIcon name="stop-workspace" />
+                                    </button>
+                                </template>
+                                <div v-else class="app-menu-wrap">
+                                    <button
+                                        class="workspace-icon-btn run"
+                                        :class="{
+                                            loading: studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
+                                        }"
+                                        type="button"
+                                        :disabled="
+                                            studio.state.busy ||
+                                            studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
+                                        "
+                                        @click="toggle($event, 'run', entry)">
+                                        <Transition name="icon-swap" mode="out-in">
+                                            <AppIcon
+                                                :key="
+                                                    studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
+                                                        ? 'loading'
+                                                        : 'start-workspace'
+                                                "
+                                                :name="
+                                                    studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))
+                                                        ? 'loading'
+                                                        : 'start-workspace'
+                                                " />
+                                        </Transition>
+                                    </button>
+                                    <Teleport to="body">
+                                        <Transition name="menu">
+                                            <div
+                                                v-if="studio.state.openMenu === menuKey('run', entry)"
+                                                class="app-menu run-target-menu"
+                                                :data-floating-menu="menuKey('run', entry)"
+                                                :style="menuPosition"
+                                                @click.capture="studio.dismissMenu"
+                                                @click.stop>
+                                                <button
+                                                    v-for="target in studio.runTargets"
+                                                    :key="target.key"
+                                                    class="app-menu-item run-target-menu-item"
+                                                    type="button"
+                                                    @click="studio.runWorkspace(entry.path, target.key)">
+                                                    {{ target.label }}
+                                                </button>
+                                            </div>
+                                        </Transition>
+                                    </Teleport>
+                                </div>
+                                <button
+                                    v-if="entry.type !== 'remote'"
+                                    class="workspace-icon-btn folder"
+                                    type="button"
+                                    @click="studio.revealWorkspace(entry.path)">
+                                    <AppIcon name="open-folder" />
+                                </button>
+                                <div class="app-menu-wrap">
+                                    <button
+                                        class="workspace-icon-btn more"
+                                        type="button"
+                                        @click="toggle($event, 'more', entry)">
+                                        <AppIcon name="more-actions" />
+                                    </button>
+                                    <Teleport to="body">
+                                        <Transition name="menu">
+                                            <div
+                                                v-if="studio.state.openMenu === menuKey('more', entry)"
+                                                class="app-menu"
+                                                :data-floating-menu="menuKey('more', entry)"
+                                                :style="menuPosition"
+                                                @click.capture="studio.dismissMenu"
+                                                @click.stop>
+                                                <button
+                                                    v-if="entry.path"
+                                                    class="app-menu-item"
+                                                    type="button"
+                                                    @click="studio.togglePinned(entry.path)">
+                                                    <span class="app-menu-icon">
+                                                        <AppIcon
+                                                            :name="
+                                                                entry.pinned ? 'unpin-workspace' : 'pin-workspace'
+                                                            " />
+                                                    </span>
+                                                    <span>{{ entry.pinned ? "取消置顶" : "置顶" }}</span>
+                                                </button>
+                                                <button
+                                                    v-if="entry.removable && entry.type !== 'remote'"
+                                                    class="app-menu-item"
+                                                    type="button"
+                                                    @click="studio.showAliasDialog(entry.path)">
+                                                    <span class="app-menu-icon">
+                                                        <AppIcon name="rename-workspace" />
+                                                    </span>
+                                                    <span>修改工作区信息</span>
+                                                </button>
+                                                <button
+                                                    v-if="entry.type === 'remote'"
+                                                    class="app-menu-item"
+                                                    type="button"
+                                                    @click="studio.showRemoteDialog(entry.path)">
+                                                    <span class="app-menu-icon">
+                                                        <AppIcon name="edit-remote-workspace" />
+                                                    </span>
+                                                    <span>修改工作区信息</span>
+                                                </button>
+                                                <button
+                                                    v-if="entry.type === 'remote'"
+                                                    class="app-menu-item"
+                                                    type="button"
+                                                    @click="
+                                                        studio.openExternalUrl(entry.detail, {
+                                                            username: entry.username,
+                                                            password: entry.password
+                                                        })
+                                                    ">
+                                                    <span class="app-menu-icon"><AppIcon name="open-external" /></span>
+                                                    <span>使用系统浏览器打开</span>
+                                                </button>
+                                                <button
+                                                    v-if="entry.type !== 'remote'"
+                                                    class="app-menu-item"
+                                                    type="button"
+                                                    @click="studio.showLogsDialog(entry.path)">
+                                                    <span class="app-menu-icon"><AppIcon name="view-logs" /></span>
+                                                    <span>运行日志</span>
+                                                </button>
+                                                <button
+                                                    v-if="entry.removable"
+                                                    class="app-menu-item"
+                                                    type="button"
+                                                    @click="studio.showWorkspaceMoveDialog(entry)">
+                                                    <span class="app-menu-icon"><AppIcon name="move-group" /></span>
+                                                    <span>移动分组</span>
+                                                </button>
+                                                <button
+                                                    v-if="entry.removable"
+                                                    class="app-menu-item"
+                                                    type="button"
+                                                    @click="studio.removeWorkspace(entry.path)">
+                                                    <span class="app-menu-icon">
+                                                        <AppIcon name="remove-workspace" />
+                                                    </span>
+                                                    <span>移除工作区</span>
+                                                </button>
+                                            </div>
+                                        </Transition>
+                                    </Teleport>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
     </div>
 </template>

@@ -1,4 +1,12 @@
-import { loadWorkspaceAliases, loadWorkspaces, saveWorkspaceAliases, saveWorkspaces } from "./storage.js";
+import { DEFAULT_WORKSPACE_GROUP_ID } from "./constants.js";
+import {
+    loadWorkspaceAliases,
+    loadWorkspaceGroups,
+    loadWorkspaces,
+    saveWorkspaceAliases,
+    saveWorkspaceGroups,
+    saveWorkspaces
+} from "./storage.js";
 import { normalizeWebPageUrl } from "./url.js";
 
 export function getWorkspaceName(path) {
@@ -47,7 +55,7 @@ export function touchWorkspaceEntry(path) {
 export function rememberLocalWorkspace(path) {
     if (!path) return false;
     const workspaces = loadWorkspaces().filter((item) => item.path !== path);
-    workspaces.push({ path, pinned: false, lastOpenedAt: Date.now() });
+    workspaces.push({ path, groupId: DEFAULT_WORKSPACE_GROUP_ID, pinned: false, lastOpenedAt: Date.now() });
     saveWorkspaces(workspaces);
     return true;
 }
@@ -62,6 +70,7 @@ export function rememberRemoteWorkspaceEntry({ name, url: urlValue, username, pa
         url,
         username: String(username || "").trim(),
         password: String(password || ""),
+        groupId: DEFAULT_WORKSPACE_GROUP_ID,
         pinned: false,
         lastOpenedAt: Date.now()
     });
@@ -109,4 +118,57 @@ export function removeWorkspaceEntry(path) {
     }
 }
 
-export { loadWorkspaces };
+export function createWorkspaceGroup(name) {
+    const normalizedName = String(name || "").trim();
+    if (!normalizedName) return null;
+    const groups = loadWorkspaceGroups();
+    const id = `group-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    groups.push({ id, name: normalizedName, collapsed: false });
+    saveWorkspaceGroups(groups);
+    return id;
+}
+
+export function renameWorkspaceGroup(groupId, name) {
+    const normalizedName = String(name || "").trim();
+    if (!normalizedName || groupId === DEFAULT_WORKSPACE_GROUP_ID) return false;
+    const groups = loadWorkspaceGroups();
+    const index = groups.findIndex((group) => group.id === groupId);
+    if (index === -1) return false;
+    groups[index] = { ...groups[index], name: normalizedName };
+    saveWorkspaceGroups(groups);
+    return true;
+}
+
+export function deleteWorkspaceGroup(groupId) {
+    if (!groupId || groupId === DEFAULT_WORKSPACE_GROUP_ID) return false;
+    const groups = loadWorkspaceGroups();
+    if (!groups.some((group) => group.id === groupId)) return false;
+    saveWorkspaceGroups(groups.filter((group) => group.id !== groupId));
+    saveWorkspaces(
+        loadWorkspaces().map((workspace) =>
+            workspace.groupId === groupId ? { ...workspace, groupId: DEFAULT_WORKSPACE_GROUP_ID } : workspace
+        )
+    );
+    return true;
+}
+
+export function setWorkspaceGroup(path, groupId) {
+    if (!path || !loadWorkspaceGroups().some((group) => group.id === groupId)) return false;
+    const workspaces = loadWorkspaces();
+    const index = workspaces.findIndex((item) => item.path === path);
+    if (index === -1) return false;
+    workspaces[index] = { ...workspaces[index], groupId };
+    saveWorkspaces(workspaces);
+    return true;
+}
+
+export function setWorkspaceGroupCollapsed(groupId, collapsed) {
+    const groups = loadWorkspaceGroups();
+    const index = groups.findIndex((group) => group.id === groupId);
+    if (index === -1) return false;
+    groups[index] = { ...groups[index], collapsed };
+    saveWorkspaceGroups(groups);
+    return true;
+}
+
+export { loadWorkspaceGroups, loadWorkspaces };

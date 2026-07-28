@@ -1,7 +1,9 @@
 import {
     DEFAULT_TERMINAL_SETTINGS,
+    DEFAULT_WORKSPACE_GROUP_ID,
     TERMINAL_SETTINGS_KEY,
     WORKSPACE_ALIASES_KEY,
+    WORKSPACE_GROUPS_KEY,
     WORKSPACES_KEY
 } from "./constants.js";
 
@@ -56,6 +58,34 @@ export function saveWorkspaceAliases(aliases) {
     localStorage.setItem(WORKSPACE_ALIASES_KEY, JSON.stringify(aliases));
 }
 
+export function loadWorkspaceGroups() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(WORKSPACE_GROUPS_KEY) || "[]");
+        const groups = Array.isArray(parsed)
+            ? parsed
+                  .filter((group) => group && typeof group.id === "string" && typeof group.name === "string")
+                  .map((group) => ({
+                      id: group.id,
+                      name: group.name.trim() || "未命名分组",
+                      collapsed: Boolean(group.collapsed)
+                  }))
+            : [];
+        const storedDefault = groups.find((group) => group.id === DEFAULT_WORKSPACE_GROUP_ID);
+        const defaultGroup = {
+            id: DEFAULT_WORKSPACE_GROUP_ID,
+            name: "默认分组",
+            collapsed: Boolean(storedDefault?.collapsed)
+        };
+        return [defaultGroup, ...groups.filter((group) => group.id !== DEFAULT_WORKSPACE_GROUP_ID)];
+    } catch (_) {
+        return [{ id: DEFAULT_WORKSPACE_GROUP_ID, name: "默认分组", collapsed: false }];
+    }
+}
+
+export function saveWorkspaceGroups(groups) {
+    localStorage.setItem(WORKSPACE_GROUPS_KEY, JSON.stringify(groups));
+}
+
 export function loadWorkspaces() {
     try {
         const raw = localStorage.getItem(WORKSPACES_KEY);
@@ -64,7 +94,12 @@ export function loadWorkspaces() {
         return parsed
             .map((item) => {
                 if (typeof item === "string") {
-                    return { path: item, pinned: false, lastOpenedAt: 0 };
+                    return {
+                        path: item,
+                        groupId: DEFAULT_WORKSPACE_GROUP_ID,
+                        pinned: false,
+                        lastOpenedAt: 0
+                    };
                 }
                 if (item && typeof item === "object" && item.path) {
                     return {
@@ -73,6 +108,7 @@ export function loadWorkspaces() {
                         url: item.type === "remote" ? item.url || item.path : undefined,
                         username: item.type === "remote" ? String(item.username || "") : undefined,
                         password: item.type === "remote" ? String(item.password || "") : undefined,
+                        groupId: typeof item.groupId === "string" ? item.groupId : DEFAULT_WORKSPACE_GROUP_ID,
                         pinned: Boolean(item.pinned),
                         lastOpenedAt: Number.isFinite(Number(item.lastOpenedAt)) ? Number(item.lastOpenedAt) : 0
                     };

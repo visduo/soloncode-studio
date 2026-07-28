@@ -2,6 +2,8 @@ export const IS_DEVELOPMENT_MODE = true;
 
 export const WORKSPACES_KEY = "soloncode.workspaces";
 export const WORKSPACE_ALIASES_KEY = "soloncode.workspaceAliases";
+export const WORKSPACE_GROUPS_KEY = "soloncode.workspaceGroups";
+export const DEFAULT_WORKSPACE_GROUP_ID = "default";
 export const HOME_TAB_KEY = "home";
 export const HOME_WORKSPACE_KEY = "__home__";
 export const HIDDEN_STUDIO_UPDATE_KEY = "soloncode.hiddenStudioUpdate";

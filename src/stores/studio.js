@@ -1,6 +1,7 @@
 import { computed, reactive, ref, shallowReactive } from "vue";
 import {
     CLOSE_WINDOW_BEHAVIOR_KEY,
+    DEFAULT_WORKSPACE_GROUP_ID,
     HIDDEN_STUDIO_UPDATE_KEY,
     HOME_TAB_KEY,
     HOME_WORKSPACE_KEY,
@@ -15,15 +16,21 @@ import { loadTerminalSettings, normalizeTerminalSettings, persistTerminalSetting
 import { isTerminalControlSequence } from "../assets/js/terminal-input.js";
 import { normalizeWebPageUrl, withBasicAuth } from "../assets/js/url.js";
 import {
+    createWorkspaceGroup,
+    deleteWorkspaceGroup,
     getWorkspaceDisplayName,
     getWorkspaceEntry,
     getWorkspaceName,
+    loadWorkspaceGroups,
     loadWorkspaces,
     rememberLocalWorkspace,
     rememberRemoteWorkspaceEntry,
     removeWorkspaceEntry,
+    renameWorkspaceGroup,
     replaceRemoteWorkspace,
     setWorkspaceAlias,
+    setWorkspaceGroup,
+    setWorkspaceGroupCollapsed,
     setWorkspacePinnedValue,
     touchWorkspaceEntry
 } from "../assets/js/workspace-store.js";
@@ -52,6 +59,7 @@ const state = reactive({
     terminalSettings: loadTerminalSettings()
 });
 const workspaces = ref(loadWorkspaces());
+const workspaceGroups = ref(loadWorkspaceGroups());
 const projects = shallowReactive(new Map());
 const startingWorkspaceKeys = reactive(new Set());
 const pendingRunTargets = new Map();
@@ -60,15 +68,26 @@ const logs = shallowReactive(new Map());
 const promptQueue = ref([]);
 const queuedPromptKeys = new Set();
 const taskSessions = shallowReactive(new Map());
-const dialogs = reactive({ alias: false, remote: false, logs: false, terminalSettings: false });
+const dialogs = reactive({
+    alias: false,
+    remote: false,
+    workspaceGroup: false,
+    workspaceMove: false,
+    logs: false,
+    terminalSettings: false
+});
 const dialogForms = reactive({
     alias: "",
     remoteName: "",
     remoteUrl: "",
     remoteUsername: "",
     remotePassword: "",
+    workspaceGroupName: "",
+    workspaceMoveGroupId: DEFAULT_WORKSPACE_GROUP_ID,
     editingWorkspace: null,
-    editingRemote: null
+    editingRemote: null,
+    editingWorkspaceGroup: null,
+    movingWorkspace: null
 });
 let cliUpdatePromptShown = false;
 let installCliPromptShown = false;
@@ -94,6 +113,10 @@ function setStatus(text, type) {
 
 function refreshWorkspaces() {
     workspaces.value = loadWorkspaces();
+}
+
+function refreshWorkspaceGroups() {
+    workspaceGroups.value = loadWorkspaceGroups();
 }
 
 function dismissMenu() {
@@ -332,6 +355,57 @@ function removeWorkspace(path) {
 function togglePinned(path) {
     const entry = getWorkspaceEntry(path);
     if (setWorkspacePinnedValue(path, !entry?.pinned)) refreshWorkspaces();
+}
+
+function showWorkspaceGroupDialog(group = null) {
+    dismissMenu();
+    dialogForms.editingWorkspaceGroup = group?.id || null;
+    dialogForms.workspaceGroupName = group?.name || "";
+    dialogs.workspaceGroup = true;
+}
+
+function saveWorkspaceGroup() {
+    const saved = dialogForms.editingWorkspaceGroup
+        ? renameWorkspaceGroup(dialogForms.editingWorkspaceGroup, dialogForms.workspaceGroupName)
+        : createWorkspaceGroup(dialogForms.workspaceGroupName);
+    if (!saved) return;
+    dialogs.workspaceGroup = false;
+    dialogForms.editingWorkspaceGroup = null;
+    refreshWorkspaceGroups();
+}
+
+function showWorkspaceMoveDialog(entry) {
+    dismissMenu();
+    dialogForms.movingWorkspace = entry.path;
+    dialogForms.workspaceMoveGroupId = entry.groupId || DEFAULT_WORKSPACE_GROUP_ID;
+    dialogs.workspaceMove = true;
+}
+
+function moveWorkspaceToGroup() {
+    if (setWorkspaceGroup(dialogForms.movingWorkspace, dialogForms.workspaceMoveGroupId)) {
+        dialogs.workspaceMove = false;
+        dialogForms.movingWorkspace = null;
+        refreshWorkspaces();
+    }
+}
+
+function requestDeleteWorkspaceGroup(group) {
+    dismissMenu();
+    confirmAction({
+        key: `delete-workspace-group-${group.id}`,
+        title: "删除分组",
+        message: `确认删除“${group.name}”？分组内的工作区将移动到默认分组。`,
+        confirmLabel: "删除",
+        onConfirm: () => {
+            if (!deleteWorkspaceGroup(group.id)) return;
+            refreshWorkspaceGroups();
+            refreshWorkspaces();
+        }
+    });
+}
+
+function toggleWorkspaceGroup(group) {
+    if (setWorkspaceGroupCollapsed(group.id, !group.collapsed)) refreshWorkspaceGroups();
 }
 
 function showInstallPrompt() {
@@ -739,8 +813,17 @@ async function initialize() {
 const orderedProjects = computed(() =>
     tabOrder.value.map((key) => projects.get(key)).filter((project) => project && shouldRenderProject(project))
 );
-const visibleWorkspaces = computed(() => {
+function compareWorkspaceEntries(left, right) {
+    if (left.pinned !== right.pinned) return left.pinned ? -1 : 1;
+    const leftActive = projectForWorkspace(left.path) || startingWorkspaceKeys.has(workspaceKey(left.path));
+    const rightActive = projectForWorkspace(right.path) || startingWorkspaceKeys.has(workspaceKey(right.path));
+    if (Boolean(leftActive) !== Boolean(rightActive)) return leftActive ? -1 : 1;
+    return (right.lastOpenedAt || 0) - (left.lastOpenedAt || 0);
+}
+
+const workspaceGroupsWithEntries = computed(() => {
     const query = state.workspaceSearch.trim().toLowerCase();
+    const validGroupIds = new Set(workspaceGroups.value.map((group) => group.id));
     const homeWorkspace = {
         path: null,
         name: "用户目录",
@@ -755,15 +838,24 @@ const visibleWorkspaces = computed(() => {
             detail: entry.type === "remote" ? entry.url || entry.path : entry.path,
             removable: true
         }))
-        .filter((entry) => !query || `${entry.name} ${entry.detail}`.toLowerCase().includes(query))
-        .sort((left, right) => {
-            if (left.pinned !== right.pinned) return left.pinned ? -1 : 1;
-            const leftActive = projectForWorkspace(left.path) || startingWorkspaceKeys.has(workspaceKey(left.path));
-            const rightActive = projectForWorkspace(right.path) || startingWorkspaceKeys.has(workspaceKey(right.path));
-            if (Boolean(leftActive) !== Boolean(rightActive)) return leftActive ? -1 : 1;
-            return (right.lastOpenedAt || 0) - (left.lastOpenedAt || 0);
-        });
-    return [homeWorkspace, ...otherWorkspaces];
+        .filter((entry) => !query || `${entry.name} ${entry.detail}`.toLowerCase().includes(query));
+    return workspaceGroups.value
+        .map((group) => ({
+            ...group,
+            collapsed: query ? false : group.collapsed,
+            entries: [
+                ...(group.id === DEFAULT_WORKSPACE_GROUP_ID ? [homeWorkspace] : []),
+                ...otherWorkspaces
+                    .filter((entry) => {
+                        const entryGroupId = validGroupIds.has(entry.groupId)
+                            ? entry.groupId
+                            : DEFAULT_WORKSPACE_GROUP_ID;
+                        return entryGroupId === group.id;
+                    })
+                    .sort(compareWorkspaceEntries)
+            ]
+        }))
+        .filter((group) => !query || group.entries.length > 0);
 });
 const activePrompt = computed(() => promptQueue.value[0] || null);
 const selectedLogs = computed(() => logs.get(workspaceKey(state.selectedWorkspace))?.lines.slice(-160) || []);
@@ -777,11 +869,20 @@ export function useStudioStore() {
         dialogs,
         dialogForms,
         orderedProjects,
-        visibleWorkspaces,
+        workspaceGroups,
+        workspaceGroupsWithEntries,
         activePrompt,
         selectedLogs,
         runTargets: RUN_TARGET_OPTIONS,
-        constants: { HOME_TAB_KEY, HOME_WORKSPACE_KEY, LAUNCH_MODES, PROJECT_TYPES, RUN_TARGETS, IS_DEVELOPMENT_MODE },
+        constants: {
+            HOME_TAB_KEY,
+            HOME_WORKSPACE_KEY,
+            DEFAULT_WORKSPACE_GROUP_ID,
+            LAUNCH_MODES,
+            PROJECT_TYPES,
+            RUN_TARGETS,
+            IS_DEVELOPMENT_MODE
+        },
         workspaceKey,
         projectForWorkspace,
         dismissMenu,
@@ -800,6 +901,12 @@ export function useStudioStore() {
         showLogsDialog,
         removeWorkspace,
         togglePinned,
+        showWorkspaceGroupDialog,
+        saveWorkspaceGroup,
+        showWorkspaceMoveDialog,
+        moveWorkspaceToGroup,
+        requestDeleteWorkspaceGroup,
+        toggleWorkspaceGroup,
         openWebPage,
         openExternalUrl,
         openStudioGithubReleasePage,

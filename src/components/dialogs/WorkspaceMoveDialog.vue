@@ -1,0 +1,27 @@
+<script setup>
+import { useStudioStore } from "../../stores/studio.js";
+
+const studio = useStudioStore();
+</script>
+
+<template>
+    <Transition name="dialog">
+        <div v-if="studio.dialogs.workspaceMove" class="dialog-backdrop">
+            <section class="dialog-panel" role="dialog" aria-modal="true">
+                <h2>移动分组</h2>
+                <label class="remote-workspace-field">
+                    <span>目标分组</span>
+                    <select v-model="studio.dialogForms.workspaceMoveGroupId">
+                        <option v-for="group in studio.workspaceGroups.value" :key="group.id" :value="group.id">
+                            {{ group.name }}
+                        </option>
+                    </select>
+                </label>
+                <div class="dialog-actions">
+                    <button class="dialog-btn" type="button" @click="studio.dialogs.workspaceMove = false">取消</button>
+                    <button class="dialog-btn primary" type="button" @click="studio.moveWorkspaceToGroup">确定</button>
+                </div>
+            </section>
+        </div>
+    </Transition>
+</template>
