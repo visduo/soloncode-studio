@@ -83,13 +83,13 @@
     text-align: left;
 }
 .welcome-nav-item.active {
-    background: var(--accent-soft);
+    background: var(--sidebar-active);
     color: var(--accent-strong);
     font-weight: var(--font-medium);
 }
 
 .welcome-nav-item:not(.active):hover {
-    background: var(--surface-hover);
+    background: var(--sidebar-hover);
 }
 .welcome-nav-icon {
     width: 16px;
@@ -319,7 +319,7 @@
 }
 
 .workspace-group-header:hover {
-    background: var(--surface-hover);
+    background: var(--tree-hover);
 }
 
 .workspace-group-header.drag-over {
@@ -408,7 +408,7 @@
 }
 
 .workspace-item:not(.active):hover {
-    background: var(--surface-hover);
+    background: var(--tree-hover);
 }
 
 .workspace-item.active:hover {

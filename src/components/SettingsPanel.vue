@@ -92,45 +92,6 @@ function reset() {
         <section v-if="activeSection === 'preferences'" class="settings-content preferences-settings-section">
             <div ref="preferencesSettingsForm" class="preferences-settings-form">
                 <div class="terminal-settings-field required-field">
-                    <span>双击工作区默认启动方式</span>
-                    <div
-                        class="settings-select"
-                        :class="{ open: openPreferencesDropdown === 'run-target' }"
-                        @keydown.esc="openPreferencesDropdown = null">
-                        <button
-                            class="settings-select-trigger"
-                            type="button"
-                            aria-haspopup="listbox"
-                            :aria-expanded="openPreferencesDropdown === 'run-target'"
-                            @click="
-                                openPreferencesDropdown = openPreferencesDropdown === 'run-target' ? null : 'run-target'
-                            "
-                            @keydown.down.prevent="openPreferencesDropdown = 'run-target'">
-                            <span>{{ selectedRunTarget?.label.replace(/^启动 /, "") }}</span>
-                            <span class="settings-select-chevron" aria-hidden="true"></span>
-                        </button>
-                        <Transition name="settings-select-menu">
-                            <div
-                                v-if="openPreferencesDropdown === 'run-target'"
-                                class="settings-select-menu"
-                                role="listbox">
-                                <button
-                                    v-for="target in studio.runTargets"
-                                    :key="target.key"
-                                    class="settings-select-option"
-                                    :class="{ selected: target.key === preferencesForm.defaultRunTarget }"
-                                    type="button"
-                                    role="option"
-                                    :aria-selected="target.key === preferencesForm.defaultRunTarget"
-                                    @click="selectRunTarget(target.key)">
-                                    <span class="settings-select-check" aria-hidden="true"></span>
-                                    <span>{{ target.label.replace(/^启动 /, "") }}</span>
-                                </button>
-                            </div>
-                        </Transition>
-                    </div>
-                </div>
-                <div class="terminal-settings-field required-field">
                     <span>主题</span>
                     <div
                         class="settings-select"
@@ -165,6 +126,45 @@ function reset() {
                                     @click="selectInterfaceStyle(style.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
                                     <span>{{ style.label }}</span>
+                                </button>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+                <div class="terminal-settings-field required-field">
+                    <span>双击工作区默认启动方式</span>
+                    <div
+                        class="settings-select"
+                        :class="{ open: openPreferencesDropdown === 'run-target' }"
+                        @keydown.esc="openPreferencesDropdown = null">
+                        <button
+                            class="settings-select-trigger"
+                            type="button"
+                            aria-haspopup="listbox"
+                            :aria-expanded="openPreferencesDropdown === 'run-target'"
+                            @click="
+                                openPreferencesDropdown = openPreferencesDropdown === 'run-target' ? null : 'run-target'
+                            "
+                            @keydown.down.prevent="openPreferencesDropdown = 'run-target'">
+                            <span>{{ selectedRunTarget?.label.replace(/^启动 /, "") }}</span>
+                            <span class="settings-select-chevron" aria-hidden="true"></span>
+                        </button>
+                        <Transition name="settings-select-menu">
+                            <div
+                                v-if="openPreferencesDropdown === 'run-target'"
+                                class="settings-select-menu"
+                                role="listbox">
+                                <button
+                                    v-for="target in studio.runTargets"
+                                    :key="target.key"
+                                    class="settings-select-option"
+                                    :class="{ selected: target.key === preferencesForm.defaultRunTarget }"
+                                    type="button"
+                                    role="option"
+                                    :aria-selected="target.key === preferencesForm.defaultRunTarget"
+                                    @click="selectRunTarget(target.key)">
+                                    <span class="settings-select-check" aria-hidden="true"></span>
+                                    <span>{{ target.label.replace(/^启动 /, "") }}</span>
                                 </button>
                             </div>
                         </Transition>

@@ -6,6 +6,10 @@
     --control-hover: #f2f4f7;
     --menu-hover: #f7f8fa;
     --surface-active: #edf4ff;
+    --sidebar-bg: var(--panel);
+    --sidebar-hover: var(--surface-hover);
+    --sidebar-active: var(--accent-soft);
+    --tree-hover: var(--surface-hover);
     --border: #d8dee7;
     --border-strong: #bcc7d5;
     --text-primary: #182230;

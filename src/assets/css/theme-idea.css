@@ -4,6 +4,10 @@
     --panel-soft: #f8fafc;
     --surface-hover: #e3e7ed;
     --surface-active: #eaf3ff;
+    --sidebar-bg: #f5f6f8;
+    --sidebar-hover: #e3e7ed;
+    --sidebar-active: #dce6f3;
+    --tree-hover: #f0f2f5;
     --border: #dbe4ef;
     --border-strong: #c8d5e4;
     --text-primary: #142033;
@@ -12,7 +16,7 @@
     --accent: #246bfe;
     --accent-strong: #1d4ed8;
     --accent-hover: #3b7cff;
-    --accent-soft: #d6e7ff;
+    --accent-soft: #eaf3ff;
     --focus-ring: rgba(36, 107, 254, 0.32);
     --state-running: #16a34a;
     --state-running-soft: #edf9f0;
@@ -51,7 +55,6 @@
 
 .theme-idea .sidebar {
     border-right: 1px solid var(--border);
-    background: var(--bg-primary);
 }
 
 .theme-idea .tab-bar {
