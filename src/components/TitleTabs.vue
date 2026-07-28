@@ -182,23 +182,14 @@ async function windowAction(action) {
                 @click="activateProject($event, project.project_key)">
                 <span class="tab-main">
                     <span class="tab-mode">
-                        <Transition name="icon-swap" mode="out-in">
-                            <AppIcon
-                                :key="
-                                    studio.taskSessions.has(project.project_key)
-                                        ? 'loading'
-                                        : project.mode === 'cli'
-                                          ? 'mode-cli'
-                                          : 'mode-web'
-                                "
-                                :name="
-                                    studio.taskSessions.has(project.project_key)
-                                        ? 'loading'
-                                        : project.mode === 'cli'
-                                          ? 'mode-cli'
-                                          : 'mode-web'
-                                " />
-                        </Transition>
+                        <AppIcon
+                            :name="
+                                studio.taskSessions.has(project.project_key)
+                                    ? 'loading'
+                                    : project.mode === 'cli'
+                                      ? 'mode-cli'
+                                      : 'mode-web'
+                            " />
                     </span>
                     <span class="tab-label">{{ project.name }}</span>
                 </span>

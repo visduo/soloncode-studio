@@ -22,10 +22,6 @@ const studio = useStudioStore();
             </button>
         </header>
 
-        <p v-if="studio.state.environmentError" class="environment-error">
-            {{ studio.state.environmentError }}
-        </p>
-
         <div class="environment-list">
             <section class="environment-item">
                 <div class="environment-item-main">

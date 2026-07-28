@@ -142,9 +142,6 @@
     color: var(--text-muted);
     font-size: inherit;
 }
-.workspace-search:focus-within .workspace-search-icon {
-    color: var(--accent);
-}
 .workspace-search:hover input,
 .workspace-search:focus-within input {
     background: var(--surface-hover);
@@ -182,6 +179,7 @@
 }
 
 .welcome-action.primary:hover {
+    border-color: var(--accent-strong);
     background: var(--accent-strong);
 }
 .workspace-add-trigger {

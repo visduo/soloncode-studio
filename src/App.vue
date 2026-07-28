@@ -6,6 +6,7 @@ import LearningPanel from "./components/LearningPanel.vue";
 import ProjectHost from "./components/ProjectHost.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import StudioDialogs from "./components/StudioDialogs.vue";
+import StudioMessage from "./components/StudioMessage.vue";
 import TitleTabs from "./components/TitleTabs.vue";
 import WorkspacePanel from "./components/WorkspacePanel.vue";
 import { useStudioStore } from "./stores/studio.js";
@@ -81,6 +82,7 @@ onBeforeUnmount(() => {
             </div>
             <ProjectHost v-show="studio.state.activeTabKey !== studio.constants.HOME_TAB_KEY" />
         </main>
+        <StudioMessage />
         <StudioDialogs />
     </div>
 </template>

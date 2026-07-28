@@ -20,7 +20,7 @@ watch(
             <section class="dialog-panel" role="dialog" aria-modal="true">
                 <h2>{{ studio.dialogForms.editingWorkspaceGroup ? "修改分组" : "创建分组" }}</h2>
                 <div class="workspace-alias-form">
-                    <label class="remote-workspace-field">
+                    <label class="remote-workspace-field required-field">
                         <span>分组名称</span>
                         <input
                             v-model="studio.dialogForms.workspaceGroupName"

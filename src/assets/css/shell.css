@@ -5,19 +5,11 @@
     background: var(--bg-primary);
 }
 
-.icon-swap-enter-active,
-.icon-swap-leave-active,
 .status-text-enter-active,
 .status-text-leave-active {
     transition:
         opacity 120ms ease,
         transform 120ms ease;
-}
-
-.icon-swap-enter-from,
-.icon-swap-leave-to {
-    opacity: 0;
-    transform: scale(0.78);
 }
 
 .status-text-enter-from,
@@ -239,7 +231,7 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: var(--icon-text-gap);
+    gap: 4px;
     min-width: 0;
     height: 100%;
 }

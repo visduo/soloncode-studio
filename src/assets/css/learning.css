@@ -177,7 +177,9 @@
     color: var(--text-primary);
     text-align: left;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .learning-resource:first-child {

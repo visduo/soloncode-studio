@@ -48,7 +48,7 @@ const state = reactive({
     studioLatestVersion: "",
     cliVersion: "",
     cliLatestVersion: "",
-    environmentError: "",
+    messages: [],
     homeWorkspacePath: "",
     selectedWorkspace: null,
     activeTabKey: HOME_TAB_KEY,
@@ -92,6 +92,8 @@ const dialogForms = reactive({
 let cliUpdatePromptShown = false;
 let installCliPromptShown = false;
 let javaPromptShown = false;
+let nextMessageId = 0;
+const messageTimers = new Map();
 
 const invoke = (...args) => window.__TAURI__.core.invoke(...args);
 const workspaceKey = (path) => path || HOME_WORKSPACE_KEY;
@@ -110,6 +112,26 @@ function projectForWorkspace(path, mode) {
 function setStatus(text, type) {
     state.status = { text, type };
 }
+
+function closeMessage(id) {
+    const index = state.messages.findIndex((message) => message.id === id);
+    if (index >= 0) state.messages.splice(index, 1);
+    clearTimeout(messageTimers.get(id));
+    messageTimers.delete(id);
+}
+
+function showMessage(text, type = "success") {
+    const id = ++nextMessageId;
+    state.messages.push({ id, text: String(text), type });
+    if (state.messages.length > 3) closeMessage(state.messages[0].id);
+    messageTimers.set(
+        id,
+        setTimeout(() => closeMessage(id), 3200)
+    );
+}
+
+const showSuccess = (text) => showMessage(text, "success");
+const showError = (text) => showMessage(text, "error");
 
 function refreshWorkspaces() {
     workspaces.value = loadWorkspaces();
@@ -301,11 +323,17 @@ function showAliasDialog(path) {
 function saveAlias() {
     const alias = dialogForms.alias.trim();
     if (!dialogForms.editingWorkspace || !alias) return false;
-    setWorkspaceAlias(dialogForms.editingWorkspace, alias);
-    dialogs.alias = false;
-    dialogForms.editingWorkspace = null;
-    refreshWorkspaces();
-    return true;
+    try {
+        setWorkspaceAlias(dialogForms.editingWorkspace, alias);
+        dialogs.alias = false;
+        dialogForms.editingWorkspace = null;
+        refreshWorkspaces();
+        showSuccess("保存成功");
+        return true;
+    } catch (error) {
+        showError(`保存失败：${error}`);
+        return false;
+    }
 }
 
 function showRemoteDialog(path = null) {
@@ -333,20 +361,27 @@ function saveRemote() {
         password: dialogForms.remotePassword
     };
     if (!remote.name || !isValidWebPageUrl(remote.url)) return false;
-    dialogs.remote = false;
-    if (!previous) {
-        const saved = rememberRemoteWorkspaceEntry(remote);
-        if (saved) selectWorkspace(saved);
-    } else {
-        const saved = replaceRemoteWorkspace(previous, remote);
-        if (!saved) return;
-        projects.delete(`web::${previous}`);
-        syncTabOrder();
-        if (state.activeTabKey === `web::${previous}`) activateHome();
-        if (state.selectedWorkspace === previous) selectWorkspace(saved);
+    try {
+        if (!previous) {
+            const saved = rememberRemoteWorkspaceEntry(remote);
+            if (!saved) return false;
+            selectWorkspace(saved);
+        } else {
+            const saved = replaceRemoteWorkspace(previous, remote);
+            if (!saved) return false;
+            projects.delete(`web::${previous}`);
+            syncTabOrder();
+            if (state.activeTabKey === `web::${previous}`) activateHome();
+            if (state.selectedWorkspace === previous) selectWorkspace(saved);
+        }
+        dialogs.remote = false;
+        refreshWorkspaces();
+        showSuccess(previous ? "更新成功" : "创建成功");
+        return true;
+    } catch (error) {
+        showError(`${previous ? "更新" : "创建"}失败：${error}`);
+        return false;
     }
-    refreshWorkspaces();
-    return true;
 }
 
 function removeWorkspace(path) {
@@ -369,14 +404,21 @@ function showWorkspaceGroupDialog(group = null) {
 
 function saveWorkspaceGroup() {
     if (!dialogForms.workspaceGroupName.trim()) return false;
-    const saved = dialogForms.editingWorkspaceGroup
-        ? renameWorkspaceGroup(dialogForms.editingWorkspaceGroup, dialogForms.workspaceGroupName)
-        : createWorkspaceGroup(dialogForms.workspaceGroupName);
-    if (!saved) return;
-    dialogs.workspaceGroup = false;
-    dialogForms.editingWorkspaceGroup = null;
-    refreshWorkspaceGroups();
-    return true;
+    const editing = Boolean(dialogForms.editingWorkspaceGroup);
+    try {
+        const saved = editing
+            ? renameWorkspaceGroup(dialogForms.editingWorkspaceGroup, dialogForms.workspaceGroupName)
+            : createWorkspaceGroup(dialogForms.workspaceGroupName);
+        if (!saved) return false;
+        dialogs.workspaceGroup = false;
+        dialogForms.editingWorkspaceGroup = null;
+        refreshWorkspaceGroups();
+        showSuccess(editing ? "更新成功" : "创建成功");
+        return true;
+    } catch (error) {
+        showError(`${editing ? "更新" : "创建"}失败：${error}`);
+        return false;
+    }
 }
 
 function showWorkspaceMoveDialog(entry) {
@@ -393,11 +435,16 @@ function moveWorkspaceToGroup() {
         dialogForms.workspaceMoveGroupId === dialogForms.workspaceMoveSourceGroupId
     )
         return false;
-    if (setWorkspaceGroup(dialogForms.movingWorkspace, dialogForms.workspaceMoveGroupId)) {
-        dialogs.workspaceMove = false;
-        dialogForms.movingWorkspace = null;
-        refreshWorkspaces();
-        return true;
+    try {
+        if (setWorkspaceGroup(dialogForms.movingWorkspace, dialogForms.workspaceMoveGroupId)) {
+            dialogs.workspaceMove = false;
+            dialogForms.movingWorkspace = null;
+            refreshWorkspaces();
+            showSuccess("移动成功");
+            return true;
+        }
+    } catch (error) {
+        showError(`移动失败：${error}`);
     }
     return false;
 }
@@ -459,7 +506,7 @@ async function refreshVersions(options = {}) {
         state.studioLatestVersion = info.studio_latest ? `v${String(info.studio_latest).replace(/^v/, "")}` : "";
         state.cliVersion = info.cli_current ? `v${String(info.cli_current).replace(/^v/, "")}` : "";
         state.cliLatestVersion = info.cli_latest ? `v${String(info.cli_latest).replace(/^v/, "")}` : "";
-        state.environmentError = info.error || "";
+        if (info.error) showError(`检测失败：${info.error}`);
         setStatus(
             state.installed ? (state.cliUpdateAvailable ? "CLI 可更新" : "已安装") : "CLI 未安装，请先安装",
             state.installed ? (state.cliUpdateAvailable ? "update-available" : "installed") : "not-installed"
@@ -495,7 +542,7 @@ async function refreshVersions(options = {}) {
         return info;
     } catch (error) {
         if (!options.preserveInstalledOnError) state.installed = false;
-        state.environmentError = String(error);
+        showError(`版本检测失败：${error}`);
         setStatus(`检测失败: ${error}`, state.installed ? "installed" : "not-installed");
         return { error: String(error) };
     }
@@ -504,7 +551,6 @@ async function refreshVersions(options = {}) {
 async function refreshEnvironment(options = {}) {
     if (state.environmentChecking) return;
     state.environmentChecking = true;
-    state.environmentError = "";
     try {
         const javaVersion = await invoke("check_java");
         state.javaVersion = typeof javaVersion === "string" ? javaVersion : "";
@@ -516,7 +562,7 @@ async function refreshEnvironment(options = {}) {
     } catch (error) {
         state.javaAvailable = false;
         state.javaVersion = "";
-        state.environmentError = `Java 检测失败: ${error}`;
+        showError(`Java 检测失败：${error}`);
         appendLog(formatError(`Java 检测失败: ${error}`));
     }
     try {
@@ -526,7 +572,7 @@ async function refreshEnvironment(options = {}) {
     }
 }
 
-async function performInstall() {
+async function performInstall(action = "install") {
     if (state.busy || state.environmentChecking) return;
     selectWorkspace(null);
     dialogs.logs = true;
@@ -537,9 +583,13 @@ async function performInstall() {
         await invoke("install_soloncode");
         state.installed = true;
         await refreshEnvironment({ preserveInstalledOnError: true });
+        showSuccess(action === "update" ? "更新成功" : "安装成功");
+        return true;
     } catch (error) {
         appendLog(formatError(error));
         setStatus("CLI 安装失败", "not-installed");
+        showError(`${action === "update" ? "更新" : "安装"}失败：${error}`);
+        return false;
     } finally {
         state.busy = false;
     }
@@ -558,7 +608,7 @@ function handleInstall() {
 
 async function performUpdate() {
     if (state.busy || state.environmentChecking || !state.installed || projects.size > 0) return;
-    await performInstall();
+    return performInstall("update");
 }
 
 function handleUpdate() {
@@ -592,8 +642,12 @@ async function performUninstall() {
         activateHome();
         await refreshVersions();
         setStatus("CLI 已卸载", "not-installed");
+        showSuccess("卸载成功");
+        return true;
     } catch (error) {
         appendLog(formatError(error));
+        showError(`卸载失败：${error}`);
+        return false;
     } finally {
         state.busy = false;
     }
@@ -710,8 +764,15 @@ async function sendCliInput(key, input) {
 }
 
 function saveTerminalSettings(settings) {
-    state.terminalSettings = normalizeTerminalSettings(settings);
-    persistTerminalSettings(state.terminalSettings);
+    try {
+        state.terminalSettings = normalizeTerminalSettings(settings);
+        persistTerminalSettings(state.terminalSettings);
+        showSuccess("保存成功");
+        return true;
+    } catch (error) {
+        showError(`保存失败：${error}`);
+        return false;
+    }
 }
 
 async function applyCloseBehavior(behavior) {
@@ -935,6 +996,7 @@ export function useStudioStore() {
         appendLog,
         clearLog,
         closePrompt,
+        closeMessage,
         saveTerminalSettings,
         initialize,
         registerEvents,

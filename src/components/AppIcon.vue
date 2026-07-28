@@ -40,6 +40,8 @@ const icons = {
     "source-repository": "ri-github-fill",
     refresh: "ri-refresh-line",
     loading: "ri-loader-4-fill",
+    success: "ri-checkbox-circle-line",
+    error: "ri-error-warning-line",
     close: "ri-close-line"
 };
 

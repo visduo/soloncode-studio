@@ -60,7 +60,7 @@ function reset() {
         <section v-if="activeSection === 'preferences'" class="settings-content"></section>
         <section v-else class="settings-content terminal-settings-section">
             <form class="terminal-settings-form" @submit.prevent>
-                <label class="terminal-settings-field terminal-settings-field-wide">
+                <label class="terminal-settings-field terminal-settings-field-wide required-field">
                     <span>字体</span>
                     <input
                         v-model="form.fontFamily"
@@ -71,7 +71,7 @@ function reset() {
                         {{ errors.fontFamily }}
                     </small>
                 </label>
-                <label class="terminal-settings-field">
+                <label class="terminal-settings-field required-field">
                     <span>字号</span>
                     <input
                         v-model.number="form.fontSize"
@@ -85,7 +85,7 @@ function reset() {
                         {{ errors.fontSize }}
                     </small>
                 </label>
-                <label class="terminal-settings-field">
+                <label class="terminal-settings-field required-field">
                     <span>行高</span>
                     <input
                         v-model.number="form.lineHeight"

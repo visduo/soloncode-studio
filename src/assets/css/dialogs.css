@@ -114,11 +114,17 @@
     font-weight: var(--font-medium);
 }
 
+.required-field > span:first-child::after {
+    margin-left: 3px;
+    color: var(--state-error);
+    content: "*";
+}
+
 .remote-workspace-field input,
 .remote-workspace-field select {
     width: 100%;
-    height: 40px;
-    padding: 0 12px;
+    height: 36px;
+    padding: 0 10px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--panel);
@@ -144,6 +150,145 @@
     box-shadow: 0 0 0 2px var(--state-error-soft);
 }
 
+.group-select {
+    position: relative;
+}
+
+.group-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    height: 36px;
+    padding: 0 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--panel);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.94rem;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease;
+}
+
+.group-select-trigger:hover {
+    background: var(--control-hover);
+}
+
+.group-select.open .group-select-trigger,
+.group-select-trigger:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.group-select-trigger[aria-invalid="true"] {
+    border-color: var(--state-error-border);
+}
+
+.group-select-chevron {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 0.16s ease;
+}
+
+.group-select.open .group-select-chevron {
+    transform: translateY(2px) rotate(225deg);
+}
+
+.group-select-menu {
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + 6px);
+    right: 0;
+    left: 0;
+    display: grid;
+    gap: 3px;
+    max-height: 220px;
+    padding: 5px;
+    overflow-y: auto;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--panel);
+    box-shadow: var(--shadow-float);
+}
+
+.group-select-option {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: calc(var(--radius-md) - 2px);
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.group-select-option:hover:not(:disabled),
+.group-select-option:focus-visible {
+    outline: none;
+    background: var(--control-hover);
+}
+
+.group-select-option.selected {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
+.group-select-option:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.group-select-option small {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: var(--font-regular);
+}
+
+.group-select-check {
+    width: 6px;
+    height: 11px;
+    margin: -2px 0 0 4px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    opacity: 0;
+    transform: rotate(45deg);
+}
+
+.group-select-option.selected .group-select-check {
+    opacity: 1;
+}
+
+.group-select-menu-enter-active,
+.group-select-menu-leave-active {
+    transition:
+        opacity 0.12s ease,
+        transform 0.12s ease;
+    transform-origin: top;
+}
+
+.group-select-menu-enter-from,
+.group-select-menu-leave-to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+}
+
 .dialog-field-error {
     color: var(--state-error);
     font-size: 0.76rem;
@@ -153,8 +298,8 @@
 
 .workspace-alias-input {
     width: 100%;
-    height: 40px;
-    padding: 0 12px;
+    height: 36px;
+    padding: 0 10px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--panel);
@@ -231,11 +376,12 @@
     color: #ffffff;
 }
 
-.dialog-btn:hover {
+.dialog-btn:hover:not(:disabled) {
     background: var(--control-hover);
 }
 
-.dialog-btn.primary:hover {
+.dialog-btn.primary:hover:not(:disabled) {
+    border-color: var(--accent-strong);
     background: var(--accent-strong);
 }
 
@@ -245,6 +391,12 @@
     color: #ffffff;
 }
 
-.dialog-btn.danger:hover {
+.dialog-btn.danger:hover:not(:disabled) {
+    border-color: #a92323;
     background: #a92323;
+}
+
+.dialog-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }

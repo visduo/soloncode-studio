@@ -26,7 +26,7 @@ watch(
             <section class="dialog-panel remote-workspace-panel" role="dialog" aria-modal="true">
                 <h2>{{ studio.dialogForms.editingRemote ? "修改工作区信息" : "添加远程工作区" }}</h2>
                 <form class="remote-workspace-form" @submit.prevent>
-                    <label class="remote-workspace-field">
+                    <label class="remote-workspace-field required-field">
                         <span>工作区名称</span>
                         <input
                             v-model="studio.dialogForms.remoteName"
@@ -41,7 +41,7 @@ watch(
                             {{ nameError }}
                         </small>
                     </label>
-                    <label class="remote-workspace-field">
+                    <label class="remote-workspace-field required-field">
                         <span>服务器 URL</span>
                         <input
                             v-model="studio.dialogForms.remoteUrl"

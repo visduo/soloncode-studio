@@ -85,6 +85,7 @@
 }
 
 .environment-action.primary:hover:not(:disabled) {
+    border-color: var(--accent-strong);
     background: var(--accent-strong);
 }
 
@@ -95,17 +96,6 @@
 .environment-action.danger:hover:not(:disabled) {
     border-color: var(--state-error-border);
     background: var(--state-error-soft);
-}
-
-.environment-error {
-    margin: 20px 0 0;
-    padding: 10px 12px;
-    border: 1px solid var(--state-error-border);
-    border-radius: var(--radius-md);
-    background: var(--state-error-soft);
-    color: var(--state-error);
-    font-size: 0.82rem;
-    line-height: 1.5;
 }
 
 .environment-list {

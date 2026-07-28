@@ -20,7 +20,7 @@ watch(
             <section class="dialog-panel" role="dialog" aria-modal="true">
                 <h2>修改工作区信息</h2>
                 <div class="workspace-alias-form">
-                    <label class="remote-workspace-field">
+                    <label class="remote-workspace-field required-field">
                         <span>工作区名称</span>
                         <input
                             v-model="studio.dialogForms.alias"
