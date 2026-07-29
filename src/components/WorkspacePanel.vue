@@ -311,12 +311,7 @@ onBeforeUnmount(() => {
                                             studio.stoppingWorkspaceKeys.has(studio.workspaceKey(entry.path))
                                         "
                                         @click="studio.stopWorkspace(entry.path)">
-                                        <AppIcon
-                                            :name="
-                                                studio.stoppingWorkspaceKeys.has(studio.workspaceKey(entry.path))
-                                                    ? 'loading'
-                                                    : 'stop-workspace'
-                                            " />
+                                        <AppIcon name="loading" />
                                     </button>
                                     <button
                                         v-else
