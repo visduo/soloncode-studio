@@ -54,13 +54,27 @@ function activateHome(event) {
     revealTab(event.currentTarget);
 }
 
-function activateProject(event, key) {
+async function activateProject(event, key) {
     if (suppressTabClick) {
         suppressTabClick = false;
         return;
     }
     studio.activateProject(key);
     revealTab(event.currentTarget);
+    const project = studio.orderedProjects.value.find((entry) => entry.project_key === key);
+    if (!project || project.mode === studio.constants.LAUNCH_MODES.cli) return;
+    await nextTick();
+    const frame = document.querySelector(`[data-project-key="${CSS.escape(key)}"] iframe`);
+    frame?.contentWindow?.postMessage(
+        {
+            type: "studio-theme-sync",
+            payload: {
+                theme: studio.state.resolvedThemeMode,
+                source: "soloncode-studio"
+            }
+        },
+        "*"
+    );
 }
 
 function pointerDown(event, key) {

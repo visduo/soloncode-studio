@@ -25,6 +25,7 @@ let cleanupEvents;
 let unlistenThemeChanged;
 
 function applyThemeMode(mode) {
+    studio.state.resolvedThemeMode = mode;
     document.documentElement.classList.remove("theme-mode-light", "theme-mode-dark");
     document.documentElement.classList.add(`theme-mode-${mode}`);
     document.documentElement.style.colorScheme = mode;

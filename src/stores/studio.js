@@ -50,6 +50,7 @@ const state = reactive({
     javaVersion: "",
     environmentChecking: false,
     busy: false,
+    resolvedThemeMode: "light",
     cliUpdateAvailable: false,
     studioUpdateAvailable: false,
     studioVersion: t("status.versionUnknown"),
@@ -821,6 +822,13 @@ function saveAppPreferences(preferences) {
     }
 }
 
+function synchronizeThemeMode(themeMode) {
+    if ((themeMode !== "light" && themeMode !== "dark") || state.preferences.themeMode === themeMode) return false;
+    state.preferences = normalizeAppPreferences({ ...state.preferences, themeMode });
+    persistAppPreferences(state.preferences);
+    return true;
+}
+
 async function applyCloseBehavior(behavior) {
     await invoke(behavior === "quit" ? "quit_studio" : "minimize_to_tray");
 }
@@ -1045,6 +1053,7 @@ export function useStudioStore() {
         closePrompt,
         closeMessage,
         saveAppPreferences,
+        synchronizeThemeMode,
         saveTerminalSettings,
         initialize,
         registerEvents,

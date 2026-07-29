@@ -46,6 +46,7 @@
 }
 
 .theme-idea .project-view {
+    border: 0;
     border-radius: 0;
 }
 

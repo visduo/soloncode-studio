@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import {
     DEFAULT_TERMINAL_SETTINGS,
     INTERFACE_STYLE_OPTIONS,
@@ -35,6 +35,20 @@ const selectedInterfaceStyle = computed(() =>
 );
 const selectedThemeMode = computed(() => THEME_MODE_OPTIONS.find((mode) => mode.key === preferencesForm.themeMode));
 const selectedLocale = computed(() => LOCALE_OPTIONS.find((locale) => locale.key === preferencesForm.locale));
+
+watch(
+    () => [
+        studio.state.preferences.defaultRunTarget,
+        studio.state.preferences.interfaceStyle,
+        studio.state.preferences.themeMode,
+        studio.state.preferences.locale
+    ],
+    () => {
+        if (activeSection.value !== "preferences") return;
+        Object.assign(preferencesForm, studio.state.preferences);
+        openPreferencesDropdown.value = null;
+    }
+);
 
 function closePreferencesDropdown(event) {
     if (!preferencesSettingsForm.value?.contains(event.target)) openPreferencesDropdown.value = null;

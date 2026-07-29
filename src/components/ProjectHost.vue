@@ -1,11 +1,28 @@
 <script setup>
-import { onBeforeUnmount, onMounted } from "vue";
+import { onBeforeUnmount, onMounted, watch } from "vue";
 import { withStudioParam } from "../assets/js/url.js";
 import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 import TerminalView from "./TerminalView.vue";
 const studio = useStudioStore();
 const { t } = useI18n();
+
+function sendThemeToFrame(frame) {
+    frame?.contentWindow?.postMessage(
+        {
+            type: "studio-theme-sync",
+            payload: {
+                theme: studio.state.resolvedThemeMode,
+                source: "soloncode-studio"
+            }
+        },
+        "*"
+    );
+}
+
+function broadcastThemeToFrames() {
+    document.querySelectorAll(".project-frame").forEach(sendThemeToFrame);
+}
 
 function projectFrameBySource(source) {
     for (const project of studio.orderedProjects.value) {
@@ -21,6 +38,16 @@ async function message(event) {
     const match = projectFrameBySource(event.source);
     if (!match) return;
     const { project, frame } = match;
+    if (data.type === "soloncode-theme-ready") {
+        sendThemeToFrame(frame);
+        return;
+    }
+    if (data.type === "soloncode-theme-change") {
+        const theme = data.payload?.theme;
+        if ((theme === "light" || theme === "dark") && theme !== studio.state.resolvedThemeMode)
+            studio.synchronizeThemeMode(theme);
+        return;
+    }
     if (data.type === "soloncode-frame-context-action") {
         if (data.action === "refresh") {
             frame.src = withStudioParam(project.url);
@@ -72,6 +99,7 @@ async function message(event) {
         else studio.taskSessions.delete(project.project_key);
     }
 }
+watch(() => studio.state.resolvedThemeMode, broadcastThemeToFrames, { flush: "post" });
 onMounted(() => window.addEventListener("message", message));
 onBeforeUnmount(() => window.removeEventListener("message", message));
 </script>
@@ -93,6 +121,7 @@ onBeforeUnmount(() => window.removeEventListener("message", message));
                 class="project-frame"
                 :class="{ 'web-page-frame': project.type === studio.constants.PROJECT_TYPES.webPage }"
                 :src="withStudioParam(project.url)"
+                @load="sendThemeToFrame($event.currentTarget)"
                 :referrerpolicy="project.type === studio.constants.PROJECT_TYPES.webPage ? 'no-referrer' : undefined"
                 :allow="
                     project.type === studio.constants.PROJECT_TYPES.webPage

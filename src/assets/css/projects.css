@@ -4,7 +4,7 @@
     display: block;
     min-height: 0;
     overflow: hidden;
-    border: 0;
+    border: 1px solid var(--window-border);
     border-radius: var(--radius-window);
     background: var(--panel);
     box-shadow: none;
