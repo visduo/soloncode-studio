@@ -128,6 +128,43 @@ function reset() {
         <section v-if="activeSection === 'preferences'" class="settings-content preferences-settings-section">
             <div ref="preferencesSettingsForm" class="preferences-settings-form">
                 <div class="terminal-settings-field required-field">
+                    <span>{{ t("settings.language") }}</span>
+                    <div
+                        class="settings-select"
+                        :class="{ open: openPreferencesDropdown === 'locale' }"
+                        @keydown.esc="openPreferencesDropdown = null">
+                        <button
+                            class="settings-select-trigger"
+                            type="button"
+                            aria-haspopup="listbox"
+                            :aria-expanded="openPreferencesDropdown === 'locale'"
+                            @click="openPreferencesDropdown = openPreferencesDropdown === 'locale' ? null : 'locale'"
+                            @keydown.down.prevent="openPreferencesDropdown = 'locale'">
+                            <span>{{ selectedLocale ? t(selectedLocale.labelKey) : "" }}</span>
+                            <span class="settings-select-chevron" aria-hidden="true"></span>
+                        </button>
+                        <Transition name="settings-select-menu">
+                            <div
+                                v-if="openPreferencesDropdown === 'locale'"
+                                class="settings-select-menu"
+                                role="listbox">
+                                <button
+                                    v-for="localeOption in LOCALE_OPTIONS"
+                                    :key="localeOption.key"
+                                    class="settings-select-option"
+                                    :class="{ selected: localeOption.key === preferencesForm.locale }"
+                                    type="button"
+                                    role="option"
+                                    :aria-selected="localeOption.key === preferencesForm.locale"
+                                    @click="selectLocale(localeOption.key)">
+                                    <span class="settings-select-check" aria-hidden="true"></span>
+                                    <span>{{ t(localeOption.labelKey) }}</span>
+                                </button>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+                <div class="terminal-settings-field required-field">
                     <span>{{ t("settings.themeStyle") }}</span>
                     <div
                         class="settings-select"
@@ -240,43 +277,6 @@ function reset() {
                                     @click="selectRunTarget(target.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
                                     <span>{{ t(target.shortLabelKey) }}</span>
-                                </button>
-                            </div>
-                        </Transition>
-                    </div>
-                </div>
-                <div class="terminal-settings-field required-field">
-                    <span>{{ t("settings.language") }}</span>
-                    <div
-                        class="settings-select"
-                        :class="{ open: openPreferencesDropdown === 'locale' }"
-                        @keydown.esc="openPreferencesDropdown = null">
-                        <button
-                            class="settings-select-trigger"
-                            type="button"
-                            aria-haspopup="listbox"
-                            :aria-expanded="openPreferencesDropdown === 'locale'"
-                            @click="openPreferencesDropdown = openPreferencesDropdown === 'locale' ? null : 'locale'"
-                            @keydown.down.prevent="openPreferencesDropdown = 'locale'">
-                            <span>{{ selectedLocale ? t(selectedLocale.labelKey) : "" }}</span>
-                            <span class="settings-select-chevron" aria-hidden="true"></span>
-                        </button>
-                        <Transition name="settings-select-menu">
-                            <div
-                                v-if="openPreferencesDropdown === 'locale'"
-                                class="settings-select-menu"
-                                role="listbox">
-                                <button
-                                    v-for="localeOption in LOCALE_OPTIONS"
-                                    :key="localeOption.key"
-                                    class="settings-select-option"
-                                    :class="{ selected: localeOption.key === preferencesForm.locale }"
-                                    type="button"
-                                    role="option"
-                                    :aria-selected="localeOption.key === preferencesForm.locale"
-                                    @click="selectLocale(localeOption.key)">
-                                    <span class="settings-select-check" aria-hidden="true"></span>
-                                    <span>{{ t(localeOption.labelKey) }}</span>
                                 </button>
                             </div>
                         </Transition>

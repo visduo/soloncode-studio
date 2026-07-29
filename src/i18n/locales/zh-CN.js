@@ -25,7 +25,7 @@ export default {
     "settings.theme": "主题",
     "settings.themeStyle": "主题风格",
     "settings.themeMode": "主题模式",
-    "settings.language": "语言",
+    "settings.language": "语言 [Beta]",
     "settings.font": "字体",
     "settings.fontSize": "字号",
     "settings.lineHeight": "行高",

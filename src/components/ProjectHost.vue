@@ -28,7 +28,7 @@ function prepareFrame(project) {
 
 function frameLoaded(event, project) {
     sendThemeToFrame(event.currentTarget);
-    if (project.type === studio.constants.PROJECT_TYPES.webPage) markFrameReady(project.project_key);
+    markFrameReady(project.project_key);
 }
 
 function frameOrigin(frame) {
