@@ -284,12 +284,12 @@
 .tab-item.active {
     z-index: 1;
     border-color: var(--border);
-    background: var(--panel-soft);
+    background: var(--panel);
     color: var(--text-primary);
 }
 
 .tab-item.active:hover {
-    background: var(--panel-soft);
+    background: var(--panel);
 }
 
 .tab-label {
