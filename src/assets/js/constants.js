@@ -69,14 +69,14 @@ export const RUN_TARGET_OPTIONS = [
     }
 ];
 
-export const INTERFACE_STYLES = {
+export const THEME_STYLES = {
     idea: "idea",
     studio: "studio"
 };
 
-export const INTERFACE_STYLE_OPTIONS = [
-    { key: INTERFACE_STYLES.idea, labelKey: "theme.idea" },
-    { key: INTERFACE_STYLES.studio, labelKey: "theme.studio" }
+export const THEME_STYLE_OPTIONS = [
+    { key: THEME_STYLES.idea, labelKey: "theme.idea" },
+    { key: THEME_STYLES.studio, labelKey: "theme.studio" }
 ];
 
 export const THEME_MODES = {
@@ -105,7 +105,7 @@ export const LOCALE_OPTIONS = [
 
 export const DEFAULT_APP_PREFERENCES = {
     defaultRunTarget: RUN_TARGETS.webInternal,
-    interfaceStyle: INTERFACE_STYLES.idea,
+    themeStyle: THEME_STYLES.idea,
     themeMode: THEME_MODES.system,
     locale: LOCALES.simplifiedChinese
 };

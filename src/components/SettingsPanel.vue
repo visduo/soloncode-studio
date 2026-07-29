@@ -2,9 +2,9 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import {
     DEFAULT_TERMINAL_SETTINGS,
-    INTERFACE_STYLE_OPTIONS,
     LOCALE_OPTIONS,
-    THEME_MODE_OPTIONS
+    THEME_MODE_OPTIONS,
+    THEME_STYLE_OPTIONS
 } from "../assets/js/constants.js";
 import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
@@ -30,8 +30,8 @@ const invalid = computed(() => Object.values(errors.value).some(Boolean));
 const selectedRunTarget = computed(() =>
     studio.runTargets.find((target) => target.key === preferencesForm.defaultRunTarget)
 );
-const selectedInterfaceStyle = computed(() =>
-    INTERFACE_STYLE_OPTIONS.find((style) => style.key === preferencesForm.interfaceStyle)
+const selectedThemeStyle = computed(() =>
+    THEME_STYLE_OPTIONS.find((style) => style.key === preferencesForm.themeStyle)
 );
 const selectedThemeMode = computed(() => THEME_MODE_OPTIONS.find((mode) => mode.key === preferencesForm.themeMode));
 const selectedLocale = computed(() => LOCALE_OPTIONS.find((locale) => locale.key === preferencesForm.locale));
@@ -39,7 +39,7 @@ const selectedLocale = computed(() => LOCALE_OPTIONS.find((locale) => locale.key
 watch(
     () => [
         studio.state.preferences.defaultRunTarget,
-        studio.state.preferences.interfaceStyle,
+        studio.state.preferences.themeStyle,
         studio.state.preferences.themeMode,
         studio.state.preferences.locale
     ],
@@ -59,8 +59,8 @@ function selectRunTarget(target) {
     openPreferencesDropdown.value = null;
 }
 
-function selectInterfaceStyle(style) {
-    preferencesForm.interfaceStyle = style;
+function selectThemeStyle(style) {
+    preferencesForm.themeStyle = style;
     openPreferencesDropdown.value = null;
 }
 
@@ -168,35 +168,35 @@ function reset() {
                     <span>{{ t("settings.themeStyle") }}</span>
                     <div
                         class="settings-select"
-                        :class="{ open: openPreferencesDropdown === 'interface-style' }"
+                        :class="{ open: openPreferencesDropdown === 'theme-style' }"
                         @keydown.esc="openPreferencesDropdown = null">
                         <button
                             class="settings-select-trigger"
                             type="button"
                             aria-haspopup="listbox"
-                            :aria-expanded="openPreferencesDropdown === 'interface-style'"
+                            :aria-expanded="openPreferencesDropdown === 'theme-style'"
                             @click="
                                 openPreferencesDropdown =
-                                    openPreferencesDropdown === 'interface-style' ? null : 'interface-style'
+                                    openPreferencesDropdown === 'theme-style' ? null : 'theme-style'
                             "
-                            @keydown.down.prevent="openPreferencesDropdown = 'interface-style'">
-                            <span>{{ selectedInterfaceStyle ? t(selectedInterfaceStyle.labelKey) : "" }}</span>
+                            @keydown.down.prevent="openPreferencesDropdown = 'theme-style'">
+                            <span>{{ selectedThemeStyle ? t(selectedThemeStyle.labelKey) : "" }}</span>
                             <span class="settings-select-chevron" aria-hidden="true"></span>
                         </button>
                         <Transition name="settings-select-menu">
                             <div
-                                v-if="openPreferencesDropdown === 'interface-style'"
+                                v-if="openPreferencesDropdown === 'theme-style'"
                                 class="settings-select-menu"
                                 role="listbox">
                                 <button
-                                    v-for="style in INTERFACE_STYLE_OPTIONS"
+                                    v-for="style in THEME_STYLE_OPTIONS"
                                     :key="style.key"
                                     class="settings-select-option"
-                                    :class="{ selected: style.key === preferencesForm.interfaceStyle }"
+                                    :class="{ selected: style.key === preferencesForm.themeStyle }"
                                     type="button"
                                     role="option"
-                                    :aria-selected="style.key === preferencesForm.interfaceStyle"
-                                    @click="selectInterfaceStyle(style.key)">
+                                    :aria-selected="style.key === preferencesForm.themeStyle"
+                                    @click="selectThemeStyle(style.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
                                     <span>{{ t(style.labelKey) }}</span>
                                 </button>
