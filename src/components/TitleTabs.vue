@@ -65,15 +65,17 @@ async function activateProject(event, key) {
     if (!project || project.mode === studio.constants.LAUNCH_MODES.cli) return;
     await nextTick();
     const frame = document.querySelector(`[data-project-key="${CSS.escape(key)}"] iframe`);
-    frame?.contentWindow?.postMessage(
+    if (!frame) return;
+    const targetOrigin = new URL(frame.src).origin;
+    frame.contentWindow?.postMessage(
         {
             type: "studio-theme-sync",
+            source: "soloncode-studio",
             payload: {
-                theme: studio.state.resolvedThemeMode,
-                source: "soloncode-studio"
+                theme: studio.state.resolvedThemeMode
             }
         },
-        "*"
+        targetOrigin
     );
 }
 

@@ -1,22 +1,54 @@
 <script setup>
-import { onBeforeUnmount, onMounted, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { withStudioParam } from "../assets/js/url.js";
 import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 import TerminalView from "./TerminalView.vue";
 const studio = useStudioStore();
 const { t } = useI18n();
+const readyFrames = ref(new Set());
+const frameReadyTimers = new Map();
+
+function markFrameReady(projectKey) {
+    window.clearTimeout(frameReadyTimers.get(projectKey));
+    frameReadyTimers.delete(projectKey);
+    readyFrames.value = new Set(readyFrames.value).add(projectKey);
+}
+
+function prepareFrame(project) {
+    const frames = new Set(readyFrames.value);
+    frames.delete(project.project_key);
+    readyFrames.value = frames;
+    window.clearTimeout(frameReadyTimers.get(project.project_key));
+    frameReadyTimers.set(
+        project.project_key,
+        window.setTimeout(() => markFrameReady(project.project_key), 1500)
+    );
+}
+
+function frameLoaded(event, project) {
+    sendThemeToFrame(event.currentTarget);
+    if (project.type === studio.constants.PROJECT_TYPES.webPage) markFrameReady(project.project_key);
+}
+
+function frameOrigin(frame) {
+    try {
+        return new URL(frame.src).origin;
+    } catch (_) {
+        return "*";
+    }
+}
 
 function sendThemeToFrame(frame) {
     frame?.contentWindow?.postMessage(
         {
             type: "studio-theme-sync",
+            source: "soloncode-studio",
             payload: {
-                theme: studio.state.resolvedThemeMode,
-                source: "soloncode-studio"
+                theme: studio.state.resolvedThemeMode
             }
         },
-        "*"
+        frameOrigin(frame)
     );
 }
 
@@ -33,13 +65,16 @@ function projectFrameBySource(source) {
 }
 async function message(event) {
     const data = event.data;
-    if (!data?.type) return;
-    if (data.type === "studio-blocked-navigation") return studio.openExternalUrl(data.payload.url);
+    if (!data?.type || data.source !== "soloncode-cli") return;
     const match = projectFrameBySource(event.source);
     if (!match) return;
     const { project, frame } = match;
+    const sourceOrigin = frameOrigin(frame);
+    if (sourceOrigin !== "*" && event.origin !== sourceOrigin) return;
+    if (data.type === "studio-blocked-navigation" && data.payload?.url) return studio.openExternalUrl(data.payload.url);
     if (data.type === "soloncode-theme-ready") {
         sendThemeToFrame(frame);
+        window.setTimeout(() => markFrameReady(project.project_key), 50);
         return;
     }
     if (data.type === "soloncode-theme-change") {
@@ -49,34 +84,37 @@ async function message(event) {
         return;
     }
     if (data.type === "soloncode-frame-context-action") {
-        if (data.action === "refresh") {
+        const action = data.payload?.action;
+        if (action === "refresh") {
             frame.src = withStudioParam(project.url);
         }
-        if (data.action === "open-external") await studio.openExternalUrl(project.url);
-        if (data.action === "open-devtools" && studio.constants.IS_DEVELOPMENT_MODE)
-            await studio.invoke("open_devtools");
-        if (data.action === "open-workspace" && project.type !== studio.constants.PROJECT_TYPES.webPage)
+        if (action === "open-external") await studio.openExternalUrl(project.url);
+        if (action === "open-devtools" && studio.constants.IS_DEVELOPMENT_MODE) await studio.invoke("open_devtools");
+        if (action === "open-workspace" && project.type !== studio.constants.PROJECT_TYPES.webPage)
             await studio.revealWorkspace(project.workspace);
     }
     if (data.type === "soloncode-frame-context-request")
         event.source.postMessage(
             {
                 type: "soloncode-frame-context-response",
-                requestId: data.requestId,
-                context: {
-                    localWorkspace: project.type !== studio.constants.PROJECT_TYPES.webPage,
-                    developmentMode: studio.constants.IS_DEVELOPMENT_MODE,
-                    labels: {
-                        copy: t("context.copy"),
-                        paste: t("context.paste"),
-                        refresh: t("context.refresh"),
-                        external: t("context.openExternal"),
-                        folder: t("context.openWorkspace"),
-                        devtools: t("context.openDevtools")
+                source: "soloncode-studio",
+                payload: {
+                    requestId: data.payload?.requestId,
+                    context: {
+                        localWorkspace: project.type !== studio.constants.PROJECT_TYPES.webPage,
+                        developmentMode: studio.constants.IS_DEVELOPMENT_MODE,
+                        labels: {
+                            copy: t("context.copy"),
+                            paste: t("context.paste"),
+                            refresh: t("context.refresh"),
+                            external: t("context.openExternal"),
+                            folder: t("context.openWorkspace"),
+                            devtools: t("context.openDevtools")
+                        }
                     }
                 }
             },
-            "*"
+            event.origin
         );
     if (data.type === "studio-task-lifecycle" && data.payload?.sessionId) {
         const sessions = new Map(studio.taskSessions.get(project.project_key) || []);
@@ -101,7 +139,10 @@ async function message(event) {
 }
 watch(() => studio.state.resolvedThemeMode, broadcastThemeToFrames, { flush: "post" });
 onMounted(() => window.addEventListener("message", message));
-onBeforeUnmount(() => window.removeEventListener("message", message));
+onBeforeUnmount(() => {
+    window.removeEventListener("message", message);
+    frameReadyTimers.forEach((timer) => window.clearTimeout(timer));
+});
 </script>
 
 <template>
@@ -119,9 +160,13 @@ onBeforeUnmount(() => window.removeEventListener("message", message));
             <iframe
                 v-else
                 class="project-frame"
-                :class="{ 'web-page-frame': project.type === studio.constants.PROJECT_TYPES.webPage }"
+                :class="{
+                    'web-page-frame': project.type === studio.constants.PROJECT_TYPES.webPage,
+                    'frame-loading': !readyFrames.has(project.project_key)
+                }"
                 :src="withStudioParam(project.url)"
-                @load="sendThemeToFrame($event.currentTarget)"
+                @vue:mounted="prepareFrame(project)"
+                @load="frameLoaded($event, project)"
                 :referrerpolicy="project.type === studio.constants.PROJECT_TYPES.webPage ? 'no-referrer' : undefined"
                 :allow="
                     project.type === studio.constants.PROJECT_TYPES.webPage

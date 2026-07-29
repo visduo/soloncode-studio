@@ -23,6 +23,12 @@
     height: 100%;
     border: 0;
     background: var(--panel);
+    opacity: 1;
+    transition: opacity 80ms ease-out;
+}
+
+.project-frame.frame-loading {
+    opacity: 0;
 }
 
 .web-page-frame {

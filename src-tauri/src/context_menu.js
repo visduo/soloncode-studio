@@ -6,7 +6,14 @@
     const actionMessageType = "soloncode-frame-context-action";
     const contextRequestType = "soloncode-frame-context-request";
     const contextResponseType = "soloncode-frame-context-response";
+    const cliMessageSource = "soloncode-cli";
+    const studioMessageSource = "soloncode-studio";
+    let parentOrigin = "";
+    try {
+        parentOrigin = window.location.ancestorOrigins?.[0] || (document.referrer && new URL(document.referrer).origin);
+    } catch (_) {}
     const pendingContextRequests = new Map();
+    const forwardedContextRequests = new Map();
     const iconNames = {
         copy: "ri-file-copy-line",
         paste: "ri-clipboard-line",
@@ -22,8 +29,18 @@
         style.textContent = __REMIX_ICON_CSS__;
         (document.head || document.documentElement).appendChild(style);
     };
+    const isDirectChild = (source) => {
+        for (let index = 0; index < window.frames.length; index += 1) {
+            if (window.frames[index] === source) return true;
+        }
+        return false;
+    };
     const removeMenu = () => document.getElementById(menuId)?.remove();
-    const sendAction = (action) => window.parent.postMessage({ type: actionMessageType, action }, "*");
+    const sendAction = (action) =>
+        window.parent.postMessage(
+            { type: actionMessageType, source: cliMessageSource, payload: { action } },
+            parentOrigin || "*"
+        );
     const requestContext = () =>
         new Promise((resolve) => {
             const requestId = `${Date.now()}-${Math.random()}`;
@@ -35,7 +52,10 @@
                 window.clearTimeout(timeout);
                 resolve(context);
             });
-            window.parent.postMessage({ type: contextRequestType, requestId }, "*");
+            window.parent.postMessage(
+                { type: contextRequestType, source: cliMessageSource, payload: { requestId } },
+                parentOrigin || "*"
+            );
         });
     const getEditable = (target) => {
         const editable = target?.closest?.(
@@ -187,17 +207,35 @@
     });
     window.addEventListener("message", (event) => {
         const data = event.data;
-        if (window.top !== window && [actionMessageType, contextRequestType].includes(data?.type)) {
-            window.parent.postMessage(event.data, "*");
-        }
-        if (data?.type === contextResponseType) {
-            const resolve = pendingContextRequests.get(data.requestId);
-            if (resolve) {
-                pendingContextRequests.delete(data.requestId);
-                resolve(data.context);
+        if (
+            window.top !== window &&
+            isDirectChild(event.source) &&
+            data?.source === cliMessageSource &&
+            [actionMessageType, contextRequestType].includes(data.type)
+        ) {
+            if (data.type === contextRequestType && typeof data.payload?.requestId === "string") {
+                forwardedContextRequests.set(data.payload.requestId, {
+                    source: event.source,
+                    origin: event.origin
+                });
             }
-            for (let index = 0; index < window.frames.length; index += 1) {
-                window.frames[index].postMessage(data, "*");
+            window.parent.postMessage(event.data, parentOrigin || "*");
+        }
+        if (
+            event.source === window.parent &&
+            (!parentOrigin || event.origin === parentOrigin) &&
+            data?.type === contextResponseType &&
+            data.source === studioMessageSource
+        ) {
+            const resolve = pendingContextRequests.get(data.payload?.requestId);
+            if (resolve) {
+                pendingContextRequests.delete(data.payload.requestId);
+                resolve(data.payload.context);
+            }
+            const forwardedRequest = forwardedContextRequests.get(data.payload?.requestId);
+            if (forwardedRequest) {
+                forwardedContextRequests.delete(data.payload.requestId);
+                forwardedRequest.source.postMessage(data, forwardedRequest.origin);
             }
         }
     });
