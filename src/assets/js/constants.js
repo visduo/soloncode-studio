@@ -1,4 +1,4 @@
-export const IS_DEVELOPMENT_MODE = false;
+export const IS_DEVELOPMENT_MODE = true;
 
 export const WORKSPACES_KEY = "soloncode.workspaces";
 export const WORKSPACE_ALIASES_KEY = "soloncode.workspaceAliases";

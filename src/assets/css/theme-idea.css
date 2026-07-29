@@ -73,3 +73,7 @@
 .theme-idea .workspace-content::after {
     content: none;
 }
+
+.theme-idea .welcome-nav-item.active {
+    background: linear-gradient(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.06)), var(--sidebar-active);
+}
