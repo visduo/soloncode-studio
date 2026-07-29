@@ -105,7 +105,7 @@ const { t } = useI18n();
                                       ? t("common.unknown")
                                       : studio.state.cliUpdateAvailable
                                         ? t("common.updateAvailable")
-                                        : t("common.installed")
+                                        : t("environment.latest")
                             }}
                         </span>
                     </div>

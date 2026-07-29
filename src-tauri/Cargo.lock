@@ -3599,7 +3599,7 @@ dependencies = [
 
 [[package]]
 name = "soloncode-studio"
-version = "26.729.5"
+version = "26.729.6"
 dependencies = [
  "base64 0.22.1",
  "dirs",
