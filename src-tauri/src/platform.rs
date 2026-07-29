@@ -151,7 +151,7 @@ fn open_url(url: &str) -> Result<(), String> {
 
 #[cfg(target_os = "linux")]
 pub(crate) fn configure_linux_webkit_gpu_fallback() {
-    if !should_disable_webkit_gpu() {
+    if linux_webkit_gpu_enabled() {
         return;
     }
 
@@ -161,31 +161,7 @@ pub(crate) fn configure_linux_webkit_gpu_fallback() {
 }
 
 #[cfg(target_os = "linux")]
-fn should_disable_webkit_gpu() -> bool {
-    match std::env::var("SOLONCODE_STUDIO_DISABLE_GPU") {
-        Ok(value) if matches!(value.as_str(), "0" | "false" | "FALSE" | "off" | "OFF") => {
-            return false
-        }
-        Ok(_) => return true,
-        Err(_) => {}
-    }
-
-    match fs::read_dir("/dev/dri") {
-        Ok(entries) => entries
-            .filter_map(Result::ok)
-            .map(|entry| entry.path())
-            .filter(|path| {
-                path.file_name()
-                    .and_then(|name| name.to_str())
-                    .is_some_and(|name| name == "renderD128" || name.starts_with("card"))
-            })
-            .any(|path| {
-                fs::OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .open(path)
-                    .is_err()
-            }),
-        Err(_) => true,
-    }
+fn linux_webkit_gpu_enabled() -> bool {
+    std::env::var("SOLONCODE_STUDIO_DISABLE_GPU")
+        .is_ok_and(|value| matches!(value.as_str(), "0" | "false" | "FALSE" | "off" | "OFF"))
 }

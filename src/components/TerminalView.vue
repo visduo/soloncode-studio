@@ -19,6 +19,7 @@ let fitAddon;
 let webglAddon;
 let commandBuffer = "";
 let renderedOutput = "";
+const isLinux = !/Mac|iPhone|iPad|Win/.test(navigator.platform);
 
 function fit() {
     nextTick(() => {
@@ -102,12 +103,14 @@ onMounted(() => {
     fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
     terminal.open(host.value);
-    try {
-        webglAddon = new WebglAddon();
-        webglAddon.onContextLoss?.(() => webglAddon.dispose());
-        terminal.loadAddon(webglAddon);
-    } catch (_) {
-        webglAddon = null;
+    if (!isLinux) {
+        try {
+            webglAddon = new WebglAddon();
+            webglAddon.onContextLoss?.(() => webglAddon.dispose());
+            terminal.loadAddon(webglAddon);
+        } catch (_) {
+            webglAddon = null;
+        }
     }
     terminal.onData(onData);
     writeSnapshot(props.project.terminal_output || "");
