@@ -164,10 +164,6 @@
     color: var(--state-loading);
 }
 
-.environment-detail-value.environment-missing {
-    color: var(--state-error);
-}
-
 .environment-controls {
     display: contents;
 }

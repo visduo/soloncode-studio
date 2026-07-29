@@ -181,7 +181,7 @@ export default {
     "prompt.installCli": "Install CLI",
     "prompt.javaMissingTitle": "Java runtime missing",
     "prompt.javaMissingMessage":
-        "No Java runtime was detected. Install Java before installing or starting SolonCode CLI.",
+        "Java runtime environment is not detected. Please install Java runtime environment first.",
     "prompt.installEnvironment": "Install environment",
     "prompt.cliUpdateTitle": "CLI update available",
     "prompt.cliUpdateMessage": "A new SolonCode CLI version is available. Update now?",

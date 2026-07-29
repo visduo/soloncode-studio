@@ -153,9 +153,7 @@ const { t } = useI18n();
                 <div class="environment-controls">
                     <div class="environment-status">
                         <span class="environment-detail-label">{{ t("environment.status") }}</span>
-                        <span
-                            class="environment-detail-value"
-                            :class="{ 'environment-missing': !studio.state.javaAvailable }">
+                        <span class="environment-detail-value">
                             {{ t(studio.state.javaAvailable ? "environment.available" : "common.unknown") }}
                         </span>
                     </div>

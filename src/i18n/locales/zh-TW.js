@@ -131,7 +131,7 @@ export default {
     "prompt.acknowledge": "知道了",
     "prompt.installCli": "安裝 CLI",
     "prompt.javaMissingTitle": "缺少 Java 環境",
-    "prompt.javaMissingMessage": "未偵測到 Java 執行環境，請先安裝後再啟動 SolonCode CLI。",
+    "prompt.javaMissingMessage": "未偵測到 Java 運行環境，請先安裝 Java 運行環境。",
     "prompt.installEnvironment": "快速安裝環境",
     "prompt.cliUpdateTitle": "CLI 可更新",
     "prompt.cliUpdateMessage": "SolonCode CLI 有新版本，是否立即更新？",
