@@ -286,13 +286,19 @@ onBeforeUnmount(() => {
                                     <button
                                         class="workspace-icon-btn stop"
                                         type="button"
+                                        :disabled="studio.stoppingWorkspaceKeys.has(studio.workspaceKey(entry.path))"
                                         @click="
                                             studio.stopWorkspace(
                                                 entry.path,
                                                 studio.projectForWorkspace(entry.path).mode
                                             )
                                         ">
-                                        <AppIcon name="stop-workspace" />
+                                        <AppIcon
+                                            :name="
+                                                studio.stoppingWorkspaceKeys.has(studio.workspaceKey(entry.path))
+                                                    ? 'loading'
+                                                    : 'stop-workspace'
+                                            " />
                                     </button>
                                 </template>
                                 <div v-else class="app-menu-wrap">
@@ -300,14 +306,23 @@ onBeforeUnmount(() => {
                                         v-if="studio.startingWorkspaceKeys.has(studio.workspaceKey(entry.path))"
                                         class="workspace-icon-btn is-loading"
                                         type="button"
-                                        disabled>
-                                        <AppIcon name="loading" />
+                                        :disabled="
+                                            !studio.startingRuns.get(studio.workspaceKey(entry.path))?.instanceId ||
+                                            studio.stoppingWorkspaceKeys.has(studio.workspaceKey(entry.path))
+                                        "
+                                        @click="studio.stopWorkspace(entry.path)">
+                                        <AppIcon
+                                            :name="
+                                                studio.stoppingWorkspaceKeys.has(studio.workspaceKey(entry.path))
+                                                    ? 'loading'
+                                                    : 'stop-workspace'
+                                            " />
                                     </button>
                                     <button
                                         v-else
                                         class="workspace-icon-btn run"
                                         type="button"
-                                        :disabled="studio.state.busy"
+                                        :disabled="studio.workspaceLaunchBlocked.value"
                                         @click="toggle($event, 'run', entry)">
                                         <AppIcon name="start-workspace" />
                                     </button>

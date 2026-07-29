@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Clone)]
 pub(crate) struct StartResult {
+    pub(crate) instance_id: u64,
     pub(crate) project_key: String,
     pub(crate) workspace_key: String,
     pub(crate) workspace: Option<String>,
@@ -49,6 +50,7 @@ pub(crate) struct WorkspaceLog {
 
 #[derive(Serialize, Clone)]
 pub(crate) struct FailedResult {
+    pub(crate) instance_id: u64,
     pub(crate) workspace_key: String,
     pub(crate) name: String,
     pub(crate) port: Option<u16>,

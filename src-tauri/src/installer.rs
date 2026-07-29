@@ -1,4 +1,4 @@
-use crate::cleanup_soloncode_process;
+use crate::process::cleanup_soloncode_process;
 use crate::state::SolonState;
 use std::io::{BufRead, BufReader, Write};
 #[cfg(windows)]

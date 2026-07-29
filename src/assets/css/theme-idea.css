@@ -22,6 +22,7 @@
 
 .theme-idea .sidebar {
     border-right: 1px solid var(--border);
+    background: var(--panel-soft);
 }
 
 .theme-idea .tab-bar {

@@ -17,7 +17,7 @@ const { t } = useI18n();
             <button
                 class="environment-refresh"
                 type="button"
-                :disabled="studio.state.busy || studio.state.environmentChecking"
+                :disabled="studio.state.cliMutating || studio.state.environmentChecking"
                 @click="studio.refreshEnvironment()">
                 <AppIcon :name="studio.state.environmentChecking ? 'loading' : 'refresh'" />
                 <span>{{ t(studio.state.environmentChecking ? "environment.checking" : "environment.recheck") }}</span>
@@ -114,8 +114,7 @@ const { t } = useI18n();
                             class="environment-action primary"
                             type="button"
                             :disabled="
-                                studio.state.busy ||
-                                studio.state.environmentChecking ||
+                                studio.cliMaintenanceBlocked.value ||
                                 (studio.state.installed && !studio.state.cliUpdateAvailable)
                             "
                             @click="studio.handleCliPrimaryAction">
@@ -125,12 +124,7 @@ const { t } = useI18n();
                         <button
                             class="environment-action danger"
                             type="button"
-                            :disabled="
-                                studio.state.busy ||
-                                studio.state.environmentChecking ||
-                                !studio.state.installed ||
-                                studio.projects.size > 0
-                            "
+                            :disabled="studio.cliMaintenanceBlocked.value || !studio.state.installed"
                             @click="studio.handleUninstall">
                             <AppIcon name="uninstall-cli" />
                             <span>{{ t("common.uninstall") }}</span>

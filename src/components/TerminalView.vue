@@ -34,14 +34,16 @@ function writeSnapshot(output = "") {
     else {
         terminal.reset();
         terminal.write(output.replace(/\n/g, "\r\n"));
+        if (commandBuffer) terminal.write(commandBuffer);
     }
     renderedOutput = output;
-    commandBuffer = "";
 }
 function onData(data) {
     if (isTerminalControlSequence(data)) {
-        commandBuffer = "";
-        if (data === "\u0003") terminal.write("^C\r\n");
+        if (data === "\u0003") {
+            commandBuffer = "";
+            terminal.write("^C\r\n");
+        }
         studio.sendCliInput(props.project.project_key, data);
         return;
     }

@@ -389,8 +389,3 @@
     border-color: var(--state-error-hover);
     background: var(--state-error-hover);
 }
-
-.dialog-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}

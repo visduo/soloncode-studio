@@ -69,12 +69,6 @@
     outline-offset: 1px;
 }
 
-.environment-refresh:disabled,
-.environment-action:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
 .environment-action.primary:not(:disabled) {
     border-color: var(--accent);
     background: var(--accent);

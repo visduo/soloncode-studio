@@ -1,5 +1,5 @@
-use crate::kill_child_tree;
 use crate::models::{RemoteVersionInfo, VersionStatus};
+use crate::process::kill_child_tree;
 use std::io::{BufRead, BufReader};
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -94,8 +94,7 @@ fn current_java_version() -> Option<String> {
         .nth(1)
         .or_else(|| {
             first_line.split_whitespace().find(|part| {
-                part
-                    .chars()
+                part.chars()
                     .next()
                     .is_some_and(|character| character.is_ascii_digit())
             })
@@ -120,8 +119,14 @@ fn normalize_version(version: &str) -> String {
     version.trim().trim_start_matches('v').to_string()
 }
 
-fn is_version_different(current: &str, latest: &str) -> bool {
-    normalize_version(current) != normalize_version(latest)
+fn is_update_available(current: &str, latest: &str) -> bool {
+    let Ok(current) = semver::Version::parse(&normalize_version(current)) else {
+        return false;
+    };
+    let Ok(latest) = semver::Version::parse(&normalize_version(latest)) else {
+        return false;
+    };
+    latest > current
 }
 
 fn current_cli_version(soloncode_path: &str) -> Result<String, String> {
@@ -158,11 +163,11 @@ fn current_cli_version(soloncode_path: &str) -> Result<String, String> {
 
     match receiver.recv_timeout(Duration::from_secs(12)) {
         Ok(line) => {
-            kill_child_tree(child, process_group_id, None);
+            kill_child_tree(child, process_group_id);
             parse_soloncode_version(&line).ok_or_else(|| "无法解析 SolonCode CLI 版本".to_string())
         }
         Err(_) => {
-            kill_child_tree(child, process_group_id, None);
+            kill_child_tree(child, process_group_id);
             Err("获取 SolonCode CLI 版本超时".to_string())
         }
     }
@@ -232,11 +237,11 @@ fn check_versions_blocking() -> VersionStatus {
             let cli_update_available = cli_current
                 .as_deref()
                 .zip(remote.cli.as_deref())
-                .is_some_and(|(current, latest)| is_version_different(current, latest));
+                .is_some_and(|(current, latest)| is_update_available(current, latest));
             let studio_update_available = remote
                 .studio
                 .as_deref()
-                .is_some_and(|latest| is_version_different(&studio_current, latest));
+                .is_some_and(|latest| is_update_available(&studio_current, latest));
 
             VersionStatus {
                 installed,
@@ -259,5 +264,18 @@ fn check_versions_blocking() -> VersionStatus {
             studio_update_available: false,
             error: Some(error),
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_update_available;
+
+    #[test]
+    fn update_is_only_available_for_newer_versions() {
+        assert!(is_update_available("v26.728.5", "26.728.6"));
+        assert!(!is_update_available("26.728.5", "v26.728.5"));
+        assert!(!is_update_available("26.728.6", "26.728.5"));
+        assert!(!is_update_available("development", "26.728.6"));
     }
 }

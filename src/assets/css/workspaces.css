@@ -130,7 +130,7 @@
     padding: 0 16px 0 36px;
     border: 0;
     border-radius: var(--radius-lg);
-    background: var(--panel-soft);
+    background: var(--control-hover);
     color: var(--text-primary);
     font-size: 0.88rem;
     outline: none;
@@ -144,7 +144,7 @@
 }
 .workspace-search:hover input,
 .workspace-search:focus-within input {
-    background: var(--surface-hover);
+    background: var(--control-hover);
 }
 .welcome-actions {
     display: flex;
@@ -536,11 +536,6 @@
     background: var(--control-hover);
 }
 
-.workspace-icon-btn.is-disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
 .workspace-icon-btn.run {
     color: var(--state-running);
 }
@@ -636,11 +631,6 @@
 
 .app-menu-item:hover:not(:disabled) {
     background: var(--menu-hover);
-}
-
-.app-menu-item:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
 }
 
 .app-menu-icon {
