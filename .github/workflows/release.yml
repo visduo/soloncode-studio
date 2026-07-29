@@ -16,10 +16,13 @@ jobs:
                 include:
                     - platform: macos-latest
                       args: --target universal-apple-darwin --bundles dmg
+                      uploadPlainBinary: false
                     - platform: ubuntu-22.04
                       args: --bundles appimage
+                      uploadPlainBinary: false
                     - platform: windows-latest
                       args: --bundles nsis
+                      uploadPlainBinary: true
 
         runs-on: ${{ matrix.platform }}
 
@@ -59,7 +62,7 @@ jobs:
                     libssl-dev
 
             - name: Build and publish Tauri app
-              uses: tauri-apps/tauri-action@v0
+              uses: tauri-apps/tauri-action@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
@@ -70,3 +73,4 @@ jobs:
                   releaseDraft: true
                   prerelease: false
                   args: ${{ matrix.args }}
+                  uploadPlainBinary: ${{ matrix.uploadPlainBinary }}
