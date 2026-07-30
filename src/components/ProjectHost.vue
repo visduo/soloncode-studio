@@ -57,7 +57,7 @@ function broadcastThemeToFrames() {
 }
 
 function projectFrameBySource(source) {
-    for (const project of studio.orderedProjects.value) {
+    for (const project of studio.hostedProjects.value) {
         const frame = document.querySelector(`[data-project-key="${CSS.escape(project.project_key)}"] iframe`);
         if (frame?.contentWindow === source) return { project, frame };
     }
@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
 <template>
     <section class="project-view">
         <div
-            v-for="project in studio.orderedProjects.value"
+            v-for="project in studio.hostedProjects.value"
             v-show="studio.state.activeTabKey === project.project_key"
             :key="project.project_key"
             class="vue-project-host"

@@ -453,6 +453,7 @@ async function initialize() {
 const orderedProjects = computed(() =>
     tabOrder.value.map((key) => projects.get(key)).filter((project) => project && shouldRenderProject(project))
 );
+const hostedProjects = computed(() => [...projects.values()].filter(shouldRenderProject));
 const activePrompt = computed(() => promptQueue.value[0] || null);
 const selectedLogs = computed(() => logs.get(workspaceKey(state.selectedWorkspace))?.lines.slice(-160) || []);
 
@@ -469,6 +470,7 @@ export function useStudioStore() {
         dialogs,
         dialogForms,
         orderedProjects,
+        hostedProjects,
         workspaceGroups,
         workspaceGroupsWithEntries,
         activePrompt,
