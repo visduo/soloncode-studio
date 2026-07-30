@@ -72,10 +72,10 @@ strong {
     line-height: 1;
 }
 
-.app-icon-loading-spinner {
+.app-icon-loading {
     animation: spin 0.9s linear infinite;
-    transform-box: view-box;
-    transform-origin: 12px 12px;
+    transform-origin: center;
+    will-change: transform;
 }
 
 :is(
