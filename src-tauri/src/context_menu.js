@@ -14,6 +14,7 @@
     } catch (_) {}
     const pendingContextRequests = new Map();
     const forwardedContextRequests = new Map();
+    let cachedContext = { localWorkspace: false };
     const iconNames = {
         copy: "ri-file-copy-line",
         paste: "ri-clipboard-line",
@@ -35,6 +36,11 @@
         }
         return false;
     };
+    const broadcastToChildren = (message) => {
+        for (let index = 0; index < window.frames.length; index += 1) {
+            window.frames[index].postMessage(message, "*");
+        }
+    };
     const removeMenu = () => document.getElementById(menuId)?.remove();
     const sendAction = (action) =>
         window.parent.postMessage(
@@ -46,11 +52,12 @@
             const requestId = `${Date.now()}-${Math.random()}`;
             const timeout = window.setTimeout(() => {
                 pendingContextRequests.delete(requestId);
-                resolve({ localWorkspace: false });
-            }, 300);
+                resolve(cachedContext);
+            }, 1000);
             pendingContextRequests.set(requestId, (context) => {
                 window.clearTimeout(timeout);
-                resolve(context);
+                if (context && typeof context === "object") cachedContext = context;
+                resolve(cachedContext);
             });
             window.parent.postMessage(
                 { type: contextRequestType, source: cliMessageSource, payload: { requestId } },
@@ -161,7 +168,7 @@
                 background: "#ffffff",
                 boxShadow: "0 12px 28px rgba(31, 50, 79, 0.1)"
             });
-            const labels = context.labels || {};
+            const labels = context?.labels || {};
             menu.appendChild(
                 createItem("copy", labels.copy || "Copy", Boolean(selectedText), () => writeClipboard(selectedText))
             );
@@ -216,7 +223,7 @@
             if (data.type === contextRequestType && typeof data.payload?.requestId === "string") {
                 forwardedContextRequests.set(data.payload.requestId, {
                     source: event.source,
-                    origin: event.origin
+                    origin: event.origin === "null" ? "*" : event.origin
                 });
             }
             window.parent.postMessage(event.data, parentOrigin || "*");
@@ -227,6 +234,10 @@
             data?.type === contextResponseType &&
             data.source === studioMessageSource
         ) {
+            if (data.payload?.context && typeof data.payload.context === "object") {
+                cachedContext = data.payload.context;
+            }
+            if (!data.payload?.requestId) broadcastToChildren(data);
             const resolve = pendingContextRequests.get(data.payload?.requestId);
             if (resolve) {
                 pendingContextRequests.delete(data.payload.requestId);

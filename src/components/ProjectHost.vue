@@ -5,7 +5,7 @@ import { useI18n } from "../i18n/index.js";
 import { useStudioStore } from "../stores/studio.js";
 import TerminalView from "./TerminalView.vue";
 const studio = useStudioStore();
-const { t } = useI18n();
+const { locale, t } = useI18n();
 const readyFrames = ref(new Set());
 const frameReadyTimers = new Map();
 
@@ -28,6 +28,7 @@ function prepareFrame(project) {
 
 function frameLoaded(event, project) {
     sendThemeToFrame(event.currentTarget);
+    sendContextToFrame(event.currentTarget, project);
     markFrameReady(project.project_key);
 }
 
@@ -54,6 +55,39 @@ function sendThemeToFrame(frame) {
 
 function broadcastThemeToFrames() {
     document.querySelectorAll(".project-frame").forEach(sendThemeToFrame);
+}
+
+function contextForProject(project) {
+    return {
+        localWorkspace: project.type !== studio.constants.PROJECT_TYPES.webPage,
+        developmentMode: studio.constants.IS_DEVELOPMENT_MODE,
+        labels: {
+            copy: t("context.copy"),
+            paste: t("context.paste"),
+            refresh: t("context.refresh"),
+            external: t("context.openExternal"),
+            folder: t("context.openWorkspace"),
+            devtools: t("context.openDevtools")
+        }
+    };
+}
+
+function sendContextToFrame(frame, project, requestId) {
+    frame?.contentWindow?.postMessage(
+        {
+            type: "soloncode-frame-context-response",
+            source: "soloncode-studio",
+            payload: { requestId, context: contextForProject(project) }
+        },
+        frameOrigin(frame)
+    );
+}
+
+function broadcastContextToFrames() {
+    for (const project of studio.hostedProjects.value) {
+        const frame = document.querySelector(`[data-project-key="${CSS.escape(project.project_key)}"] iframe`);
+        sendContextToFrame(frame, project);
+    }
 }
 
 function projectFrameBySource(source) {
@@ -93,29 +127,7 @@ async function message(event) {
         if (action === "open-workspace" && project.type !== studio.constants.PROJECT_TYPES.webPage)
             await studio.revealWorkspace(project.workspace);
     }
-    if (data.type === "soloncode-frame-context-request")
-        event.source.postMessage(
-            {
-                type: "soloncode-frame-context-response",
-                source: "soloncode-studio",
-                payload: {
-                    requestId: data.payload?.requestId,
-                    context: {
-                        localWorkspace: project.type !== studio.constants.PROJECT_TYPES.webPage,
-                        developmentMode: studio.constants.IS_DEVELOPMENT_MODE,
-                        labels: {
-                            copy: t("context.copy"),
-                            paste: t("context.paste"),
-                            refresh: t("context.refresh"),
-                            external: t("context.openExternal"),
-                            folder: t("context.openWorkspace"),
-                            devtools: t("context.openDevtools")
-                        }
-                    }
-                }
-            },
-            event.origin
-        );
+    if (data.type === "soloncode-frame-context-request") sendContextToFrame(frame, project, data.payload?.requestId);
     if (data.type === "studio-task-lifecycle" && data.payload?.sessionId) {
         const sessions = new Map(studio.taskSessions.get(project.project_key) || []);
         if (data.payload.action === "start") sessions.set(data.payload.sessionId, data.payload);
@@ -138,6 +150,7 @@ async function message(event) {
     }
 }
 watch(() => studio.state.resolvedThemeMode, broadcastThemeToFrames, { flush: "post" });
+watch(locale, broadcastContextToFrames, { flush: "post" });
 onMounted(() => window.addEventListener("message", message));
 onBeforeUnmount(() => {
     window.removeEventListener("message", message);
