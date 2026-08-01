@@ -28,6 +28,7 @@ function prepareFrame(project) {
 
 function frameLoaded(event, project) {
     sendThemeToFrame(event.currentTarget);
+    sendLocaleToFrame(event.currentTarget);
     sendContextToFrame(event.currentTarget, project);
     markFrameReady(project.project_key);
 }
@@ -55,6 +56,23 @@ function sendThemeToFrame(frame) {
 
 function broadcastThemeToFrames() {
     document.querySelectorAll(".project-frame").forEach(sendThemeToFrame);
+}
+
+function sendLocaleToFrame(frame) {
+    frame?.contentWindow?.postMessage(
+        {
+            type: "studio-locale-sync",
+            source: "soloncode-studio",
+            payload: {
+                locale: locale.value
+            }
+        },
+        frameOrigin(frame)
+    );
+}
+
+function broadcastLocaleToFrames() {
+    document.querySelectorAll(".project-frame").forEach(sendLocaleToFrame);
 }
 
 function contextForProject(project) {
@@ -117,6 +135,14 @@ async function message(event) {
             studio.synchronizeThemeMode(theme);
         return;
     }
+    if (data.type === "soloncode-locale-ready") {
+        sendLocaleToFrame(frame);
+        return;
+    }
+    if (data.type === "soloncode-locale-change") {
+        studio.synchronizeLocale(data.payload?.locale);
+        return;
+    }
     if (data.type === "soloncode-frame-context-action") {
         const action = data.payload?.action;
         if (action === "refresh") {
@@ -151,7 +177,14 @@ async function message(event) {
     }
 }
 watch(() => studio.state.resolvedThemeMode, broadcastThemeToFrames, { flush: "post" });
-watch(locale, broadcastContextToFrames, { flush: "post" });
+watch(
+    locale,
+    () => {
+        broadcastLocaleToFrames();
+        broadcastContextToFrames();
+    },
+    { flush: "post" }
+);
 onMounted(() => window.addEventListener("message", message));
 onBeforeUnmount(() => {
     window.removeEventListener("message", message);

@@ -146,7 +146,7 @@ function reset() {
                             :aria-expanded="openPreferencesDropdown === 'locale'"
                             @click="openPreferencesDropdown = openPreferencesDropdown === 'locale' ? null : 'locale'"
                             @keydown.down.prevent="openPreferencesDropdown = 'locale'">
-                            <span>{{ selectedLocale ? t(selectedLocale.labelKey) : "" }}</span>
+                            <span>{{ selectedLocale?.name || "" }}</span>
                             <span class="settings-select-chevron" aria-hidden="true"></span>
                         </button>
                         <Transition name="settings-select-menu">
@@ -164,7 +164,7 @@ function reset() {
                                     :aria-selected="localeOption.key === preferencesForm.locale"
                                     @click="selectLocale(localeOption.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
-                                    <span>{{ t(localeOption.labelKey) }}</span>
+                                    <span>{{ localeOption.name }}</span>
                                 </button>
                             </div>
                         </Transition>

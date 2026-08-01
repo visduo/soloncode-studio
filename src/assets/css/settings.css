@@ -137,6 +137,9 @@
     left: 0;
     display: grid;
     gap: 4px;
+    max-height: min(320px, calc(100vh - 180px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 6px;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
