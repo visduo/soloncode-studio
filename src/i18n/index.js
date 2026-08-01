@@ -1,12 +1,16 @@
 import { readonly, ref } from "vue";
-import enUS from "./locales/en-US.js";
-import zhCN from "./locales/zh-CN.js";
-import zhTW from "./locales/zh-TW.js";
+import { LOCALE_OPTIONS } from "../assets/js/constants.js";
 
 export const DEFAULT_LOCALE = "zh-CN";
-export const SUPPORTED_LOCALES = ["zh-CN", "zh-TW", "en-US"];
+export const SUPPORTED_LOCALES = LOCALE_OPTIONS.map((option) => option.key);
 
-const messages = { "zh-CN": zhCN, "zh-TW": zhTW, "en-US": enUS };
+const localeModules = import.meta.glob("./locales/*.js", { eager: true, import: "default" });
+const messages = Object.fromEntries(
+    Object.entries(localeModules).map(([file, localeMessages]) => {
+        const fileLocale = file.match(/\/([^/]+)\.js$/)?.[1];
+        return [fileLocale, localeMessages];
+    })
+);
 const currentLocale = ref(DEFAULT_LOCALE);
 
 function interpolate(message, params) {
@@ -21,7 +25,8 @@ export function setLocale(locale) {
 }
 
 export function t(key, params = {}) {
-    const message = messages[currentLocale.value]?.[key] ?? messages[DEFAULT_LOCALE]?.[key];
+    const fallbackLocale = currentLocale.value === DEFAULT_LOCALE ? DEFAULT_LOCALE : "en";
+    const message = messages[currentLocale.value]?.[key] ?? messages[fallbackLocale]?.[key];
     if (message == null) {
         if (import.meta.env.DEV) console.warn(`Missing translation: ${key}`);
         return key;
