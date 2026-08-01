@@ -91,22 +91,35 @@ export const THEME_MODE_OPTIONS = [
     { key: THEME_MODES.system, labelKey: "themeMode.system" }
 ];
 
-export const LOCALES = {
-    simplifiedChinese: "zh-CN",
-    traditionalChinese: "zh-TW",
-    english: "en-US"
-};
-
 export const LOCALE_OPTIONS = [
-    { key: LOCALES.simplifiedChinese, labelKey: "locale.zhCN" },
-    { key: LOCALES.traditionalChinese, labelKey: "locale.zhTW" },
-    { key: LOCALES.english, labelKey: "locale.enUS" }
+    { key: "zh-CN", name: "简体中文" },
+    { key: "zh-TW", name: "繁體中文" },
+    { key: "en", name: "English" },
+    { key: "ja", name: "日本語" },
+    { key: "ko", name: "한국어" },
+    { key: "de", name: "Deutsch" },
+    { key: "fr", name: "Français" },
+    { key: "es", name: "Español" },
+    { key: "it", name: "Italiano" },
+    { key: "ru", name: "Русский" },
+    { key: "ar", name: "العربية" },
+    { key: "br", name: "Português (BR)" },
+    { key: "th", name: "ไทย" },
+    { key: "vi", name: "Tiếng Việt" },
+    { key: "pl", name: "Polski" },
+    { key: "bn", name: "বাংলা" },
+    { key: "bs", name: "Bosanski" },
+    { key: "da", name: "Dansk" },
+    { key: "gr", name: "Ελληνικά" },
+    { key: "no", name: "Norsk" },
+    { key: "tr", name: "Türkçe" },
+    { key: "uk", name: "Українська" }
 ];
 
 export const DEFAULT_APP_PREFERENCES = {
     defaultRunTarget: RUN_TARGETS.webInternal,
     themeStyle: THEME_STYLES.idea,
     themeMode: THEME_MODES.system,
-    locale: LOCALES.simplifiedChinese,
+    locale: "zh-CN",
     notificationsEnabled: true
 };
