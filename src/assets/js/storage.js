@@ -27,7 +27,11 @@ export function normalizeAppPreferences(preferences) {
     const locale = LOCALE_OPTIONS.some((option) => option.key === preferences?.locale)
         ? preferences.locale
         : DEFAULT_APP_PREFERENCES.locale;
-    return { defaultRunTarget, themeStyle, themeMode, locale };
+    const notificationsEnabled =
+        typeof preferences?.notificationsEnabled === "boolean"
+            ? preferences.notificationsEnabled
+            : DEFAULT_APP_PREFERENCES.notificationsEnabled;
+    return { defaultRunTarget, themeStyle, themeMode, locale, notificationsEnabled };
 }
 
 export function loadAppPreferences() {

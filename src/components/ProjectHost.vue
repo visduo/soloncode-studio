@@ -136,6 +136,7 @@ async function message(event) {
             sessions.delete(data.payload.sessionId);
             if (
                 previous &&
+                studio.state.preferences.notificationsEnabled &&
                 (studio.state.activeTabKey !== project.project_key ||
                     document.visibilityState === "hidden" ||
                     !document.hasFocus())

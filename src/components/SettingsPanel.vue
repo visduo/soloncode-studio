@@ -41,7 +41,8 @@ watch(
         studio.state.preferences.defaultRunTarget,
         studio.state.preferences.themeStyle,
         studio.state.preferences.themeMode,
-        studio.state.preferences.locale
+        studio.state.preferences.locale,
+        studio.state.preferences.notificationsEnabled
     ],
     () => {
         if (activeSection.value !== "preferences") return;
@@ -71,6 +72,11 @@ function selectThemeMode(mode) {
 
 function selectLocale(locale) {
     preferencesForm.locale = locale;
+    openPreferencesDropdown.value = null;
+}
+
+function selectNotificationsEnabled(enabled) {
+    preferencesForm.notificationsEnabled = enabled;
     openPreferencesDropdown.value = null;
 }
 
@@ -277,6 +283,54 @@ function reset() {
                                     @click="selectRunTarget(target.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
                                     <span>{{ t(target.shortLabelKey) }}</span>
+                                </button>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+                <div class="terminal-settings-field required-field">
+                    <span>{{ t("settings.notifications") }}</span>
+                    <div
+                        class="settings-select"
+                        :class="{ open: openPreferencesDropdown === 'notifications' }"
+                        @keydown.esc="openPreferencesDropdown = null">
+                        <button
+                            class="settings-select-trigger"
+                            type="button"
+                            aria-haspopup="listbox"
+                            :aria-expanded="openPreferencesDropdown === 'notifications'"
+                            @click="
+                                openPreferencesDropdown =
+                                    openPreferencesDropdown === 'notifications' ? null : 'notifications'
+                            "
+                            @keydown.down.prevent="openPreferencesDropdown = 'notifications'">
+                            <span>{{
+                                t(
+                                    preferencesForm.notificationsEnabled
+                                        ? "settings.notificationsOn"
+                                        : "settings.notificationsOff"
+                                )
+                            }}</span>
+                            <span class="settings-select-chevron" aria-hidden="true"></span>
+                        </button>
+                        <Transition name="settings-select-menu">
+                            <div
+                                v-if="openPreferencesDropdown === 'notifications'"
+                                class="settings-select-menu"
+                                role="listbox">
+                                <button
+                                    v-for="option in [true, false]"
+                                    :key="String(option)"
+                                    class="settings-select-option"
+                                    :class="{ selected: option === preferencesForm.notificationsEnabled }"
+                                    type="button"
+                                    role="option"
+                                    :aria-selected="option === preferencesForm.notificationsEnabled"
+                                    @click="selectNotificationsEnabled(option)">
+                                    <span class="settings-select-check" aria-hidden="true"></span>
+                                    <span>{{
+                                        t(option ? "settings.notificationsOn" : "settings.notificationsOff")
+                                    }}</span>
                                 </button>
                             </div>
                         </Transition>

@@ -107,5 +107,6 @@ export const DEFAULT_APP_PREFERENCES = {
     defaultRunTarget: RUN_TARGETS.webInternal,
     themeStyle: THEME_STYLES.idea,
     themeMode: THEME_MODES.system,
-    locale: LOCALES.simplifiedChinese
+    locale: LOCALES.simplifiedChinese,
+    notificationsEnabled: true
 };
