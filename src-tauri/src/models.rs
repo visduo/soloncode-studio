@@ -46,6 +46,19 @@ pub(crate) struct WorkspaceLog {
     pub(crate) name: String,
     pub(crate) port: Option<u16>,
     pub(crate) message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) message_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) message_params: Option<serde_json::Value>,
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct SystemLog {
+    pub(crate) message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) message_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) message_params: Option<serde_json::Value>,
 }
 
 #[derive(Serialize, Clone)]
@@ -55,6 +68,10 @@ pub(crate) struct FailedResult {
     pub(crate) name: String,
     pub(crate) port: Option<u16>,
     pub(crate) message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) message_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) message_params: Option<serde_json::Value>,
 }
 
 #[derive(Deserialize)]

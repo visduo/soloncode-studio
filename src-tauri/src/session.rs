@@ -6,7 +6,8 @@ use crate::state::SolonState;
 use crate::version::soloncode_command;
 use crate::version::{find_soloncode_path, is_java_available};
 use crate::web_session::{
-    emit_workspace_log, spawn_web_readiness_monitor, spawn_web_stream_reader, WebReadinessContext,
+    emit_workspace_i18n_log, spawn_web_readiness_monitor, spawn_web_stream_reader,
+    WebReadinessContext,
 };
 use crate::workspace::{normalize_workspace, pick_available_port};
 use std::collections::HashSet;
@@ -85,7 +86,7 @@ pub(crate) fn start_soloncode(
         String::new()
     };
 
-    emit_workspace_log(
+    emit_workspace_i18n_log(
         &app,
         &workspace_key,
         &name,
@@ -95,6 +96,12 @@ pub(crate) fn start_soloncode(
         } else {
             "🚀 启动 SolonCode CLI".to_string()
         },
+        if mode == LaunchMode::Web {
+            "log.startWeb"
+        } else {
+            "log.startCli"
+        },
+        serde_json::json!({ "port": port }),
     );
 
     let mut path_env = std::env::var("PATH").unwrap_or_default();
@@ -170,7 +177,7 @@ pub(crate) fn start_soloncode(
         .map_err(|e| format!("启动失败: {} (路径: {})", e, soloncode_path))?;
     let process_group_id = child.id();
 
-    emit_workspace_log(
+    emit_workspace_i18n_log(
         &app,
         &workspace_key,
         &name,
@@ -180,6 +187,12 @@ pub(crate) fn start_soloncode(
         } else {
             "✅ CLI 运行中"
         },
+        if mode == LaunchMode::Web {
+            "log.processStartedWaiting"
+        } else {
+            "log.cliRunning"
+        },
+        serde_json::json!({}),
     );
 
     let stdout = child
@@ -328,12 +341,18 @@ pub(crate) fn stop_soloncode(
             LaunchMode::Web => "🛑 停止 SolonCode Web".to_string(),
             LaunchMode::Cli => "🛑 停止 SolonCode CLI".to_string(),
         };
-        emit_workspace_log(
+        emit_workspace_i18n_log(
             &app,
             &workspace_key,
             &name,
             (mode == LaunchMode::Web).then_some(process.port),
             message.clone(),
+            if mode == LaunchMode::Web {
+                "log.stopWeb"
+            } else {
+                "log.stopCli"
+            },
+            serde_json::json!({}),
         );
         Ok(message)
     } else {

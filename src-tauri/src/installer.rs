@@ -1,3 +1,4 @@
+use crate::models::SystemLog;
 use crate::process::cleanup_soloncode_process;
 use crate::state::SolonState;
 use std::io::{BufRead, BufReader, Write};
@@ -13,12 +14,20 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
 fn run_shell_with_live_output(
     app: tauri::AppHandle,
     start_message: &'static str,
+    start_message_key: &'static str,
     script: &'static str,
     stdin_input: Option<&'static str>,
     success_message: &'static str,
+    success_message_key: &'static str,
     failure_label: &'static str,
+    failure_message_key: &'static str,
 ) -> Result<String, String> {
-    let _ = app.emit("soloncode-output", start_message);
+    emit_system_i18n_log(
+        &app,
+        start_message,
+        start_message_key,
+        serde_json::json!({}),
+    );
 
     #[cfg(target_os = "windows")]
     let mut command = {
@@ -91,13 +100,39 @@ fn run_shell_with_live_output(
     }
 
     if status.success() {
-        let _ = app.emit("soloncode-output", success_message);
+        emit_system_i18n_log(
+            &app,
+            success_message,
+            success_message_key,
+            serde_json::json!({}),
+        );
         Ok(success_message.to_string())
     } else {
         let msg = format!("{} (exit code: {:?})", failure_label, status.code());
-        let _ = app.emit("soloncode-output", msg.clone());
+        emit_system_i18n_log(
+            &app,
+            &msg,
+            failure_message_key,
+            serde_json::json!({ "exitCode": status.code().map_or_else(|| "unknown".to_string(), |code| code.to_string()) }),
+        );
         Err(msg)
     }
+}
+
+fn emit_system_i18n_log(
+    app: &tauri::AppHandle,
+    message: impl Into<String>,
+    message_key: &str,
+    message_params: serde_json::Value,
+) {
+    let _ = app.emit(
+        "soloncode-output",
+        SystemLog {
+            message: message.into(),
+            message_key: Some(message_key.to_string()),
+            message_params: Some(message_params),
+        },
+    );
 }
 
 #[tauri::command]
@@ -106,10 +141,13 @@ pub(crate) async fn install_soloncode(app: tauri::AppHandle) -> Result<String, S
         run_shell_with_live_output(
             app,
             "📦 开始安装 SolonCode CLI...",
+            "log.installingCli",
             install_soloncode_script(),
             None,
             "✅ SolonCode 安装成功!",
+            "log.installSuccess",
             "❌ 安装失败",
+            "log.installFailed",
         )
     })
     .await
@@ -138,10 +176,13 @@ pub(crate) async fn uninstall_soloncode(
         run_shell_with_live_output(
             app,
             "🗑️ 正在卸载 SolonCode CLI...",
+            "log.uninstallingCli",
             uninstall_soloncode_script(),
             uninstall_soloncode_confirmation(),
             "✅ SolonCode 已卸载",
+            "log.uninstallSuccess",
             "❌ 卸载失败",
+            "log.uninstallFailed",
         )
     })
     .await
