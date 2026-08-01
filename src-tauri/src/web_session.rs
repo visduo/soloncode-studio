@@ -114,23 +114,27 @@ fn monitor_web_readiness(context: WebReadinessContext) {
         }
         if declared_port && last_port_log != Some(current_port) {
             last_port_log = Some(current_port);
-            emit_workspace_log(
+            emit_workspace_i18n_log(
                 &app,
                 &workspace_key,
                 &ready_payload.name,
                 Some(current_port),
                 format!("📡 检测到服务端口 {}，等待 Web 服务响应...", current_port),
+                "log.serverPortDetected",
+                serde_json::json!({ "port": current_port }),
             );
         }
 
         if is_web_service_ready(current_port) {
             ready = true;
-            emit_workspace_log(
+            emit_workspace_i18n_log(
                 &app,
                 &workspace_key,
                 &ready_payload.name,
                 Some(current_port),
                 format!("✅ 端口 {} 就绪 ({}秒)", current_port, iteration / 2),
+                "log.portReady",
+                serde_json::json!({ "port": current_port, "seconds": iteration / 2 }),
             );
             break;
         }
@@ -147,33 +151,51 @@ fn monitor_web_readiness(context: WebReadinessContext) {
             return;
         };
         if let Some(status) = exited {
-            failed_message = Some(format!("❌ SolonCode 已退出: {}", status));
+            failed_message = Some((
+                format!("❌ SolonCode 已退出: {}", status),
+                "log.processExited",
+                serde_json::json!({ "status": status.to_string() }),
+            ));
             break;
         }
         if iteration % 4 == 0 {
-            let message = if declared_port {
+            let (message, message_key, message_params) = if declared_port {
                 if is_local_port_ready(current_port) {
-                    format!(
-                        "⏳ 端口 {} 已监听，等待 Web 服务响应... ({}s)",
-                        current_port,
-                        iteration / 2
+                    (
+                        format!(
+                            "⏳ 端口 {} 已监听，等待 Web 服务响应... ({}s)",
+                            current_port,
+                            iteration / 2
+                        ),
+                        "log.portListeningWaiting",
+                        serde_json::json!({ "port": current_port, "seconds": iteration / 2 }),
                     )
                 } else {
-                    format!(
-                        "⏳ 已检测到端口 {}，等待服务监听... ({}s)",
-                        current_port,
-                        iteration / 2
+                    (
+                        format!(
+                            "⏳ 已检测到端口 {}，等待服务监听... ({}s)",
+                            current_port,
+                            iteration / 2
+                        ),
+                        "log.portDetectedWaiting",
+                        serde_json::json!({ "port": current_port, "seconds": iteration / 2 }),
                     )
                 }
             } else {
-                format!("⏳ 等待 SolonCode 声明服务端口... ({}s)", iteration / 2)
+                (
+                    format!("⏳ 等待 SolonCode 声明服务端口... ({}s)", iteration / 2),
+                    "log.waitingServerPort",
+                    serde_json::json!({ "seconds": iteration / 2 }),
+                )
             };
-            emit_workspace_log(
+            emit_workspace_i18n_log(
                 &app,
                 &workspace_key,
                 &ready_payload.name,
                 Some(current_port),
                 message,
+                message_key,
+                message_params,
             );
         }
         std::thread::sleep(Duration::from_millis(500));
@@ -197,24 +219,38 @@ fn monitor_web_readiness(context: WebReadinessContext) {
         return;
     }
 
-    let message = failed_message.unwrap_or_else(|| {
+    let (message, message_key, message_params) = failed_message.unwrap_or_else(|| {
         if !declared_port {
-            "❌ SolonCode 在30秒内未声明服务端口".to_string()
+            (
+                "❌ SolonCode 在30秒内未声明服务端口".to_string(),
+                "log.serverPortTimeout",
+                serde_json::json!({}),
+            )
         } else if !is_local_port_ready(current_port) {
-            format!(
-                "❌ SolonCode 已声明端口 {}，但30秒内没有监听该端口",
-                current_port
+            (
+                format!(
+                    "❌ SolonCode 已声明端口 {}，但30秒内没有监听该端口",
+                    current_port
+                ),
+                "log.declaredPortNotListening",
+                serde_json::json!({ "port": current_port }),
             )
         } else {
-            format!("❌ 端口 {} 已监听，但 Web 服务30秒内未响应", current_port)
+            (
+                format!("❌ 端口 {} 已监听，但 Web 服务30秒内未响应", current_port),
+                "log.webServiceTimeout",
+                serde_json::json!({ "port": current_port }),
+            )
         }
     });
-    emit_workspace_log(
+    emit_workspace_i18n_log(
         &app,
         &workspace_key,
         &ready_payload.name,
         Some(current_port),
         &message,
+        message_key,
+        message_params.clone(),
     );
     let state = app.state::<SolonState>();
     let mut owns_process = false;
@@ -237,6 +273,8 @@ fn monitor_web_readiness(context: WebReadinessContext) {
                 name: ready_payload.name,
                 port: Some(current_port),
                 message,
+                message_key: Some(message_key.to_string()),
+                message_params: Some(message_params),
             },
         );
     }
@@ -256,6 +294,30 @@ pub(crate) fn emit_workspace_log(
             name: name.to_string(),
             port,
             message: message.into(),
+            message_key: None,
+            message_params: None,
+        },
+    );
+}
+
+pub(crate) fn emit_workspace_i18n_log(
+    app: &tauri::AppHandle,
+    workspace_key: &str,
+    name: &str,
+    port: Option<u16>,
+    message: impl Into<String>,
+    message_key: &str,
+    message_params: serde_json::Value,
+) {
+    let _ = app.emit(
+        "soloncode-workspace-output",
+        WorkspaceLog {
+            workspace_key: workspace_key.to_string(),
+            name: name.to_string(),
+            port,
+            message: message.into(),
+            message_key: Some(message_key.to_string()),
+            message_params: Some(message_params),
         },
     );
 }

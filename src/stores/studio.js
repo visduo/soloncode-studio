@@ -113,7 +113,8 @@ function dismissMenu() {
 function appendWorkspaceLog(payload) {
     const key = payload.workspace_key || "system";
     const old = logs.get(key) || { name: payload.name || t("log.system"), lines: [] };
-    const entry = { name: payload.name || old.name, lines: [...old.lines, payload.message || ""] };
+    const message = payload.message_key ? t(payload.message_key, payload.message_params || {}) : payload.message || "";
+    const entry = { name: payload.name || old.name, lines: [...old.lines, message] };
     if (entry.lines.length > MAX_LOG_LINES) entry.lines.splice(0, entry.lines.length - MAX_LOG_LINES);
     logs.set(key, entry);
 }
@@ -373,6 +374,16 @@ function synchronizeThemeMode(themeMode) {
     return true;
 }
 
+function synchronizeLocale(locale) {
+    const preferences = normalizeAppPreferences({ ...state.preferences, locale });
+    if (preferences.locale !== locale || state.preferences.locale === locale) return false;
+    state.preferences = preferences;
+    setLocale(locale);
+    persistAppPreferences(state.preferences);
+    refreshWorkspaceGroups();
+    return true;
+}
+
 async function applyCloseBehavior(behavior) {
     await invoke(behavior === "quit" ? "quit_studio" : "minimize_to_tray");
 }
@@ -408,7 +419,16 @@ function handleCloseRequested() {
 }
 
 const eventHandlers = {
-    "soloncode-output": (event) => appendLog(String(event.payload)),
+    "soloncode-output": (event) => {
+        const payload = event.payload;
+        appendLog(
+            payload && typeof payload === "object"
+                ? payload.message_key
+                    ? t(payload.message_key, payload.message_params || {})
+                    : payload.message || ""
+                : String(payload)
+        );
+    },
     "soloncode-workspace-output": (event) => appendWorkspaceLog(event.payload),
     "soloncode-ready": operations.handleReady,
     "soloncode-failed": operations.handleFailed,
@@ -527,6 +547,7 @@ export function useStudioStore() {
         closeMessage,
         saveAppPreferences,
         synchronizeThemeMode,
+        synchronizeLocale,
         saveTerminalSettings,
         initialize,
         registerEvents,

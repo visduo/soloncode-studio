@@ -212,7 +212,10 @@ export function createStudioOperations({
         startingRuns.delete(key);
         for (const project of [...projects.values()])
             if (project.workspace_key === key) removeProject(project.project_key);
-        appendLog(formatError(payload.message || t("status.startFailed")), key, payload.name || t("workspace.home"));
+        const message = payload.message_key
+            ? t(payload.message_key, payload.message_params || {})
+            : payload.message || t("status.startFailed");
+        appendLog(formatError(message), key, payload.name || t("workspace.home"));
         showLogs();
         setStatus(t("status.startFailed"), "installed");
     }
