@@ -91,7 +91,10 @@ export const THEME_MODE_OPTIONS = [
     { key: THEME_MODES.system, labelKey: "themeMode.system" }
 ];
 
+export const SYSTEM_LOCALE = "system";
+
 export const LOCALE_OPTIONS = [
+    { key: SYSTEM_LOCALE, labelKey: "themeMode.system" },
     { key: "zh-CN", name: "简体中文" },
     { key: "zh-TW", name: "繁體中文" },
     { key: "en", name: "English" },
@@ -120,6 +123,6 @@ export const DEFAULT_APP_PREFERENCES = {
     defaultRunTarget: RUN_TARGETS.webInternal,
     themeStyle: THEME_STYLES.idea,
     themeMode: THEME_MODES.system,
-    locale: "zh-CN",
+    locale: SYSTEM_LOCALE,
     notificationsEnabled: true
 };

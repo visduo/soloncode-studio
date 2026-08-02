@@ -40,6 +40,10 @@ function handleSystemThemeChange(event) {
     if (event.payload === "dark" || event.payload === "light") systemPrefersDark.value = event.payload === "dark";
 }
 
+function handleSystemLanguageChange() {
+    studio.refreshSystemLocale();
+}
+
 function dismissMenu() {
     if (!studio.state.openMenu) return;
     studio.dismissMenu();
@@ -93,6 +97,7 @@ onMounted(async () => {
     await refreshSystemTheme();
     document.addEventListener("pointerdown", handleDocumentPointerDown, true);
     document.addEventListener("keydown", handleDocumentKeydown);
+    window.addEventListener("languagechange", handleSystemLanguageChange);
     cleanupEvents = studio.registerEvents();
     await studio.initialize();
 });
@@ -100,6 +105,7 @@ onBeforeUnmount(() => {
     unlistenThemeChanged?.();
     document.removeEventListener("pointerdown", handleDocumentPointerDown, true);
     document.removeEventListener("keydown", handleDocumentKeydown);
+    window.removeEventListener("languagechange", handleSystemLanguageChange);
     cleanupEvents?.();
 });
 </script>

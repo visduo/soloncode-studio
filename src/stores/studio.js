@@ -384,6 +384,13 @@ function synchronizeLocale(locale) {
     return true;
 }
 
+function refreshSystemLocale() {
+    if (state.preferences.locale !== "system") return false;
+    setLocale(state.preferences.locale);
+    refreshWorkspaceGroups();
+    return true;
+}
+
 async function applyCloseBehavior(behavior) {
     await invoke(behavior === "quit" ? "quit_studio" : "minimize_to_tray");
 }
@@ -548,6 +555,7 @@ export function useStudioStore() {
         saveAppPreferences,
         synchronizeThemeMode,
         synchronizeLocale,
+        refreshSystemLocale,
         saveTerminalSettings,
         initialize,
         registerEvents,

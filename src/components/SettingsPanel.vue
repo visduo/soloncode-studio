@@ -36,6 +36,10 @@ const selectedThemeStyle = computed(() =>
 const selectedThemeMode = computed(() => THEME_MODE_OPTIONS.find((mode) => mode.key === preferencesForm.themeMode));
 const selectedLocale = computed(() => LOCALE_OPTIONS.find((locale) => locale.key === preferencesForm.locale));
 
+function localeOptionName(localeOption) {
+    return localeOption?.labelKey ? t(localeOption.labelKey) : localeOption?.name || "";
+}
+
 watch(
     () => [
         studio.state.preferences.defaultRunTarget,
@@ -146,7 +150,7 @@ function reset() {
                             :aria-expanded="openPreferencesDropdown === 'locale'"
                             @click="openPreferencesDropdown = openPreferencesDropdown === 'locale' ? null : 'locale'"
                             @keydown.down.prevent="openPreferencesDropdown = 'locale'">
-                            <span>{{ selectedLocale?.name || "" }}</span>
+                            <span>{{ localeOptionName(selectedLocale) }}</span>
                             <span class="settings-select-chevron" aria-hidden="true"></span>
                         </button>
                         <Transition name="settings-select-menu">
@@ -164,7 +168,7 @@ function reset() {
                                     :aria-selected="localeOption.key === preferencesForm.locale"
                                     @click="selectLocale(localeOption.key)">
                                     <span class="settings-select-check" aria-hidden="true"></span>
-                                    <span>{{ localeOption.name }}</span>
+                                    <span>{{ localeOptionName(localeOption) }}</span>
                                 </button>
                             </div>
                         </Transition>

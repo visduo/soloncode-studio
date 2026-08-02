@@ -64,7 +64,7 @@ function sendLocaleToFrame(frame) {
             type: "studio-locale-sync",
             source: "soloncode-studio",
             payload: {
-                locale: locale.value
+                locale: studio.state.preferences.locale
             }
         },
         frameOrigin(frame)
@@ -178,7 +178,7 @@ async function message(event) {
 }
 watch(() => studio.state.resolvedThemeMode, broadcastThemeToFrames, { flush: "post" });
 watch(
-    locale,
+    () => [locale.value, studio.state.preferences.locale],
     () => {
         broadcastLocaleToFrames();
         broadcastContextToFrames();
