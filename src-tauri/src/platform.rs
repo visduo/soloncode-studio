@@ -1,4 +1,4 @@
-use crate::version::find_soloncode_path;
+use crate::version::{find_soloncode_path, is_java_available, java_home_and_bin};
 use crate::workspace::normalize_workspace;
 use std::fs;
 #[cfg(target_os = "macos")]
@@ -22,21 +22,49 @@ pub(crate) fn open_external_url(url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub(crate) fn open_soloncode_system_terminal(workspace: Option<String>) -> Result<(), String> {
+pub(crate) fn open_soloncode_system_terminal(
+    workspace: Option<String>,
+    java_executable: Option<String>,
+) -> Result<(), String> {
     let (_, _, workspace_path, _) = normalize_workspace(workspace)?;
     let soloncode_path =
         find_soloncode_path().ok_or("SolonCode CLI 未安装，请先点击「安装 CLI」")?;
+    if !is_java_available(java_executable.as_deref()) {
+        return Err("所选 Java 运行环境不可用，请重新选择 Java 版本".to_string());
+    }
 
     #[cfg(not(target_os = "windows"))]
+    let java_environment = java_home_and_bin(java_executable.as_deref())
+        .map(|(home, bin)| {
+            format!(
+                "export JAVA_HOME={}; export PATH={}:\"$PATH\"; ",
+                shell_quote(&home.to_string_lossy()),
+                shell_quote(&bin.to_string_lossy())
+            )
+        })
+        .unwrap_or_default();
+    #[cfg(not(target_os = "windows"))]
     let script = format!(
-        "cd {} && {} cli",
+        "{}cd {} && {} cli",
+        java_environment,
         shell_quote(&workspace_path.to_string_lossy()),
         shell_quote(&soloncode_path)
     );
 
     #[cfg(target_os = "windows")]
+    let java_environment = java_home_and_bin(java_executable.as_deref())
+        .map(|(home, bin)| {
+            format!(
+                "set \"JAVA_HOME={}\" && set \"PATH={};%PATH%\" && ",
+                home.to_string_lossy().replace('"', "\"\""),
+                bin.to_string_lossy().replace('"', "\"\"")
+            )
+        })
+        .unwrap_or_default();
+    #[cfg(target_os = "windows")]
     let script = format!(
-        "pushd {} && {} cli",
+        "{}pushd {} && {} cli",
+        java_environment,
         cmd_quote(&workspace_path.to_string_lossy()),
         cmd_quote(&soloncode_path)
     );

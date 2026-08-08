@@ -1,79 +1,79 @@
 .theme-idea .app-shell {
-    padding: 0;
+  padding: 0;
 }
 
 .theme-idea .title-bar {
-    min-height: 48px;
-    margin: 0;
-    padding-inline: 10px;
-    border-bottom: 1px solid var(--border);
+  min-height: 48px;
+  margin: 0;
+  padding-inline: 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .theme-idea .home-view {
-    gap: 0;
-    background: var(--panel);
+  gap: 0;
+  background: var(--panel);
 }
 
 .theme-idea .sidebar,
 .theme-idea .home-content-panel {
-    border: 0;
-    border-radius: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 .theme-idea .sidebar {
-    border-right: 1px solid var(--border);
-    background: linear-gradient(rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.03)), var(--panel-soft);
+  border-right: 1px solid var(--border);
+  background: linear-gradient(rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.03)), var(--panel-soft);
 }
 
 .theme-idea .tab-bar {
-    gap: 4px;
-    padding-inline: 8px;
+  gap: 4px;
+  padding-inline: 8px;
 }
 
 .theme-idea .tab-item {
-    height: 32px;
-    border: 1px solid transparent;
-    border-radius: 7px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 7px;
 }
 
 .theme-idea .tab-item.active {
-    border-color: var(--border);
-    background: var(--panel);
-    box-shadow: var(--shadow-soft);
+  border-color: var(--border);
+  background: var(--panel);
+  box-shadow: var(--shadow-soft);
 }
 
 .theme-idea .tab-item.active:hover {
-    background: var(--panel);
+  background: var(--panel);
 }
 
 .theme-idea .project-view {
-    border: 0;
-    border-radius: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 .theme-idea .workspace-search input,
 .theme-idea .workspace-search:hover input,
 .theme-idea .workspace-search:focus-within input {
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-    outline: none;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
 .theme-idea .welcome-toolbar {
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
 }
 
 .theme-idea .welcome-toolbar + .workspace-list {
-    border-top: 0;
+  border-top: 0;
 }
 
 .theme-idea .workspace-content::before,
 .theme-idea .workspace-content::after {
-    content: none;
+  content: none;
 }
 
 .theme-idea .welcome-nav-item.active {
-    background: linear-gradient(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.06)), var(--sidebar-active);
+  background: linear-gradient(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.06)), var(--sidebar-active);
 }

@@ -1,225 +1,233 @@
 .environment-panel {
-    container-name: environment-panel;
-    container-type: inline-size;
-    width: min(100%, 920px);
-    max-width: 100%;
-    min-width: 0;
-    margin-inline: auto;
-    overflow-x: clip;
+  container-name: environment-panel;
+  container-type: inline-size;
+  width: min(100%, 920px);
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  overflow-x: clip;
 }
 
 .environment-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 28px;
-    padding-bottom: 28px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+  padding-bottom: 28px;
 }
 
 .environment-header h1 {
-    color: var(--text-primary);
-    font-size: 1.5rem;
-    line-height: 1.3;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  line-height: 1.3;
 }
 
 .environment-header p {
-    max-width: 620px;
-    margin-top: 10px;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.65;
+  max-width: 620px;
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.65;
 }
 
 .environment-refresh,
 .environment-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--icon-text-gap);
-    height: 36px;
-    padding: 0 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--panel);
-    color: var(--text-primary);
-    cursor: pointer;
-    font-size: 0.82rem;
-    font-weight: var(--font-medium);
-    transition: var(--transition-control);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--icon-text-gap);
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: var(--font-medium);
+  transition: var(--transition-control);
 }
 
 .environment-refresh {
-    flex: 0 0 auto;
+  flex: 0 0 auto;
 }
 
 .environment-refresh .app-icon,
 .environment-action .app-icon {
-    width: 15px;
-    height: 15px;
+  width: 15px;
+  height: 15px;
 }
 
 .environment-refresh:hover:not(:disabled),
 .environment-action:hover:not(:disabled) {
-    background: var(--control-hover);
+  background: var(--control-hover);
 }
 
 .environment-refresh:focus-visible,
 .environment-action:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 
 .environment-action.primary:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: var(--text-on-accent);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--text-on-accent);
 }
 
 .environment-action.primary:hover:not(:disabled) {
-    border-color: var(--accent-hover);
-    background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 
 .environment-action.danger:not(:disabled) {
-    color: var(--state-error);
+  color: var(--state-error);
 }
 
 .environment-action.danger:hover:not(:disabled) {
-    border-color: var(--state-error-border);
-    background: var(--state-error-soft);
+  border-color: var(--state-error-border);
+  background: var(--state-error-soft);
 }
 
 .environment-list {
-    display: grid;
-    min-width: 0;
+  display: grid;
+  min-width: 0;
 }
 
 .environment-item {
-    display: grid;
-    grid-template-columns:
-        minmax(180px, 1.5fr)
-        minmax(72px, 0.55fr)
-        minmax(72px, 0.55fr)
-        minmax(88px, 0.65fr)
-        minmax(112px, 1fr);
-    align-items: center;
-    column-gap: 20px;
-    padding: 26px 0;
-    border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.5fr)
+    minmax(72px, 0.55fr)
+    minmax(72px, 0.55fr)
+    minmax(88px, 0.65fr)
+    minmax(112px, 1fr);
+  align-items: center;
+  column-gap: 20px;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .environment-item:last-child {
-    border-bottom: 0;
+  border-bottom: 0;
 }
 
 .environment-item-main {
-    min-width: 0;
+  min-width: 0;
 }
 
 .environment-item h2 {
-    color: var(--text-primary);
-    font-size: 0.95rem;
-    line-height: 1.4;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .environment-item-main p {
-    margin-top: 5px;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    line-height: 1.55;
+  margin-top: 5px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.environment-item-main .environment-executable-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 .environment-versions {
-    display: contents;
-    margin: 0;
+  display: contents;
+  margin: 0;
 }
 
 .environment-versions div {
-    min-width: 0;
+  min-width: 0;
 }
 
 .environment-versions div:nth-child(2) {
-    padding-left: 12px;
+  padding-left: 12px;
 }
 
 .environment-versions dt,
 .environment-detail-label {
-    color: var(--text-muted);
-    font-size: 0.72rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
 }
 
 .environment-versions dd,
 .environment-detail-value {
-    display: block;
-    margin: 6px 0 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--text-primary);
-    font-size: 0.84rem;
-    font-weight: var(--font-medium);
-    white-space: nowrap;
+  display: block;
+  margin: 6px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  font-weight: var(--font-medium);
+  white-space: nowrap;
 }
 
 .environment-detail-value.environment-update {
-    color: var(--state-loading);
+  color: var(--state-loading);
 }
 
 .environment-controls {
-    display: contents;
+  display: contents;
 }
 
 .environment-status {
-    min-width: 0;
-    padding-left: 16px;
+  min-width: 0;
+  padding-left: 16px;
 }
 
 .environment-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 8px;
-    min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
 }
 
 @container environment-panel (max-width: 700px) {
-    .environment-item {
-        column-gap: 12px;
-    }
+  .environment-item {
+    column-gap: 12px;
+  }
 
-    .environment-versions div:nth-child(2) {
-        padding-left: 8px;
-    }
+  .environment-versions div:nth-child(2) {
+    padding-left: 8px;
+  }
 
-    .environment-status {
-        padding-left: 10px;
-    }
+  .environment-status {
+    padding-left: 10px;
+  }
 }
 
 @container environment-panel (max-width: 560px) {
-    .environment-header {
-        flex-direction: column;
-    }
+  .environment-header {
+    flex-direction: column;
+  }
 
-    .environment-item {
-        grid-template-columns: 1fr;
-        row-gap: 16px;
-    }
+  .environment-item {
+    grid-template-columns: 1fr;
+    row-gap: 16px;
+  }
 
-    .environment-versions,
-    .environment-controls {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 14px;
-        width: 100%;
-    }
+  .environment-versions,
+  .environment-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    width: 100%;
+  }
 
-    .environment-versions div:nth-child(2),
-    .environment-status {
-        padding-left: 0;
-    }
+  .environment-versions div:nth-child(2),
+  .environment-status {
+    padding-left: 0;
+  }
 
-    .environment-controls,
-    .environment-actions {
-        justify-content: flex-start;
-    }
+  .environment-controls,
+  .environment-actions {
+    justify-content: flex-start;
+  }
 }

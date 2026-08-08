@@ -1,305 +1,305 @@
 .settings-panel {
-    width: min(100%, 920px);
-    max-width: 100%;
-    min-width: 0;
-    margin-inline: auto;
+  width: min(100%, 920px);
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: auto;
 }
 
 .settings-header {
-    padding-bottom: 24px;
+  padding-bottom: 24px;
 }
 
 .settings-header h1 {
-    color: var(--text-primary);
-    font-size: 1.5rem;
-    line-height: 1.3;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  line-height: 1.3;
 }
 
 .settings-header p {
-    margin-top: 10px;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.65;
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.65;
 }
 
 .settings-tabs {
-    display: flex;
-    gap: 24px;
-    min-height: 46px;
-    border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 24px;
+  min-height: 46px;
+  border-bottom: 1px solid var(--border);
 }
 
 .settings-tab {
-    position: relative;
-    padding: 0 2px;
-    border: 0;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 0.86rem;
-    font-weight: var(--font-medium);
+  position: relative;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: var(--font-medium);
 }
 
 .settings-tab::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    bottom: -1px;
-    left: 0;
-    height: 2px;
-    background: transparent;
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: transparent;
 }
 
 .settings-tab:hover,
 .settings-tab.active {
-    color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .settings-tab:focus-visible,
 .settings-button:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 
 .settings-tab.active::after {
-    background: var(--accent);
+  background: var(--accent);
 }
 
 .settings-content {
-    min-height: 320px;
-    padding: 28px 0;
+  min-height: 320px;
+  padding: 28px 0;
 }
 
 .preferences-settings-section {
-    display: grid;
-    align-content: start;
-    gap: 18px;
+  display: grid;
+  align-content: start;
+  gap: 18px;
 }
 
 .preferences-settings-form {
-    display: grid;
-    gap: 18px;
-    width: min(420px, 100%);
+  display: grid;
+  gap: 18px;
+  width: min(420px, 100%);
 }
 
 .settings-select {
-    position: relative;
+  position: relative;
 }
 
 .settings-select-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    height: 36px;
-    padding: 0 11px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--panel);
-    color: var(--text-primary);
-    font-size: 0.94rem;
-    text-align: left;
-    cursor: pointer;
-    transition: var(--transition-control);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  height: 36px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--text-primary);
+  font-size: 0.94rem;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-control);
 }
 
 .settings-select-trigger:hover {
-    background: var(--control-hover);
+  background: var(--control-hover);
 }
 
 .settings-select.open .settings-select-trigger,
 .settings-select-trigger:focus-visible {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--focus-ring);
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .settings-select-chevron {
-    width: 8px;
-    height: 8px;
-    flex: 0 0 auto;
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    transform: translateY(-2px) rotate(45deg);
-    transition: transform 0.16s ease;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.16s ease;
 }
 
 .settings-select.open .settings-select-chevron {
-    transform: translateY(2px) rotate(225deg);
+  transform: translateY(2px) rotate(225deg);
 }
 
 .settings-select-menu {
-    position: absolute;
-    z-index: 2;
-    top: calc(100% + 6px);
-    right: 0;
-    left: 0;
-    display: grid;
-    gap: 4px;
-    max-height: min(320px, calc(100vh - 180px));
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 6px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-lg);
-    background: var(--panel);
-    box-shadow: var(--shadow-float);
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  display: grid;
+  gap: 4px;
+  max-height: min(320px, calc(100vh - 180px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-float);
 }
 
 .settings-select-option {
-    display: grid;
-    grid-template-columns: 16px minmax(0, 1fr);
-    align-items: center;
-    gap: var(--icon-text-gap);
-    min-height: 34px;
-    padding: 0 10px;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-primary);
-    font-size: 0.86rem;
-    text-align: left;
-    cursor: pointer;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--icon-text-gap);
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
 }
 
 .settings-select-option:hover,
 .settings-select-option:focus-visible {
-    outline: none;
-    background: var(--menu-hover);
+  outline: none;
+  background: var(--menu-hover);
 }
 
 .settings-select-option.selected {
-    background: var(--accent-soft);
-    color: var(--accent-strong);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 
 .settings-select-check {
-    width: 6px;
-    height: 11px;
-    justify-self: center;
-    margin-top: -2px;
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    opacity: 0;
-    transform: rotate(45deg);
+  width: 6px;
+  height: 11px;
+  justify-self: center;
+  margin-top: -2px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  opacity: 0;
+  transform: rotate(45deg);
 }
 
 .settings-select-option.selected .settings-select-check {
-    opacity: 1;
+  opacity: 1;
 }
 
 .settings-select-menu-enter-active,
 .settings-select-menu-leave-active {
-    transition:
-        opacity 0.12s ease,
-        transform 0.12s ease;
-    transform-origin: top;
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+  transform-origin: top;
 }
 
 .settings-select-menu-enter-from,
 .settings-select-menu-leave-to {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
 }
 
 .terminal-settings-section {
-    display: grid;
-    gap: 18px;
+  display: grid;
+  gap: 18px;
 }
 
 .terminal-settings-form {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-    max-width: 620px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 620px;
 }
 
 .terminal-settings-field {
-    display: grid;
-    gap: 7px;
-    color: var(--text-secondary);
-    font-size: 0.82rem;
-    font-weight: var(--font-medium);
+  display: grid;
+  gap: 7px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: var(--font-medium);
 }
 
 .terminal-settings-field-wide {
-    grid-column: 1 / -1;
+  grid-column: 1 / -1;
 }
 
 .terminal-settings-field input {
-    width: 100%;
-    height: 36px;
-    padding: 0 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--panel);
-    color: var(--text-primary);
-    font-size: 0.94rem;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--text-primary);
+  font-size: 0.94rem;
 }
 
 .terminal-settings-field input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--focus-ring);
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
-.terminal-settings-field input[aria-invalid="true"] {
-    border-color: var(--state-error-border);
+.terminal-settings-field input[aria-invalid='true'] {
+  border-color: var(--state-error-border);
 }
 
 .terminal-settings-field.color-field input {
-    padding: 3px;
-    cursor: pointer;
+  padding: 3px;
+  cursor: pointer;
 }
 
 .settings-field-error {
-    color: var(--state-error);
-    font-size: 0.76rem;
-    font-weight: var(--font-regular);
-    line-height: 1.4;
+  color: var(--state-error);
+  font-size: 0.76rem;
+  font-weight: var(--font-regular);
+  line-height: 1.4;
 }
 
 .settings-actions {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 .settings-button {
-    min-width: 86px;
-    height: 36px;
-    padding: 0 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--panel);
-    color: var(--text-primary);
-    cursor: pointer;
-    font-size: 0.84rem;
-    font-weight: var(--font-medium);
-    transition: var(--transition-control);
+  min-width: 86px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: var(--font-medium);
+  transition: var(--transition-control);
 }
 
 .settings-button:hover:not(:disabled) {
-    background: var(--control-hover);
+  background: var(--control-hover);
 }
 
 .settings-button.primary:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: var(--text-on-accent);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--text-on-accent);
 }
 
 .settings-button.primary:hover:not(:disabled) {
-    border-color: var(--accent-hover);
-    background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 
 @media (max-width: 640px) {
-    .terminal-settings-form {
-        grid-template-columns: 1fr;
-    }
+  .terminal-settings-form {
+    grid-template-columns: 1fr;
+  }
 
-    .terminal-settings-field-wide {
-        grid-column: auto;
-    }
+  .terminal-settings-field-wide {
+    grid-column: auto;
+  }
 }

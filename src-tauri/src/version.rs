@@ -5,6 +5,7 @@ use std::io::{BufRead, BufReader};
 use std::os::unix::process::CommandExt;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::time::Duration;
@@ -63,33 +64,80 @@ pub(crate) fn soloncode_command(soloncode_path: &str) -> Command {
     }
 }
 
-pub(crate) fn is_java_available() -> bool {
-    let mut command = Command::new("java");
-    command
-        .arg("-version")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
-    #[cfg(windows)]
-    command.creation_flags(CREATE_NO_WINDOW);
-    command.status().is_ok_and(|status| status.success())
+fn normalized_java_executable(java_executable: Option<&str>) -> Option<&str> {
+    java_executable
+        .map(str::trim)
+        .filter(|path| !path.is_empty())
 }
 
-fn current_java_version() -> Option<String> {
-    let mut command = Command::new("java");
+pub(crate) fn java_home_and_bin(java_executable: Option<&str>) -> Option<(PathBuf, PathBuf)> {
+    let executable = PathBuf::from(normalized_java_executable(java_executable)?);
+    let executable = executable.canonicalize().unwrap_or(executable);
+    let bin = executable.parent()?.to_path_buf();
+    let home = if bin
+        .file_name()
+        .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("bin"))
+    {
+        bin.parent()?.to_path_buf()
+    } else {
+        bin.clone()
+    };
+    Some((home, bin))
+}
+
+pub(crate) fn prepend_java_bin(path_env: &mut String, java_executable: Option<&str>) {
+    let Some((_, bin)) = java_home_and_bin(java_executable) else {
+        return;
+    };
+    let separator = if cfg!(windows) { ";" } else { ":" };
+    let bin = bin.to_string_lossy();
+    *path_env = if path_env.is_empty() {
+        bin.to_string()
+    } else {
+        format!("{}{}{}", bin, separator, path_env)
+    };
+}
+
+fn current_java_version(java_executable: Option<&str>) -> Result<Option<String>, String> {
+    let selected = normalized_java_executable(java_executable);
+    if let Some(path) = selected {
+        if !Path::new(path).is_file() {
+            return Err(format!("所选 Java 可执行文件不存在: {}", path));
+        }
+    }
+
+    let program = selected.unwrap_or("java");
+    let mut command = Command::new(program);
     command.arg("-version");
     #[cfg(windows)]
     command.creation_flags(CREATE_NO_WINDOW);
-    let output = command.output().ok()?;
+    let output = match command.output() {
+        Ok(output) => output,
+        Err(error) if selected.is_some() => {
+            return Err(format!("无法运行所选 Java 可执行文件: {}", error));
+        }
+        Err(_) => return Ok(None),
+    };
     if !output.status.success() {
-        return None;
+        return if selected.is_some() {
+            Err("所选文件不是可用的 Java 可执行文件".to_string())
+        } else {
+            Ok(None)
+        };
     }
     let text = format!(
         "{}\n{}",
         String::from_utf8_lossy(&output.stderr),
         String::from_utf8_lossy(&output.stdout)
     );
-    let first_line = text.lines().find(|line| !line.trim().is_empty())?;
-    first_line
+    let Some(first_line) = text.lines().find(|line| !line.trim().is_empty()) else {
+        return if selected.is_some() {
+            Err("无法读取所选 Java 的版本信息".to_string())
+        } else {
+            Ok(None)
+        };
+    };
+    let version = first_line
         .split('"')
         .nth(1)
         .or_else(|| {
@@ -100,7 +148,18 @@ fn current_java_version() -> Option<String> {
             })
         })
         .map(|version| version.trim().to_string())
-        .filter(|version| !version.is_empty())
+        .filter(|version| !version.is_empty());
+    if version.is_none() && selected.is_some() {
+        return Err("无法解析所选 Java 的版本信息".to_string());
+    }
+    Ok(version)
+}
+
+pub(crate) fn is_java_available(java_executable: Option<&str>) -> bool {
+    current_java_version(java_executable)
+        .ok()
+        .flatten()
+        .is_some()
 }
 
 fn parse_soloncode_version(output: &str) -> Option<String> {
@@ -129,12 +188,21 @@ fn is_update_available(current: &str, latest: &str) -> bool {
     latest > current
 }
 
-fn current_cli_version(soloncode_path: &str) -> Result<String, String> {
+fn current_cli_version(
+    soloncode_path: &str,
+    java_executable: Option<&str>,
+) -> Result<String, String> {
     let mut command = soloncode_command(soloncode_path);
+    let mut path_env = std::env::var("PATH").unwrap_or_default();
+    prepend_java_bin(&mut path_env, java_executable);
     command
         .arg("version")
+        .env("PATH", path_env)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    if let Some((java_home, _)) = java_home_and_bin(java_executable) {
+        command.env("JAVA_HOME", java_home);
+    }
     #[cfg(unix)]
     unsafe {
         command.pre_exec(|| {
@@ -197,10 +265,37 @@ pub(crate) async fn check_soloncode() -> bool {
 }
 
 #[tauri::command]
-pub(crate) async fn check_java() -> Option<String> {
-    tauri::async_runtime::spawn_blocking(current_java_version)
+pub(crate) async fn check_java(java_executable: Option<String>) -> Result<Option<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || current_java_version(java_executable.as_deref()))
         .await
-        .unwrap_or(None)
+        .map_err(|error| format!("Java 检测任务失败: {}", error))?
+}
+
+#[tauri::command]
+pub(crate) async fn pick_java_executable(
+    window: tauri::WebviewWindow,
+    title: Option<String>,
+    current: Option<String>,
+) -> Option<String> {
+    let mut dialog = rfd::AsyncFileDialog::new()
+        .set_parent(&window)
+        .set_title(title.as_deref().unwrap_or("选择 Java 可执行文件"));
+    if let Some(directory) = current
+        .as_deref()
+        .map(Path::new)
+        .and_then(Path::parent)
+        .filter(|path| path.is_dir())
+    {
+        dialog = dialog.set_directory(directory);
+    }
+    #[cfg(windows)]
+    {
+        dialog = dialog.add_filter("Java executable", &["exe"]);
+    }
+    dialog
+        .pick_file()
+        .await
+        .map(|file| file.path().to_string_lossy().to_string())
 }
 
 #[tauri::command]
@@ -209,28 +304,30 @@ pub(crate) fn studio_version() -> String {
 }
 
 #[tauri::command]
-pub(crate) async fn check_versions() -> VersionStatus {
-    tauri::async_runtime::spawn_blocking(check_versions_blocking)
-        .await
-        .unwrap_or_else(|error| VersionStatus {
-            installed: false,
-            cli_current: None,
-            cli_latest: None,
-            cli_update_available: false,
-            studio_current: format!("v{}", env!("CARGO_PKG_VERSION")),
-            studio_latest: None,
-            studio_update_available: false,
-            error: Some(format!("版本检测任务失败: {}", error)),
-        })
+pub(crate) async fn check_versions(java_executable: Option<String>) -> VersionStatus {
+    tauri::async_runtime::spawn_blocking(move || {
+        check_versions_blocking(java_executable.as_deref())
+    })
+    .await
+    .unwrap_or_else(|error| VersionStatus {
+        installed: false,
+        cli_current: None,
+        cli_latest: None,
+        cli_update_available: false,
+        studio_current: format!("v{}", env!("CARGO_PKG_VERSION")),
+        studio_latest: None,
+        studio_update_available: false,
+        error: Some(format!("版本检测任务失败: {}", error)),
+    })
 }
 
-fn check_versions_blocking() -> VersionStatus {
+fn check_versions_blocking(java_executable: Option<&str>) -> VersionStatus {
     let studio_current = format!("v{}", env!("CARGO_PKG_VERSION"));
     let soloncode_path = find_soloncode_path();
     let installed = soloncode_path.is_some();
     let cli_current = soloncode_path
         .as_deref()
-        .and_then(|path| current_cli_version(path).ok());
+        .and_then(|path| current_cli_version(path, java_executable).ok());
 
     match latest_versions() {
         Ok(remote) => {

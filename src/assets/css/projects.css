@@ -1,100 +1,100 @@
 .project-view {
-    position: relative;
-    grid-column: 1 / -1;
-    display: block;
-    min-height: 0;
-    overflow: hidden;
-    border: 1px solid var(--window-border);
-    border-radius: var(--radius-window);
-    background: var(--panel);
-    box-shadow: none;
+  position: relative;
+  grid-column: 1 / -1;
+  display: block;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--window-border);
+  border-radius: var(--radius-window);
+  background: var(--panel);
+  box-shadow: none;
 }
 
 .vue-project-host {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .project-frame {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border: 0;
-    background: var(--panel);
-    opacity: 1;
-    transition: opacity 80ms ease-out;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--panel);
+  opacity: 1;
+  transition: opacity 80ms ease-out;
 }
 
 .project-frame.frame-loading {
-    opacity: 0;
+  opacity: 0;
 }
 
 .web-page-frame {
-    background: var(--panel);
+  background: var(--panel);
 }
 
 .web-page-frame:empty {
-    background: var(--panel-soft);
+  background: var(--panel-soft);
 }
 
 .project-terminal {
-    position: relative;
-    display: grid;
-    grid-template-rows: minmax(0, 1fr);
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    background: var(--terminal-bg);
-    color: var(--terminal-fg);
-    overflow: hidden;
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--terminal-bg);
+  color: var(--terminal-fg);
+  overflow: hidden;
 }
 
 .terminal-surface {
-    position: relative;
-    min-height: 0;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    overflow: hidden;
-    outline: none;
-    background: var(--terminal-bg);
+  position: relative;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  outline: none;
+  background: var(--terminal-bg);
 }
 
 .terminal-surface .xterm {
-    width: 100%;
-    height: 100%;
-    padding: 10px 12px;
-    background: inherit;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  background: inherit;
 }
 
 .terminal-surface .xterm-screen canvas {
-    display: block;
+  display: block;
 }
 
 .terminal-surface .xterm-viewport {
-    overflow-y: auto;
+  overflow-y: auto;
 }
 
 .xterm .xterm-viewport {
-    background-color: transparent !important;
+  background-color: transparent !important;
 }
 
 body.project-mode .launcher-container {
-    background: var(--bg-primary);
+  background: var(--bg-primary);
 }
 
 body.project-mode .app-shell {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 body.project-mode .tab-bar {
-    min-height: 30px;
+  min-height: 30px;
 }
 
 body.project-mode .project-view {
-    min-height: 0;
-    height: 100%;
+  min-height: 0;
+  height: 100%;
 }

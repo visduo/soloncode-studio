@@ -4,7 +4,7 @@ use crate::process::{kill_child_tree, SolonProcess};
 use crate::state::SolonState;
 #[cfg(windows)]
 use crate::version::soloncode_command;
-use crate::version::{find_soloncode_path, is_java_available};
+use crate::version::{find_soloncode_path, is_java_available, java_home_and_bin, prepend_java_bin};
 use crate::web_session::{
     emit_workspace_i18n_log, spawn_web_readiness_monitor, spawn_web_stream_reader,
     WebReadinessContext,
@@ -30,6 +30,7 @@ pub(crate) fn start_soloncode(
     state: tauri::State<SolonState>,
     workspace: Option<String>,
     mode: LaunchMode,
+    java_executable: Option<String>,
 ) -> Result<StartResult, String> {
     let (workspace_key, workspace_value, workspace_path, name) = normalize_workspace(workspace)?;
     let process_key = project_key(&workspace_key, mode);
@@ -62,7 +63,7 @@ pub(crate) fn start_soloncode(
 
     let soloncode_path =
         find_soloncode_path().ok_or("SolonCode CLI 未安装，请先点击「安装 CLI」")?;
-    if !is_java_available() {
+    if !is_java_available(java_executable.as_deref()) {
         return Err(
             "未检测到 Java 运行环境，请先安装 Java 运行环境后再安装/启动 SolonCode".to_string(),
         );
@@ -105,6 +106,7 @@ pub(crate) fn start_soloncode(
     );
 
     let mut path_env = std::env::var("PATH").unwrap_or_default();
+    prepend_java_bin(&mut path_env, java_executable.as_deref());
     if let Some(home) = dirs::home_dir() {
         let bin_dir = home.join(".soloncode/bin").to_string_lossy().to_string();
         if !path_env.contains(&bin_dir) {
@@ -162,6 +164,9 @@ pub(crate) fn start_soloncode(
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    if let Some((java_home, _)) = java_home_and_bin(java_executable.as_deref()) {
+        command.env("JAVA_HOME", java_home);
+    }
     #[cfg(unix)]
     unsafe {
         command.pre_exec(|| {

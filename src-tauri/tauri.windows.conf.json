@@ -1,17 +1,17 @@
 {
-    "app": {
-        "windows": [
-            {
-                "label": "main",
-                "title": "SolonCode Studio",
-                "width": 1200,
-                "height": 780,
-                "minWidth": 1200,
-                "minHeight": 780,
-                "center": true,
-                "resizable": true,
-                "decorations": false
-            }
-        ]
-    }
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "SolonCode Studio",
+        "width": 1200,
+        "height": 780,
+        "minWidth": 1200,
+        "minHeight": 780,
+        "center": true,
+        "resizable": true,
+        "decorations": false
+      }
+    ]
+  }
 }

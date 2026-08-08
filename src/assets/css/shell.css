@@ -1,328 +1,328 @@
 .launcher-container {
-    width: 100vw;
-    height: 100vh;
-    padding: 0;
-    background: var(--bg-primary);
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  background: var(--bg-primary);
 }
 
 .status-text-enter-active,
 .status-text-leave-active {
-    transition:
-        opacity 120ms ease,
-        transform 120ms ease;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
 }
 
 .status-text-enter-from,
 .status-text-leave-to {
-    opacity: 0;
-    transform: translateY(2px);
+  opacity: 0;
+  transform: translateY(2px);
 }
 
 .app-shell {
-    display: grid;
-    grid-template-columns: minmax(330px, 36%) 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
-    gap: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 0 10px 10px;
-    background: var(--bg-primary);
+  display: grid;
+  grid-template-columns: minmax(330px, 36%) 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 10px 10px;
+  background: var(--bg-primary);
 }
 
 .home-view {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: 238px minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    gap: 8px;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-    padding: 0;
-    background: var(--bg-primary);
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 238px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  background: var(--bg-primary);
 }
 
 .sidebar,
 .home-content-panel {
-    min-height: 0;
-    border: 1px solid var(--window-border);
-    border-radius: var(--radius-window);
-    box-shadow: none;
+  min-height: 0;
+  border: 1px solid var(--window-border);
+  border-radius: var(--radius-window);
+  box-shadow: none;
 }
 
 .sidebar {
-    grid-column: 1;
-    grid-row: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 28px 12px 18px;
-    overflow: hidden;
-    background: var(--sidebar-bg);
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 12px 18px;
+  overflow: hidden;
+  background: var(--sidebar-bg);
 }
 
 .home-content-panel {
-    grid-column: 2;
-    grid-row: 1;
-    min-width: 0;
-    min-height: 0;
-    padding: 44px 52px;
-    overflow-y: auto;
-    background: var(--panel);
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 44px 52px;
+  overflow-y: auto;
+  background: var(--panel);
 }
 
 .home-content-panel::-webkit-scrollbar {
-    width: 6px;
+  width: 6px;
 }
 
 .home-content-panel::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: var(--border-strong);
+  border-radius: 999px;
+  background: var(--border-strong);
 }
 
 .title-bar {
-    position: relative;
-    z-index: 20;
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: stretch;
-    min-width: 0;
-    min-height: 48px;
-    margin: 0 -10px;
-    padding-inline: 10px;
-    border-bottom: 0;
-    background: var(--bg-primary);
-    user-select: none;
+  position: relative;
+  z-index: 20;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 48px;
+  margin: 0 -10px;
+  padding-inline: 10px;
+  border-bottom: 0;
+  background: var(--bg-primary);
+  user-select: none;
 }
 
 .macos-traffic-light-space {
-    display: none;
-    flex: 0 0 70px;
+  display: none;
+  flex: 0 0 70px;
 }
 
 .title-bar-drag-region {
-    flex: 1 1 72px;
-    min-width: 36px;
+  flex: 1 1 72px;
+  min-width: 36px;
 }
 
 .tab-scroll-control {
-    display: grid;
-    align-self: center;
-    flex: 0 0 28px;
-    width: 28px;
-    min-width: 28px;
-    height: 30px;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    color: var(--text-secondary);
-    place-items: center;
-    cursor: pointer;
+  display: grid;
+  align-self: center;
+  flex: 0 0 28px;
+  width: 28px;
+  min-width: 28px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  place-items: center;
+  cursor: pointer;
 }
 
 .tab-scroll-control[hidden] {
-    display: none;
+  display: none;
 }
 
 .tab-scroll-control:hover:not(:disabled) {
-    background: var(--control-hover);
+  background: var(--control-hover);
 }
 
 .tab-scroll-control:disabled {
-    color: var(--border-strong);
-    cursor: default;
+  color: var(--border-strong);
+  cursor: default;
 }
 
-.tab-scroll-control [class^="ri-"] {
-    font-size: 16px;
+.tab-scroll-control [class^='ri-'] {
+  font-size: 16px;
 }
 
 .tab-bar {
-    position: relative;
-    display: flex;
-    flex: 0 1 auto;
-    align-items: center;
-    gap: 2px;
-    min-width: 0;
-    min-height: 30px;
-    padding: 0 12px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    scrollbar-width: none;
-    -webkit-user-select: none;
-    user-select: none;
+  position: relative;
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 0 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  scrollbar-width: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .tab-bar * {
-    -webkit-user-select: none;
-    user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .platform-macos .macos-traffic-light-space {
-    display: block;
+  display: block;
 }
 
 .platform-macos .window-controls {
-    display: none;
+  display: none;
 }
 
 .window-controls {
-    display: flex;
-    flex: 0 0 auto;
-    align-self: stretch;
+  display: flex;
+  flex: 0 0 auto;
+  align-self: stretch;
 }
 
 .window-control {
-    display: grid;
-    width: 46px;
-    min-width: 46px;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    color: var(--text-secondary);
-    place-items: center;
-    cursor: default;
+  display: grid;
+  width: 46px;
+  min-width: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  place-items: center;
+  cursor: default;
 }
 
 .window-control:hover {
-    background: var(--control-hover);
+  background: var(--control-hover);
 }
 
-.window-control [class^="ri-"] {
-    font-size: 12px;
+.window-control [class^='ri-'] {
+  font-size: 12px;
 }
 
 .tab-bar::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .tab-item {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    box-sizing: border-box;
-    max-width: 210px;
-    height: 30px;
-    padding: 0 10px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 0.82rem;
-    font-weight: var(--font-medium);
-    white-space: nowrap;
-    touch-action: none;
-    user-select: none;
-    transition:
-        background 0.15s ease,
-        border-color 0.15s ease,
-        color 0.15s ease;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  max-width: 210px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: var(--font-medium);
+  white-space: nowrap;
+  touch-action: none;
+  user-select: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .tab-main {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--icon-text-gap);
-    min-width: 0;
-    height: 100%;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--icon-text-gap);
+  min-width: 0;
+  height: 100%;
 }
 
 .tab-mode {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    width: 15px;
-    height: 15px;
-    padding: 0;
-    border-radius: 0;
-    background: transparent;
-    color: var(--text-muted);
-    line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  line-height: 1;
 }
 
 .tab-item.active .tab-mode {
-    color: var(--accent);
+  color: var(--accent);
 }
 
 .tab-mode .app-icon {
-    width: 15px;
-    height: 15px;
-    stroke-width: 2.2;
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.2;
 }
 
 .tab-item:not(.active):hover {
-    background: var(--surface-hover);
+  background: var(--surface-hover);
 }
 
 .tab-item.dragging {
-    opacity: 0.54;
+  opacity: 0.54;
 }
 
 .tab-item.drag-over-before,
 .tab-item.drag-over-after {
-    background: var(--accent-soft);
+  background: var(--accent-soft);
 }
 
 .tab-item.drag-over-before {
-    box-shadow: inset 2px 0 0 var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .tab-item.drag-over-after {
-    box-shadow: inset -2px 0 0 var(--accent);
+  box-shadow: inset -2px 0 0 var(--accent);
 }
 
 .tab-item.active {
-    z-index: 1;
-    border-color: var(--border);
-    background: var(--panel);
-    color: var(--text-primary);
+  z-index: 1;
+  border-color: var(--border);
+  background: var(--panel);
+  color: var(--text-primary);
 }
 
 .tab-item.active:hover {
-    background: var(--panel);
+  background: var(--panel);
 }
 
 .tab-label {
-    display: block;
-    flex: 1;
-    min-width: 0;
-    height: 20px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 20px;
-    white-space: nowrap;
+  display: block;
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 20px;
+  white-space: nowrap;
 }
 
 .tab-close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 20px;
-    width: 20px;
-    height: 20px;
-    margin-right: -5px;
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    line-height: 1;
-    text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin-right: -5px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  text-align: center;
 }
 
 .tab-close .app-icon {
-    width: 12px;
-    height: 12px;
+  width: 12px;
+  height: 12px;
 }
 
 .tab-close:hover {
-    background: var(--control-hover);
+  background: var(--control-hover);
 }

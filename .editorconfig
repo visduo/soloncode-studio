@@ -1,0 +1,48 @@
+# EditorConfig helps maintain consistent coding styles across editors and IDEs.
+# See https://editorconfig.org/
+root = true
+
+# Project defaults
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+tab_width = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Web frontend & Prettier 管辖的文件 (保持与 .prettierrc 一致，使用 2 空格)
+[*.{js,jsx,ts,tsx,vue,html,htm,css,scss,less}]
+indent_size = 2
+tab_width = 2
+
+# YAML & JSON (社区惯例，推荐使用 2 空格，结构更紧凑)
+[*.{json,jsonc,yml,yaml}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+# Markdown may use trailing spaces to create an explicit line break.
+[*.md]
+trim_trailing_whitespace = false
+
+# Windows scripts require CRLF line endings.
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+
+# Preserve generated and minified files.
+[*.min.{css,js}]
+indent_style = unset
+indent_size = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
+# Binary and archive files are not text-formatted.
+[*.{jpg,jpeg,png,gif,ico,webp,pdf,zip,gz,jar,xdb}]
+charset = unset
+end_of_line = unset
+indent_style = unset
+indent_size = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
