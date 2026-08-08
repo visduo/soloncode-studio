@@ -96,7 +96,7 @@ export function createStudioEnvironment({
     try {
       const javaExecutable = await invoke('pick_java_executable', {
         title: t('environment.pickJavaTitle'),
-        current: state.javaExecutablePath || null,
+        current: state.javaExecutablePath || state.javaSystemExecutablePath || null,
       });
       if (!javaExecutable) return false;
 
@@ -104,6 +104,7 @@ export function createStudioEnvironment({
       if (!javaVersion) throw new Error(t('environment.invalidJavaExecutable'));
 
       state.javaExecutablePath = javaExecutable;
+      state.javaSystemExecutablePath = '';
       state.javaVersion = javaVersion;
       state.javaAvailable = true;
       persistJavaExecutablePath(javaExecutable);
@@ -121,14 +122,22 @@ export function createStudioEnvironment({
     if (state.environmentChecking || (state.cliMutating && !options.allowDuringCliMutation)) return;
     state.environmentChecking = true;
     try {
+      const configuredJavaExecutable = state.javaExecutablePath || null;
       const javaVersion = await invoke('check_java', {
-        javaExecutable: state.javaExecutablePath || null,
+        javaExecutable: configuredJavaExecutable,
       });
       state.javaVersion = typeof javaVersion === 'string' ? javaVersion : '';
       state.javaAvailable = Boolean(state.javaVersion);
+      state.javaSystemExecutablePath = '';
+      if (!configuredJavaExecutable && state.javaAvailable) {
+        const systemJavaExecutable = await invoke('resolve_system_java_executable');
+        state.javaSystemExecutablePath =
+          typeof systemJavaExecutable === 'string' ? systemJavaExecutable.trim() : '';
+      }
     } catch (error) {
       state.javaAvailable = false;
       state.javaVersion = '';
+      state.javaSystemExecutablePath = '';
       showError(t('message.javaCheckFailed', { error }));
       appendLog(formatError(t('log.javaCheckFailed', { error })));
     }

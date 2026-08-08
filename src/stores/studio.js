@@ -34,6 +34,7 @@ const state = reactive({
   javaAvailable: false,
   javaVersion: '',
   javaExecutablePath: loadJavaExecutablePath(),
+  javaSystemExecutablePath: '',
   javaSelecting: false,
   environmentChecking: false,
   cliMutating: false,

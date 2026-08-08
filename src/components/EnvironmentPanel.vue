@@ -140,11 +140,13 @@ const { t } = useI18n();
                         <p>{{ t("environment.javaDescription") }}</p>
                         -->
             <p
-              v-if="studio.state.javaExecutablePath"
+              v-if="studio.state.javaExecutablePath || studio.state.javaSystemExecutablePath"
               class="environment-executable-path"
-              :title="studio.state.javaExecutablePath"
+              :title="studio.state.javaExecutablePath || studio.state.javaSystemExecutablePath"
             >
-              {{ t('environment.javaExecutable') }}：{{ studio.state.javaExecutablePath }}
+              {{ t('environment.javaExecutable') }}：{{
+                studio.state.javaExecutablePath || studio.state.javaSystemExecutablePath
+              }}
             </p>
           </div>
         </div>

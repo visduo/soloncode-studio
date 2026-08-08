@@ -43,6 +43,25 @@ pub(crate) fn find_soloncode_path() -> Option<String> {
     None
 }
 
+fn find_system_java_executable() -> Option<String> {
+    #[cfg(target_os = "windows")]
+    let mut path_command = Command::new("where");
+    #[cfg(not(target_os = "windows"))]
+    let mut path_command = Command::new("which");
+    #[cfg(windows)]
+    path_command.creation_flags(CREATE_NO_WINDOW);
+
+    let output = path_command.arg("java").output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .find(|path| !path.is_empty())
+        .map(str::to_string)
+}
+
 pub(crate) fn soloncode_command(soloncode_path: &str) -> Command {
     #[cfg(target_os = "windows")]
     {
@@ -269,6 +288,13 @@ pub(crate) async fn check_java(java_executable: Option<String>) -> Result<Option
     tauri::async_runtime::spawn_blocking(move || current_java_version(java_executable.as_deref()))
         .await
         .map_err(|error| format!("Java 检测任务失败: {}", error))?
+}
+
+#[tauri::command]
+pub(crate) async fn resolve_system_java_executable() -> Option<String> {
+    tauri::async_runtime::spawn_blocking(find_system_java_executable)
+        .await
+        .unwrap_or(None)
 }
 
 #[tauri::command]

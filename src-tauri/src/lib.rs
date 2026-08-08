@@ -29,7 +29,10 @@ use platform::{
 };
 use process::{cleanup_soloncode_process, start_soloncode, stop_soloncode};
 use state::SolonState;
-use version::{check_java, check_soloncode, check_versions, pick_java_executable, studio_version};
+use version::{
+    check_java, check_soloncode, check_versions, pick_java_executable,
+    resolve_system_java_executable, studio_version,
+};
 use workspace::{home_workspace_path, pick_workspace, reveal_workspace};
 
 const TRAY_MENU_OPEN: &str = "open";
@@ -181,6 +184,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             check_soloncode,
             check_java,
+            resolve_system_java_executable,
             pick_java_executable,
             studio_version,
             check_versions,
