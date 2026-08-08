@@ -114,6 +114,7 @@ export default {
   'environment.javaDescription': 'Potrebno za instaliranje i pokretanje SolonCodea',
   'environment.switchJavaVersion': 'Promijeni Java verziju',
   'environment.javaExecutable': 'Java izvršna datoteka',
+  'environment.javaExecutableUnavailable': 'Nema',
   'environment.pickJavaTitle': 'Odaberite Java izvršnu datoteku',
   'environment.invalidJavaExecutable': 'Odabrana Java izvršna datoteka nije važeća',
   'environment.latest': 'Ažurno',

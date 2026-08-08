@@ -140,12 +140,13 @@ const { t } = useI18n();
                         <p>{{ t("environment.javaDescription") }}</p>
                         -->
             <p
-              v-if="studio.state.javaExecutablePath || studio.state.javaSystemExecutablePath"
               class="environment-executable-path"
-              :title="studio.state.javaExecutablePath || studio.state.javaSystemExecutablePath"
+              :title="studio.state.javaExecutablePath || studio.state.javaSystemExecutablePath || undefined"
             >
               {{ t('environment.javaExecutable') }}：{{
-                studio.state.javaExecutablePath || studio.state.javaSystemExecutablePath
+                studio.state.javaExecutablePath ||
+                studio.state.javaSystemExecutablePath ||
+                t('environment.javaExecutableUnavailable')
               }}
             </p>
           </div>

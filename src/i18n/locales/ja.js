@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'SolonCode をインストールして実行するために必要です',
   'environment.switchJavaVersion': 'Java バージョンを切り替え',
   'environment.javaExecutable': 'Java 実行ファイル',
+  'environment.javaExecutableUnavailable': 'なし',
   'environment.pickJavaTitle': 'Java 実行ファイルを選択',
   'environment.invalidJavaExecutable': '選択した Java 実行ファイルは無効です',
   'environment.latest': '最新の状態',

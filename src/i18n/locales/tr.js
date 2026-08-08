@@ -114,6 +114,7 @@ export default {
   'environment.javaDescription': "SolonCode'u yüklemek ve çalıştırmak için gereklidir",
   'environment.switchJavaVersion': 'Java sürümünü değiştir',
   'environment.javaExecutable': 'Java yürütülebilir dosyası',
+  'environment.javaExecutableUnavailable': 'Yok',
   'environment.pickJavaTitle': 'Java yürütülebilir dosyasını seçin',
   'environment.invalidJavaExecutable': 'Seçilen Java yürütülebilir dosyası geçersiz',
   'environment.latest': 'güncel',

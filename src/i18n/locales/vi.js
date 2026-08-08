@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'Bắt buộc phải cài đặt và chạy SolonCode',
   'environment.switchJavaVersion': 'Chuyển phiên bản Java',
   'environment.javaExecutable': 'Tệp thực thi Java',
+  'environment.javaExecutableUnavailable': 'Không có',
   'environment.pickJavaTitle': 'Chọn tệp thực thi Java',
   'environment.invalidJavaExecutable': 'Tệp thực thi Java đã chọn không hợp lệ',
   'environment.latest': 'Cập nhật',

@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'SolonCode 安裝和執行所需的基礎環境',
   'environment.switchJavaVersion': '切換 Java 版本',
   'environment.javaExecutable': 'Java 執行檔',
+  'environment.javaExecutableUnavailable': '暫無',
   'environment.pickJavaTitle': '選擇 Java 執行檔',
   'environment.invalidJavaExecutable': '選取的 Java 執行檔無效',
   'environment.available': '可用',

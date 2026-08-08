@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'Required to install and run SolonCode',
   'environment.switchJavaVersion': 'Switch Java version',
   'environment.javaExecutable': 'Java executable',
+  'environment.javaExecutableUnavailable': 'None',
   'environment.pickJavaTitle': 'Select the Java executable',
   'environment.invalidJavaExecutable': 'The selected Java executable is invalid',
   'environment.latest': 'Up to date',

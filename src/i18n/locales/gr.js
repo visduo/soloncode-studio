@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'Απαιτείται για την εγκατάσταση και εκτέλεση του SolonCode',
   'environment.switchJavaVersion': 'Αλλαγή έκδοσης Java',
   'environment.javaExecutable': 'Εκτελέσιμο Java',
+  'environment.javaExecutableUnavailable': 'Κανένα',
   'environment.pickJavaTitle': 'Επιλέξτε το εκτελέσιμο Java',
   'environment.invalidJavaExecutable': 'Το επιλεγμένο εκτελέσιμο Java δεν είναι έγκυρο',
   'environment.latest': 'Επίκαιρο',

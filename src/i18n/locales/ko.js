@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'SolonCode 설치 및 실행에 필요',
   'environment.switchJavaVersion': 'Java 버전 전환',
   'environment.javaExecutable': 'Java 실행 파일',
+  'environment.javaExecutableUnavailable': '없음',
   'environment.pickJavaTitle': 'Java 실행 파일 선택',
   'environment.invalidJavaExecutable': '선택한 Java 실행 파일이 올바르지 않습니다',
   'environment.latest': '최신',

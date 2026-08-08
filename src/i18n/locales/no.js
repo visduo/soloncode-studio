@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'Nødvendig for å installere og kjøre SolonCode',
   'environment.switchJavaVersion': 'Bytt Java-versjon',
   'environment.javaExecutable': 'Java-programfil',
+  'environment.javaExecutableUnavailable': 'Ingen',
   'environment.pickJavaTitle': 'Velg Java-programfil',
   'environment.invalidJavaExecutable': 'Den valgte Java-programfilen er ugyldig',
   'environment.latest': 'Oppdatert',

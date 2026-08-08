@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'จำเป็นต้องติดตั้งและเรียกใช้ SolonCode',
   'environment.switchJavaVersion': 'สลับเวอร์ชัน Java',
   'environment.javaExecutable': 'ไฟล์ปฏิบัติการ Java',
+  'environment.javaExecutableUnavailable': 'ไม่มี',
   'environment.pickJavaTitle': 'เลือกไฟล์ปฏิบัติการ Java',
   'environment.invalidJavaExecutable': 'ไฟล์ปฏิบัติการ Java ที่เลือกไม่ถูกต้อง',
   'environment.latest': 'ถึงวันที่',

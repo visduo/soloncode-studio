@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'SolonCode ইনস্টল এবং চালানোর জন্য প্রয়োজনীয়',
   'environment.switchJavaVersion': 'Java সংস্করণ পরিবর্তন করুন',
   'environment.javaExecutable': 'Java এক্সিকিউটেবল',
+  'environment.javaExecutableUnavailable': 'কোনোটি নেই',
   'environment.pickJavaTitle': 'Java এক্সিকিউটেবল ফাইল নির্বাচন করুন',
   'environment.invalidJavaExecutable': 'নির্বাচিত Java এক্সিকিউটেবলটি বৈধ নয়',
   'environment.latest': 'আপ টু ডেট',

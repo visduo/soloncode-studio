@@ -113,6 +113,7 @@ export default {
   'environment.javaDescription': 'مطلوب لتثبيت وتشغيل SolonCode',
   'environment.switchJavaVersion': 'تبديل إصدار Java',
   'environment.javaExecutable': 'ملف Java التنفيذي',
+  'environment.javaExecutableUnavailable': 'غير متوفر',
   'environment.pickJavaTitle': 'اختر ملف Java التنفيذي',
   'environment.invalidJavaExecutable': 'ملف Java التنفيذي المحدد غير صالح',
   'environment.latest': 'حتى الآن',
