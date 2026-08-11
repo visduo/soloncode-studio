@@ -27,6 +27,6 @@ base64 = "0.22"
 dirs = "6"
 rfd = "0.15"
 libc = "0.2"
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls-native-roots"] }
 semver = "1"
 zip = "2"

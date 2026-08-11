@@ -63,7 +63,14 @@ const logs = shallowReactive(new Map());
 const promptQueue = ref([]);
 const queuedPromptKeys = new Set();
 const taskSessions = shallowReactive(new Map());
-const dialogs = reactive({ alias: false, remote: false, workspaceGroup: false, workspaceMove: false, logs: false });
+const dialogs = reactive({
+  alias: false,
+  remote: false,
+  workspaceGroup: false,
+  workspaceMove: false,
+  logs: false,
+  httpAuth: false,
+});
 let installCliPromptShown = false;
 let nextMessageId = 0;
 const messageTimers = new Map();
@@ -290,6 +297,7 @@ const {
 workspaceActions = createStudioWorkspaces({
   state,
   startingWorkspaceKeys,
+  getProject: (key) => projects.get(key),
   invoke,
   workspaceKey,
   projectForWorkspace,
@@ -325,6 +333,10 @@ const {
   requestDeleteWorkspaceGroup,
   toggleWorkspaceGroup,
   openWebPage,
+  detectWebPageAuthentication,
+  requestHttpAuthentication,
+  submitHttpAuth,
+  closeHttpAuthDialog,
 } = workspaceActions;
 environmentActions = createStudioEnvironment({
   state,
@@ -544,6 +556,10 @@ export function useStudioStore() {
     requestDeleteWorkspaceGroup,
     toggleWorkspaceGroup,
     openWebPage,
+    detectWebPageAuthentication,
+    requestHttpAuthentication,
+    submitHttpAuth,
+    closeHttpAuthDialog,
     openExternalUrl,
     openStudioGithubReleasePage,
     goHome,

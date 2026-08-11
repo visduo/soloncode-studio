@@ -1,4 +1,5 @@
 <script setup>
+import HttpAuthDialog from './dialogs/HttpAuthDialog.vue';
 import PromptDialog from './dialogs/PromptDialog.vue';
 import RemoteWorkspaceDialog from './dialogs/RemoteWorkspaceDialog.vue';
 import WorkspaceGroupDialog from './dialogs/WorkspaceGroupDialog.vue';
@@ -9,6 +10,7 @@ import WorkspaceMoveDialog from './dialogs/WorkspaceMoveDialog.vue';
 
 <template>
   <PromptDialog />
+  <HttpAuthDialog />
   <WorkspaceInfoDialog />
   <RemoteWorkspaceDialog />
   <WorkspaceGroupDialog />

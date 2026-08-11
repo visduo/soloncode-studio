@@ -24,13 +24,16 @@ function prepareFrame(project) {
     project.project_key,
     window.setTimeout(() => markFrameReady(project.project_key), 1500),
   );
+  void studio.detectWebPageAuthentication(project);
 }
 
 function frameLoaded(event, project) {
   sendThemeToFrame(event.currentTarget);
   sendLocaleToFrame(event.currentTarget);
   sendContextToFrame(event.currentTarget, project);
+  sendHttpAuthCredentialsToFrame(event.currentTarget, project);
   markFrameReady(project.project_key);
+  void studio.detectWebPageAuthentication(project, { force: true });
 }
 
 function frameOrigin(frame) {
@@ -108,6 +111,24 @@ function broadcastContextToFrames() {
   }
 }
 
+function sendHttpAuthCredentialsToFrame(frame, project) {
+  for (const [origin, credentials] of Object.entries(project.httpAuthCredentials || {})) {
+    if (!credentials?.username || typeof credentials.password !== 'string') continue;
+    frame?.contentWindow?.postMessage(
+      {
+        type: 'soloncode-http-auth-credentials',
+        source: 'soloncode-studio',
+        payload: {
+          origin,
+          username: credentials.username,
+          password: credentials.password,
+        },
+      },
+      frameOrigin(frame),
+    );
+  }
+}
+
 function projectFrameBySource(source) {
   for (const project of studio.hostedProjects.value) {
     const frame = document.querySelector(`[data-project-key="${CSS.escape(project.project_key)}"] iframe`);
@@ -117,10 +138,16 @@ function projectFrameBySource(source) {
 }
 async function message(event) {
   const data = event.data;
-  if (!data?.type || data.source !== 'soloncode-cli') return;
+  if (!data?.type || !['soloncode-cli', 'soloncode-frame'].includes(data.source)) return;
   const match = projectFrameBySource(event.source);
   if (!match) return;
   const { project, frame } = match;
+  if (data.source === 'soloncode-frame') {
+    if (data.type === 'soloncode-http-auth-required' && data.payload?.url) {
+      studio.requestHttpAuthentication(project, data.payload.url, data.payload.realm);
+    }
+    return;
+  }
   const sourceOrigin = frameOrigin(frame);
   if (sourceOrigin !== '*' && event.origin !== sourceOrigin) return;
   if (data.type === 'studio-blocked-navigation' && data.payload?.url) return studio.openExternalUrl(data.payload.url);
@@ -177,6 +204,16 @@ async function message(event) {
   }
 }
 watch(() => studio.state.resolvedThemeMode, broadcastThemeToFrames, { flush: 'post' });
+watch(
+  () => studio.state.activeTabKey,
+  (projectKey) => {
+    const project = studio.projects.get(projectKey);
+    if (project?.url && project.mode !== studio.constants.LAUNCH_MODES.cli) {
+      void studio.detectWebPageAuthentication(project);
+    }
+  },
+  { flush: 'post' },
+);
 watch(
   () => [locale.value, studio.state.preferences.locale],
   () => {

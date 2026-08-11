@@ -57,6 +57,7 @@ function handleDocumentKeydown(event) {
   if (event.key !== 'Escape') return;
   dismissMenu();
   studio.dialogs.logs = false;
+  if (studio.dialogs.httpAuth && !studio.dialogForms.httpAuthChecking) studio.closeHttpAuthDialog();
 }
 
 watch(
@@ -80,6 +81,7 @@ watch(
     studio.dialogs.workspaceGroup,
     studio.dialogs.workspaceMove,
     studio.dialogs.logs,
+    studio.dialogs.httpAuth,
   ],
   (modalStates) => {
     if (modalStates.some(Boolean)) dismissMenu();

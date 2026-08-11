@@ -9,6 +9,8 @@ use tauri_plugin_notification::NotificationExt;
 
 mod cli_session;
 mod context_menu;
+mod frame_http_auth;
+mod http_auth;
 mod installer;
 mod models;
 mod platform;
@@ -21,6 +23,8 @@ mod workspace;
 
 use cli_session::send_cli_input;
 use context_menu::context_menu_script;
+use frame_http_auth::frame_http_auth_script;
+use http_auth::check_http_auth;
 use installer::{install_soloncode, uninstall_soloncode};
 #[cfg(target_os = "linux")]
 use platform::configure_linux_webkit_gpu_fallback;
@@ -166,6 +170,11 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(
+            tauri::plugin::Builder::<_, ()>::new("frame-http-auth")
+                .js_init_script_on_all_frames(frame_http_auth_script())
+                .build(),
+        )
+        .plugin(
             tauri::plugin::Builder::<_, ()>::new("disable-context-menu")
                 .js_init_script_on_all_frames(context_menu_script())
                 .build(),
@@ -184,6 +193,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             check_soloncode,
             check_java,
+            check_http_auth,
             resolve_system_java_executable,
             pick_java_executable,
             studio_version,

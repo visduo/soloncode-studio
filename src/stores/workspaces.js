@@ -1,6 +1,6 @@
 import { computed, reactive, ref } from 'vue';
 import { DEFAULT_WORKSPACE_GROUP_ID, LAUNCH_MODES, PROJECT_TYPES, RUN_TARGETS } from '../assets/js/constants.js';
-import { isValidWebPageUrl, normalizeWebPageUrl, withBasicAuth } from '../assets/js/url.js';
+import { isValidWebPageUrl, normalizeWebPageUrl, withBasicAuth, withStudioParam } from '../assets/js/url.js';
 import {
   createWorkspaceGroup,
   deleteWorkspaceGroup,
@@ -24,6 +24,7 @@ import { t } from '../i18n/index.js';
 export function createStudioWorkspaces({
   state,
   startingWorkspaceKeys,
+  getProject,
   invoke,
   workspaceKey,
   projectForWorkspace,
@@ -40,6 +41,8 @@ export function createStudioWorkspaces({
 }) {
   const workspaces = ref(loadWorkspaces());
   const workspaceGroups = ref(loadWorkspaceGroups());
+  const authProbeKeys = new Set();
+  const authProbeTimes = new Map();
   const dialogForms = reactive({
     alias: '',
     remoteName: '',
@@ -53,6 +56,15 @@ export function createStudioWorkspaces({
     editingRemote: null,
     editingWorkspaceGroup: null,
     movingWorkspace: null,
+    httpAuthProjectKey: '',
+    httpAuthUrl: '',
+    httpAuthProbeUrl: '',
+    httpAuthHost: '',
+    httpAuthRealm: '',
+    httpAuthUsername: '',
+    httpAuthPassword: '',
+    httpAuthChecking: false,
+    httpAuthError: '',
   });
 
   function refreshWorkspaces() {
@@ -88,6 +100,137 @@ export function createStudioWorkspaces({
       external: false,
     });
     activateProject(key);
+    void detectWebPageAuthentication(getProject(key));
+  }
+
+  function clearHttpAuthForm() {
+    dialogForms.httpAuthProjectKey = '';
+    dialogForms.httpAuthUrl = '';
+    dialogForms.httpAuthProbeUrl = '';
+    dialogForms.httpAuthHost = '';
+    dialogForms.httpAuthRealm = '';
+    dialogForms.httpAuthUsername = '';
+    dialogForms.httpAuthPassword = '';
+    dialogForms.httpAuthChecking = false;
+    dialogForms.httpAuthError = '';
+  }
+
+  function closeHttpAuthDialog() {
+    dialogs.httpAuth = false;
+    clearHttpAuthForm();
+  }
+
+  function requestHttpAuthentication(project, challengeUrl = project?.url, realm = '') {
+    if (!project?.project_key || !challengeUrl || state.activeTabKey !== project.project_key) return false;
+
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(challengeUrl);
+    } catch (_) {
+      return false;
+    }
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) return false;
+    if (
+      dialogs.httpAuth &&
+      dialogForms.httpAuthProjectKey === project.project_key &&
+      dialogForms.httpAuthHost === parsedUrl.host
+    )
+      return true;
+    if (dialogs.httpAuth) return false;
+
+    dismissMenu();
+    dialogForms.httpAuthProjectKey = project.project_key;
+    dialogForms.httpAuthUrl = project.url;
+    dialogForms.httpAuthProbeUrl = challengeUrl;
+    dialogForms.httpAuthHost = parsedUrl.host;
+    dialogForms.httpAuthRealm = realm || '';
+    dialogForms.httpAuthUsername = '';
+    dialogForms.httpAuthPassword = '';
+    dialogForms.httpAuthChecking = false;
+    dialogForms.httpAuthError = '';
+    dialogs.httpAuth = true;
+    return true;
+  }
+
+  async function detectWebPageAuthentication(project, { force = false } = {}) {
+    if (!project?.url || project.mode === LAUNCH_MODES.cli || state.activeTabKey !== project.project_key) return;
+
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(project.url);
+    } catch (_) {
+      return;
+    }
+    if (parsedUrl.username || parsedUrl.password) return;
+
+    const probeUrl = withStudioParam(project.url);
+    const probeKey = `${project.project_key}::${probeUrl}`;
+    if (authProbeKeys.has(probeKey)) return;
+    if (!force && Date.now() - (authProbeTimes.get(probeKey) || 0) < 2000) return;
+    authProbeKeys.add(probeKey);
+    authProbeTimes.set(probeKey, Date.now());
+
+    try {
+      const result = await invoke('check_http_auth', {
+        url: probeUrl,
+        username: null,
+        password: null,
+      });
+      if (!result.requiresAuth) return;
+      requestHttpAuthentication(project, probeUrl, result.realm);
+    } catch (error) {
+      // Authentication probing must not prevent the iframe from loading normally.
+      console.warn('[HTTP Auth] Unable to probe iframe authentication:', project.url, error);
+    } finally {
+      authProbeKeys.delete(probeKey);
+    }
+  }
+
+  async function submitHttpAuth() {
+    const username = dialogForms.httpAuthUsername.trim();
+    const password = dialogForms.httpAuthPassword;
+    if (!username || !password || dialogForms.httpAuthChecking) return false;
+
+    dialogForms.httpAuthChecking = true;
+    dialogForms.httpAuthError = '';
+    try {
+      const result = await invoke('check_http_auth', {
+        url: dialogForms.httpAuthProbeUrl || dialogForms.httpAuthUrl,
+        username,
+        password,
+      });
+      if (result.requiresAuth) {
+        dialogForms.httpAuthError = t('dialog.httpAuthInvalid');
+        return false;
+      }
+
+      const project = getProject(dialogForms.httpAuthProjectKey);
+      if (!project) {
+        closeHttpAuthDialog();
+        return false;
+      }
+      let challengeOrigin = '';
+      try {
+        challengeOrigin = new URL(dialogForms.httpAuthProbeUrl || dialogForms.httpAuthUrl).origin;
+      } catch (_) {}
+      upsertProject({
+        ...project,
+        url: withBasicAuth(dialogForms.httpAuthUrl, username, password),
+        httpAuthCredentials: challengeOrigin
+          ? {
+              ...(project.httpAuthCredentials || {}),
+              [challengeOrigin]: { username, password },
+            }
+          : project.httpAuthCredentials,
+      });
+      closeHttpAuthDialog();
+      return true;
+    } catch (error) {
+      dialogForms.httpAuthError = t('dialog.httpAuthFailed', { error });
+      return false;
+    } finally {
+      dialogForms.httpAuthChecking = false;
+    }
   }
 
   async function pickWorkspace() {
@@ -326,5 +469,9 @@ export function createStudioWorkspaces({
     requestDeleteWorkspaceGroup,
     toggleWorkspaceGroup,
     openWebPage,
+    detectWebPageAuthentication,
+    requestHttpAuthentication,
+    submitHttpAuth,
+    closeHttpAuthDialog,
   };
 }
