@@ -14,6 +14,7 @@ import {
   WORKSPACE_GROUPS_KEY,
   WORKSPACES_KEY,
 } from './constants.js';
+import { getSecureItem, removeSecureItem, setSecureItem } from './secure-storage.js';
 
 export function normalizeAppPreferences(preferences) {
   const defaultRunTarget = RUN_TARGET_OPTIONS.some((option) => option.key === preferences?.defaultRunTarget)
@@ -41,24 +42,23 @@ export function normalizeAppPreferences(preferences) {
 
 export function loadAppPreferences() {
   try {
-    return normalizeAppPreferences(JSON.parse(localStorage.getItem(APP_PREFERENCES_KEY) || '{}'));
+    return normalizeAppPreferences(JSON.parse(getSecureItem(APP_PREFERENCES_KEY) || '{}'));
   } catch (_) {
     return { ...DEFAULT_APP_PREFERENCES };
   }
 }
 
 export function persistAppPreferences(preferences) {
-  localStorage.setItem(APP_PREFERENCES_KEY, JSON.stringify(normalizeAppPreferences(preferences)));
+  return setSecureItem(APP_PREFERENCES_KEY, JSON.stringify(normalizeAppPreferences(preferences)));
 }
 
 export function loadJavaExecutablePath() {
-  return (localStorage.getItem(JAVA_EXECUTABLE_KEY) || '').trim();
+  return (getSecureItem(JAVA_EXECUTABLE_KEY) || '').trim();
 }
 
 export function persistJavaExecutablePath(path) {
   const normalized = typeof path === 'string' ? path.trim() : '';
-  if (normalized) localStorage.setItem(JAVA_EXECUTABLE_KEY, normalized);
-  else localStorage.removeItem(JAVA_EXECUTABLE_KEY);
+  return normalized ? setSecureItem(JAVA_EXECUTABLE_KEY, normalized) : removeSecureItem(JAVA_EXECUTABLE_KEY);
 }
 
 function clampNumber(value, min, max) {
@@ -85,7 +85,7 @@ export function normalizeTerminalSettings(settings) {
 
 export function loadTerminalSettings() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(TERMINAL_SETTINGS_KEY) || '{}');
+    const parsed = JSON.parse(getSecureItem(TERMINAL_SETTINGS_KEY) || '{}');
     return normalizeTerminalSettings(parsed);
   } catch (_) {
     return { ...DEFAULT_TERMINAL_SETTINGS };
@@ -93,12 +93,12 @@ export function loadTerminalSettings() {
 }
 
 export function persistTerminalSettings(settings) {
-  localStorage.setItem(TERMINAL_SETTINGS_KEY, JSON.stringify(settings));
+  return setSecureItem(TERMINAL_SETTINGS_KEY, JSON.stringify(settings));
 }
 
 export function loadWorkspaceAliases() {
   try {
-    const raw = localStorage.getItem(WORKSPACE_ALIASES_KEY);
+    const raw = getSecureItem(WORKSPACE_ALIASES_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? parsed : {};
@@ -108,12 +108,12 @@ export function loadWorkspaceAliases() {
 }
 
 export function saveWorkspaceAliases(aliases) {
-  localStorage.setItem(WORKSPACE_ALIASES_KEY, JSON.stringify(aliases));
+  return setSecureItem(WORKSPACE_ALIASES_KEY, JSON.stringify(aliases));
 }
 
 export function loadWorkspaceGroups() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(WORKSPACE_GROUPS_KEY) || '[]');
+    const parsed = JSON.parse(getSecureItem(WORKSPACE_GROUPS_KEY) || '[]');
     const groups = Array.isArray(parsed)
       ? parsed
           .filter((group) => group && typeof group.id === 'string' && typeof group.name === 'string')
@@ -136,12 +136,12 @@ export function loadWorkspaceGroups() {
 }
 
 export function saveWorkspaceGroups(groups) {
-  localStorage.setItem(WORKSPACE_GROUPS_KEY, JSON.stringify(groups));
+  return setSecureItem(WORKSPACE_GROUPS_KEY, JSON.stringify(groups));
 }
 
 export function loadWorkspaces() {
   try {
-    const raw = localStorage.getItem(WORKSPACES_KEY);
+    const raw = getSecureItem(WORKSPACES_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(parsed)) return [];
     return parsed
@@ -175,5 +175,5 @@ export function loadWorkspaces() {
 }
 
 export function saveWorkspaces(workspaces) {
-  localStorage.setItem(WORKSPACES_KEY, JSON.stringify(workspaces));
+  return setSecureItem(WORKSPACES_KEY, JSON.stringify(workspaces));
 }

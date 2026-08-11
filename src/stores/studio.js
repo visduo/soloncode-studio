@@ -1,6 +1,8 @@
 import { computed, reactive, ref, shallowReactive } from 'vue';
 import {
   CLOSE_WINDOW_BEHAVIOR_KEY,
+  DEFAULT_APP_PREFERENCES,
+  DEFAULT_TERMINAL_SETTINGS,
   DEFAULT_WORKSPACE_GROUP_ID,
   HOME_TAB_KEY,
   HOME_WORKSPACE_KEY,
@@ -10,7 +12,14 @@ import {
   PROJECT_TYPES,
   RUN_TARGET_OPTIONS,
   RUN_TARGETS,
+  SELECTED_WORKSPACE_KEY,
 } from '../assets/js/constants.js';
+import {
+  flushSecureStorageWrites,
+  getSecureItem,
+  initializeSecureStorage,
+  setSecureItem,
+} from '../assets/js/secure-storage.js';
 import {
   loadAppPreferences,
   loadJavaExecutablePath,
@@ -33,7 +42,7 @@ const state = reactive({
   installed: false,
   javaAvailable: false,
   javaVersion: '',
-  javaExecutablePath: loadJavaExecutablePath(),
+  javaExecutablePath: '',
   javaSystemExecutablePath: '',
   javaSelecting: false,
   environmentChecking: false,
@@ -53,8 +62,8 @@ const state = reactive({
   status: { text: t('status.checking'), type: 'detecting' },
   workspaceSearch: '',
   openMenu: null,
-  preferences: loadAppPreferences(),
-  terminalSettings: loadTerminalSettings(),
+  preferences: { ...DEFAULT_APP_PREFERENCES },
+  terminalSettings: { ...DEFAULT_TERMINAL_SETTINGS },
 });
 setLocale(state.preferences.locale);
 const projects = shallowReactive(new Map());
@@ -316,6 +325,7 @@ const {
   dialogForms,
   workspaceGroups,
   workspaceGroupsWithEntries,
+  hydrateStoredWorkspaces,
   refreshWorkspaceGroups,
   selectWorkspace,
   pickWorkspace,
@@ -359,10 +369,10 @@ environmentActions = createStudioEnvironment({
 const { showInstallPrompt, refreshEnvironment, switchJavaExecutable, handleCliPrimaryAction, handleUninstall } =
   environmentActions;
 
-function saveTerminalSettings(settings) {
+async function saveTerminalSettings(settings) {
   try {
     state.terminalSettings = normalizeTerminalSettings(settings);
-    persistTerminalSettings(state.terminalSettings);
+    await persistTerminalSettings(state.terminalSettings);
     showSuccess(t('message.saveSuccess'));
     return true;
   } catch (error) {
@@ -371,11 +381,11 @@ function saveTerminalSettings(settings) {
   }
 }
 
-function saveAppPreferences(preferences) {
+async function saveAppPreferences(preferences) {
   try {
     state.preferences = normalizeAppPreferences(preferences);
     setLocale(state.preferences.locale);
-    persistAppPreferences(state.preferences);
+    await persistAppPreferences(state.preferences);
     refreshWorkspaceGroups();
     showSuccess(t('message.saveSuccess'));
     return true;
@@ -410,11 +420,12 @@ function refreshSystemLocale() {
 }
 
 async function applyCloseBehavior(behavior) {
+  await flushSecureStorageWrites();
   await invoke(behavior === 'quit' ? 'quit_studio' : 'minimize_to_tray');
 }
 
 function handleCloseRequested() {
-  const saved = localStorage.getItem(CLOSE_WINDOW_BEHAVIOR_KEY);
+  const saved = getSecureItem(CLOSE_WINDOW_BEHAVIOR_KEY);
   if (saved === 'quit' || saved === 'tray') return applyCloseBehavior(saved);
   queuePrompt({
     key: 'close-window-behavior',
@@ -433,10 +444,10 @@ function handleCloseRequested() {
       {
         label: t('common.confirm'),
         primary: true,
-        handler: ({ checked, behavior }) => {
-          if (checked) localStorage.setItem(CLOSE_WINDOW_BEHAVIOR_KEY, behavior);
+        handler: async ({ checked, behavior }) => {
+          if (checked) await setSecureItem(CLOSE_WINDOW_BEHAVIOR_KEY, behavior);
           closePrompt();
-          applyCloseBehavior(behavior);
+          await applyCloseBehavior(behavior);
         },
       },
     ],
@@ -478,8 +489,21 @@ function registerEvents() {
 }
 
 async function initialize() {
-  localStorage.setItem('soloncode.selectedWorkspace', '');
-  state.selectedWorkspace = null;
+  try {
+    await initializeSecureStorage();
+    state.javaExecutablePath = loadJavaExecutablePath();
+    state.preferences = loadAppPreferences();
+    state.terminalSettings = loadTerminalSettings();
+    setLocale(state.preferences.locale);
+    hydrateStoredWorkspaces();
+    state.selectedWorkspace = null;
+    await setSecureItem(SELECTED_WORKSPACE_KEY, '');
+  } catch (error) {
+    appendLog(formatError(error));
+    showError(t('message.checkFailed', { error }));
+    state.initialized = true;
+    return;
+  }
   try {
     state.studioVersion = `v${String(await invoke('studio_version')).replace(/^v/, '')}`;
     state.homeWorkspacePath = await invoke('home_workspace_path');

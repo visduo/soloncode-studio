@@ -1,4 +1,5 @@
 import { HIDDEN_STUDIO_UPDATE_KEY } from '../assets/js/constants.js';
+import { getSecureItem } from '../assets/js/secure-storage.js';
 import { t } from '../i18n/index.js';
 
 export function createStudioEnvironment({
@@ -66,7 +67,7 @@ export function createStudioEnvironment({
         });
       }
       const latestStudioVersion = info.studio_latest ? `v${String(info.studio_latest).replace(/^v/, '')}` : '';
-      if (info.studio_update_available && localStorage.getItem(HIDDEN_STUDIO_UPDATE_KEY) !== latestStudioVersion) {
+      if (info.studio_update_available && getSecureItem(HIDDEN_STUDIO_UPDATE_KEY) !== latestStudioVersion) {
         queuePrompt({
           key: `studio-update-${info.studio_latest}`,
           title: t('prompt.studioUpdateTitle'),
@@ -107,7 +108,7 @@ export function createStudioEnvironment({
       state.javaSystemExecutablePath = '';
       state.javaVersion = javaVersion;
       state.javaAvailable = true;
-      persistJavaExecutablePath(javaExecutable);
+      await persistJavaExecutablePath(javaExecutable);
       showSuccess(t('message.javaSwitchSuccess', { version: javaVersion }));
       return true;
     } catch (error) {
@@ -131,8 +132,7 @@ export function createStudioEnvironment({
       state.javaSystemExecutablePath = '';
       if (!configuredJavaExecutable && state.javaAvailable) {
         const systemJavaExecutable = await invoke('resolve_system_java_executable');
-        state.javaSystemExecutablePath =
-          typeof systemJavaExecutable === 'string' ? systemJavaExecutable.trim() : '';
+        state.javaSystemExecutablePath = typeof systemJavaExecutable === 'string' ? systemJavaExecutable.trim() : '';
       }
     } catch (error) {
       state.javaAvailable = false;

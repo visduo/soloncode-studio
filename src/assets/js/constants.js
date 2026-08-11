@@ -11,6 +11,7 @@ export const TERMINAL_SETTINGS_KEY = 'soloncode.terminalSettings';
 export const APP_PREFERENCES_KEY = 'soloncode.preferences';
 export const JAVA_EXECUTABLE_KEY = 'soloncode.javaExecutable';
 export const CLOSE_WINDOW_BEHAVIOR_KEY = 'soloncode.closeWindowBehavior';
+export const SELECTED_WORKSPACE_KEY = 'soloncode.selectedWorkspace';
 export const MAX_LOG_LINES = 500;
 
 export const DEFAULT_TERMINAL_SETTINGS = {

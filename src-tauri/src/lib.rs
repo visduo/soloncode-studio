@@ -15,6 +15,7 @@ mod installer;
 mod models;
 mod platform;
 mod process;
+mod secure_storage;
 mod session;
 mod state;
 mod version;
@@ -32,6 +33,10 @@ use platform::{
     open_external_url, open_soloncode_system_terminal, open_studio_github_release_page,
 };
 use process::{cleanup_soloncode_process, start_soloncode, stop_soloncode};
+use secure_storage::{
+    decrypt_local_storage_item, encrypt_local_storage_item, initialize_secure_storage,
+    SecureStorageState,
+};
 use state::SolonState;
 use version::{
     check_java, check_soloncode, check_versions, pick_java_executable,
@@ -186,6 +191,7 @@ pub fn run() {
             cli_outputs: Arc::new(Mutex::new(HashMap::new())),
             should_exit: Mutex::new(false),
         })
+        .manage(SecureStorageState::default())
         .setup(|app| {
             setup_tray(app)?;
             Ok(())
@@ -214,6 +220,9 @@ pub fn run() {
             open_devtools,
             quit_studio,
             show_task_finished_notification,
+            initialize_secure_storage,
+            encrypt_local_storage_item,
+            decrypt_local_storage_item,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

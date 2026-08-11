@@ -1,5 +1,12 @@
 import { computed, reactive, ref } from 'vue';
-import { DEFAULT_WORKSPACE_GROUP_ID, LAUNCH_MODES, PROJECT_TYPES, RUN_TARGETS } from '../assets/js/constants.js';
+import {
+  DEFAULT_WORKSPACE_GROUP_ID,
+  LAUNCH_MODES,
+  PROJECT_TYPES,
+  RUN_TARGETS,
+  SELECTED_WORKSPACE_KEY,
+} from '../assets/js/constants.js';
+import { setSecureItem } from '../assets/js/secure-storage.js';
 import { isValidWebPageUrl, normalizeWebPageUrl, withBasicAuth, withStudioParam } from '../assets/js/url.js';
 import {
   createWorkspaceGroup,
@@ -39,8 +46,10 @@ export function createStudioWorkspaces({
   activateProject,
   dialogs,
 }) {
-  const workspaces = ref(loadWorkspaces());
-  const workspaceGroups = ref(loadWorkspaceGroups());
+  const workspaces = ref([]);
+  const workspaceGroups = ref([
+    { id: DEFAULT_WORKSPACE_GROUP_ID, name: t('workspace.defaultGroup'), collapsed: false },
+  ]);
   const authProbeKeys = new Set();
   const authProbeTimes = new Map();
   const dialogForms = reactive({
@@ -75,9 +84,14 @@ export function createStudioWorkspaces({
     workspaceGroups.value = loadWorkspaceGroups();
   }
 
+  function hydrateStoredWorkspaces() {
+    refreshWorkspaces();
+    refreshWorkspaceGroups();
+  }
+
   function selectWorkspace(path) {
     state.selectedWorkspace = path || null;
-    localStorage.setItem('soloncode.selectedWorkspace', state.selectedWorkspace || '');
+    void setSecureItem(SELECTED_WORKSPACE_KEY, state.selectedWorkspace || '');
     dismissMenu();
   }
 
@@ -451,6 +465,7 @@ export function createStudioWorkspaces({
     dialogForms,
     workspaceGroups,
     workspaceGroupsWithEntries,
+    hydrateStoredWorkspaces,
     refreshWorkspaces,
     refreshWorkspaceGroups,
     selectWorkspace,
